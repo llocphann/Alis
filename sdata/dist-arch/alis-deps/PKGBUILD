@@ -102,7 +102,7 @@ depends=(
   networkmanager
   nm-connection-editor
   gnome-keyring
-  nautilus
+  gtk4
   kitty
   glib2
   starship

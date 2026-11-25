@@ -20,6 +20,7 @@ FocusScope {
     property string browseFolder:Config.options?.wallpapers?.directory ?? ""
     property string selectedColor:""
     property bool favouritesOnly:false
+    property double _folderDialogClosedAtMs: 0
     readonly property var colorPalette:[
         {id:"",label:"All",swatch:"transparent"},
         {id:"red",label:"Red",swatch:"#ef4444"},
@@ -115,6 +116,27 @@ FocusScope {
         function applyCurrent():void {root.activateCurrent()}
         function status():string {return root.statusJson()}
     }
+    function handleEscape():bool {
+        if (folderPicker.visible) {
+            folderPicker.close()
+            root._folderDialogClosedAtMs = Date.now()
+            root.focusPrimarySurface()
+            return true
+        }
+        if ((Date.now() - root._folderDialogClosedAtMs) < 300) {
+            root.focusPrimarySurface()
+            return true
+        }
+        if (search.activeFocus && search.text.length > 0) {
+            search.text = ""
+            root.focusPrimarySurface()
+            return true
+        }
+        root.focusPrimarySurface()
+        GlobalStates.wallpaperLauncherOpen = false
+        closeRequested()
+        return true
+    }
     onBrowseFolderChanged:if(GlobalStates.wallpaperLauncherOpen)refreshLibrary(true)
     Timer {
         id: focusTimer
@@ -133,7 +155,13 @@ FocusScope {
     Component.onDestruction:GlobalStates.setSettingsNativeDialogVisible("wallpaperLauncherFolder",false)
     Connections {
         target:GlobalStates
-        function onWallpaperLauncherOpenChanged():void {if(GlobalStates.wallpaperLauncherOpen){root.refreshLibrary(true);focusTimer.restart()}}
+        function onWallpaperLauncherOpenChanged():void {
+            if(GlobalStates.wallpaperLauncherOpen){
+                root._folderDialogClosedAtMs=0
+                root.refreshLibrary(true)
+                focusTimer.restart()
+            }
+        }
     }
     FolderDialog {
         id:folderPicker
@@ -143,8 +171,20 @@ FocusScope {
             const chosen=FileUtils.trimFileProtocol(String(selectedFolder))
             root.browseFolder=chosen
             Config.setNestedValue("wallpapers.directory",chosen)
+            root._folderDialogClosedAtMs=Date.now()
+            focusTimer.restart()
         }
-        onVisibleChanged:GlobalStates.setSettingsNativeDialogVisible("wallpaperLauncherFolder",visible)
+        onRejected:{
+            root._folderDialogClosedAtMs=Date.now()
+            focusTimer.restart()
+        }
+        onVisibleChanged:{
+            GlobalStates.setSettingsNativeDialogVisible("wallpaperLauncherFolder",visible)
+            if (!visible) {
+                root._folderDialogClosedAtMs=Date.now()
+                focusTimer.restart()
+            }
+        }
     }
     WallpaperLibrary {id:library}
     Rectangle {anchors.fill:parent;visible:!root.embedded;radius:18;color:AbyssStyle.surface}
@@ -241,14 +281,9 @@ FocusScope {
                     onAccepted:root.activateCurrent()
                     Keys.onDownPressed:{root.moveSelection(1);root.focusPrimarySurface()}
                     Keys.onUpPressed:{root.moveSelection(-1);root.focusPrimarySurface()}
-                    Keys.onEscapePressed:{
-                        if (search.text.length > 0) {
-                            search.text = ""
-                            root.focusPrimarySurface()
-                        } else {
-                            root.focusPrimarySurface()
-                            GlobalStates.wallpaperLauncherOpen = false
-                        }
+                    Keys.onEscapePressed:event=>{
+                        root.handleEscape()
+                        event.accepted = true
                     }
                 }
                 AbyssButton {objectName:"wallpaperFavouritesFilter";outlined:root.favouritesOnly;glyph:"favorite";description:root.favouritesOnly ? "Show all wallpapers" : "Show favourite wallpapers";onClicked:{root.favouritesOnly=!root.favouritesOnly;root.focusPrimarySurface()}}
@@ -266,13 +301,7 @@ FocusScope {
         const alt = (event.modifiers & Qt.AltModifier) !== 0
         const keyText = String(event.text ?? "").toLowerCase()
         if (event.key === Qt.Key_Escape) {
-            if (search.activeFocus && search.text.length > 0) {
-                search.text = ""
-                if (typeof root !== "undefined") root.focusPrimarySurface()
-            } else {
-                if (typeof root !== "undefined") root.focusPrimarySurface()
-                GlobalStates.wallpaperLauncherOpen = false
-            }
+            root.handleEscape()
             event.accepted = true
         } else if ((ctrl && ((Qt.Key_F !== undefined && event.key === Qt.Key_F) || keyText === "f"))
                 || (!search.activeFocus && !ctrl && !alt && ((Qt.Key_Slash !== undefined && event.key === Qt.Key_Slash) || event.text === "/"))) {

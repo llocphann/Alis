@@ -265,13 +265,17 @@ Singleton {
         if (!event) return
         const urgency = event.priority === "high" ? "critical" : (event.priority === "low" ? "low" : "normal")
         const timeout = event.priority === "high" ? 0 : 10000
+        const startDt = new Date(event.startDate || event.dateTime)
+        const timePrefix = (event.allDay !== true && Number.isFinite(startDt.getTime()))
+            ? (String(startDt.getHours()).padStart(2, "0") + ":" + String(startDt.getMinutes()).padStart(2, "0") + " · ")
+            : ""
         Notifications.sendInternal({
             appName: "Alis Events",
             urgency: urgency,
             timeout: timeout,
             appIcon: root.getCategoryIcon(event.category),
             summary: String(event.title || Translation.tr("Event")),
-            body: String(event.description || Translation.tr("Event is now!")),
+            body: timePrefix + String(event.description || Translation.tr("Event is now!")),
         })
     }
 
@@ -282,13 +286,17 @@ Singleton {
             : minutesBefore >= 60
                 ? Translation.tr("In %1 hour(s)").arg(Math.floor(minutesBefore / 60))
                 : Translation.tr("In %1 minutes").arg(minutesBefore)
+        const startDt = new Date(event.startDate || event.dateTime)
+        const timePrefix = (event.allDay !== true && Number.isFinite(startDt.getTime()))
+            ? (String(startDt.getHours()).padStart(2, "0") + ":" + String(startDt.getMinutes()).padStart(2, "0") + " · ")
+            : ""
         Notifications.sendInternal({
             appName: "Alis Events",
             urgency: "normal",
             timeout: 8000,
             appIcon: "alarm",
             summary: Translation.tr("Upcoming: %1").arg(event.title),
-            body: reminderText + (event.description ? " — " + event.description : ""),
+            body: timePrefix + reminderText + (event.description ? " — " + event.description : ""),
         })
     }
 
@@ -341,14 +349,20 @@ Singleton {
                 })
                 if (reminderMinutes > 0 && !slot.reminderNotified
                         && currentTime >= reminderTime && currentTime < startMs) {
+                    const actualMinutesLeft = Math.max(1, Math.round((startMs - currentTime) / 60000))
                     slot.reminderNotified = true
-                    root.reminderTriggered(notificationEvent,reminderMinutes)
+                    root.reminderTriggered(notificationEvent, actualMinutesLeft)
                     changed = true
                 }
                 if (!slot.notified && currentTime >= startMs) {
                     slot.notified = true
-                    root.eventTriggered(notificationEvent)
+                    slot.reminderNotified = true
                     changed = true
+                    const endMs = new Date(slot.endDate).getTime()
+                    const isNonRecurring = !event.recurrence || event.recurrence === "none"
+                    const isStalePast = isNonRecurring && ((currentTime - startMs) > 15 * 60000 || (Number.isFinite(endMs) && currentTime >= endMs))
+                    if (!isStalePast)
+                        root.eventTriggered(notificationEvent)
                     if (slots.length===1 && !Array.isArray(event.occurrences)
                             && event.recurrence && event.recurrence!=="none")
                         root.createNextRecurrence(event,currentTime)
@@ -698,7 +712,7 @@ Singleton {
         if (!root.ready) return false
         const position = root.list.findIndex(e => e.id === id)
         if (position < 0) return false
-        const updated = Occurrences.reschedule(root.list[position],index,startIso,endIso)
+        const updated = Occurrences.reschedule(root.list[position],index,startIso,endIso,Date.now())
         if (!updated) return false
         // Metadata updates and occurrence time edits share one durable write.
         const merged = Object.assign({},updated,metadata || {})
@@ -789,19 +803,42 @@ Singleton {
         if (!root.ready) return false
         const index = root.list.findIndex(e => e.id === id)
         if (index !== -1) {
-            let updated = Object.assign({}, root.list[index], updates)
+            const prev = root.list[index]
+            const nowMs = Date.now()
+            const oldStartMs = new Date(prev.startDate || prev.dateTime).getTime()
+            const newStartStr = updates.startDate || updates.dateTime || prev.startDate || prev.dateTime
+            const newStartMs = new Date(newStartStr).getTime()
+            const startChanged = Number.isFinite(newStartMs) && newStartMs !== oldStartMs
+            const resolvedNotified = ("notified" in updates)
+                ? (updates.notified === true)
+                : (startChanged ? (newStartMs <= nowMs) : (prev.notified === true))
+            const resolvedReminded = ("reminderNotified" in updates)
+                ? (updates.reminderNotified === true)
+                : (startChanged ? (newStartMs <= nowMs) : (prev.reminderNotified === true))
+            let updated = Object.assign({}, prev, updates, {
+                notified: resolvedNotified,
+                reminderNotified: resolvedReminded
+            })
             // Older callers still edit startDate/endDate directly. Preserve
             // additional dates instead of replacing the whole series.
-            if (Array.isArray(root.list[index].occurrences)
+            if (Array.isArray(prev.occurrences)
                 && !Object.prototype.hasOwnProperty.call(updates,"occurrences")
                 && ("startDate" in updates || "dateTime" in updates || "endDate" in updates)) {
-                const slots = Occurrences.entries(root.list[index])
+                const slots = Occurrences.entries(prev)
                 const first = slots[0]
                 if (first) {
-                    first.startDate = updates.startDate || updates.dateTime || first.startDate
+                    const firstOldMs = new Date(first.startDate).getTime()
+                    const firstNewStr = updates.startDate || updates.dateTime || first.startDate
+                    const firstNewMs = new Date(firstNewStr).getTime()
+                    const firstStartChanged = Number.isFinite(firstNewMs) && firstNewMs !== firstOldMs
+                    first.startDate = firstNewStr
                     first.endDate = updates.endDate || first.endDate
-                    first.notified = updates.notified === true
-                    first.reminderNotified = updates.reminderNotified === true
+                    first.notified = ("notified" in updates)
+                        ? (updates.notified === true)
+                        : (firstStartChanged ? (firstNewMs <= nowMs) : (first.notified === true))
+                    first.reminderNotified = ("reminderNotified" in updates)
+                        ? (updates.reminderNotified === true)
+                        : (firstStartChanged ? (firstNewMs <= nowMs) : (first.reminderNotified === true))
                     updated = Occurrences.store(updated,slots)
                 }
             }

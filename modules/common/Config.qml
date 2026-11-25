@@ -680,15 +680,7 @@ Singleton {
                 styleMigration["background.transition.type"] = "alisMelt";
             if (root._jsonMirror?.waffles?.background?.transition?.type === "inirMelt")
                 styleMigration["waffles.background.transition.type"] = "alisMelt";
-            if (root._jsonMirror?.dashboard
-                    && !Object.prototype.hasOwnProperty.call(root._jsonMirror.dashboard, "spacedRepetition")
-                    && (root._jsonMirror.dashboard.pageOrderVersion ?? 1) >= 1
-                    && Array.isArray(root._jsonMirror.dashboard.pageOrder)
-                    && !root._jsonMirror.dashboard.pageOrder.includes("spacedRepetition")) {
-                styleMigration["dashboard.pageOrder"] = root._jsonMirror.dashboard.pageOrder.concat(["spacedRepetition"]);
-                styleMigration["dashboard.spacedRepetition.enable"] = true;
-            }
-            // Do not backfill integrations.alisIntergration.exercises_tracker into _jsonMirror
+            // Do not backfill optional integration plugins into untouched config.json.
             // on read-only loads; AlisIntergration computes the backward-compatible runtime
             // fallback via Config.hasPersistedKey() without mutating untouched config.json.
             if (Object.keys(styleMigration).length) {
@@ -755,6 +747,7 @@ Singleton {
                 property string quality: "balanced"
                 property bool autoQuality: false
                 property list<var> positions: []
+                property list<var> layoutPresets: []
                 property JsonObject sidebars: JsonObject {
                     property bool hoverEnabled: true
                 }
@@ -795,6 +788,10 @@ Singleton {
                     property bool ambientVisualPeek: false
                     property bool a2uiEnabled: true
                     property bool a2uiGenerativeEnabled: false
+                    property bool liveGuiControlEnabled: false
+                    property string localSttEndpoint: ""
+                    property string sttLanguage: "auto"
+                    property string ambientLanguage: "auto"
                     property real temperature: 0.7
                     property bool hasTemperatureOverride: false
                     property bool ragUseNexus: true
@@ -1419,8 +1416,8 @@ Singleton {
                 property string terminal: "kitty"
                 property string browser: "firefox"
                 property string editor: "code"
-                property string fileManager: "nautilus"
-                property string fileExplorer: "nautilus"
+                property string fileManager: "alis-files"
+                property string fileExplorer: "alis-files"
                 property string pdfViewer: "okular"
                 property string officeSuite: "libreoffice"
                 property string htmlViewer: "firefox"
@@ -2352,7 +2349,7 @@ Singleton {
                 property bool enableBlurGlass: true
                 property bool separatePinnedFromRunning: true
                 property bool notificationBadge: true
-                property list<string> pinnedApps: ["org.gnome.Nautilus", "firefox", "kitty"]
+                property list<string> pinnedApps: ["org.alis.Files", "firefox", "kitty"]
                 property list<string> hiddenPinnedApps: []
                 property list<string> ignoredAppRegexes: []
                 property list<string> screenList: []
@@ -2379,12 +2376,13 @@ Singleton {
 
             property JsonObject dashboard: JsonObject {
                 property int pageOrderVersion: 1
-                property list<string> pageOrder: ["dashboard", "music", "weeklyPlanner", "spacedRepetition"]
+                property list<string> pageOrder: ["dashboard", "music", "weeklyPlanner"]
                 // DASH-F01: explicit JsonAdapter fields are mandatory for
                 // round-trip persistence. Keep per-tab layouts in a list of
                 // JSON records (not dynamically named Qt object properties).
                 property list<var> customTabs: []
                 property list<var> customTabLayouts: []
+                property list<var> tabIcons: []
                 property string defaultTabId: ""
                 property int inactiveMinutes: 0
                 property real lastHiddenAtMs: 0
@@ -2864,7 +2862,7 @@ Singleton {
                         property bool highlightLocal: true
                     }
                     property list<var> quickLaunch: [
-                        { "icon": "folder", "name": "Files", "cmd": "/usr/bin/nautilus" },
+                        { "icon": "folder", "name": "Files", "cmd": "alis-files" },
                         { "icon": "terminal", "name": "Terminal", "cmd": "/usr/bin/kitty" },
                         { "icon": "web", "name": "Browser", "cmd": "/usr/bin/firefox" },
                         { "icon": "code", "name": "Code", "cmd": "/usr/bin/code" }
@@ -3238,9 +3236,10 @@ Singleton {
                 property JsonObject alisIntergration: JsonObject {
                     property bool tlp: false
                     property bool thinkfan: false
-                    property bool nexus: false
-                    property bool spaced_repetition: false
-                    property bool exercises_tracker: false
+                    property bool nexus: true
+                    property bool spaced_repetition: true
+                    property bool exercises_tracker: true
+                    property bool alis_files: true
                 }
                 property JsonObject nexus: JsonObject {
                     property bool autoTheme: false
@@ -3252,6 +3251,7 @@ Singleton {
 
             property JsonObject todo: JsonObject {
                 property string backend: "internal"
+                property bool autoLinkNexus: true
                 property JsonObject nexus: JsonObject {
                     property string vaultPath: ""
                     property string sourceMode: "markdown-note"

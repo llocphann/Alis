@@ -2638,7 +2638,7 @@ _KB_TERMINALS = [
     "konsole",
     "gnome-terminal",
 ]
-_KB_FILE_MANAGERS = ["dolphin", "nautilus", "thunar", "nemo", "pcmanfm", "ranger", "yazi"]
+_KB_FILE_MANAGERS = ["alis-files", "dolphin", "nautilus", "thunar", "nemo", "pcmanfm", "ranger", "yazi"]
 _KB_BROWSERS = ["firefox", "zen-browser", "chromium", "brave", "vivaldi"]
 
 

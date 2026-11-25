@@ -117,7 +117,9 @@ ShellRoot {
    const dimensions=[dashboard.canvasController.width,dashboard.canvasController.height]
    const dots=findChild(dashboard,"dashboardPageDots")
    check(Math.abs(dots.mapToItem(dashboard,0,0).x+dots.width/2-dashboard.width/2)<1,"page dots are not centered")
-   check(findChild(dashboard,"dashboardPageDot0").width===8 && findChild(dashboard,"dashboardPageDot0").height===8,"page indicator must remain a small circular dot")
+   const pageIcon0=findChild(dashboard,"dashboardPageIcon0")
+   check(Boolean(pageIcon0) && pageIcon0.visible && pageIcon0.text==="dashboard" && findChild(dashboard,"dashboardPageDot0")===null,"page indicator must render Material Symbol icon instead of circular dot")
+   check(Boolean(findChild(dashboard,"dashboardActivePageIndicator")?.visible),"active tab indicator must be visible")
    check(findChild(dashboard,"dashboardMusic")===null,"Music UI eagerly allocated before its first visit")
    // Real Qt wheel dispatch across body, header and the page indicators.
    for(const area of [dashboard,dots.parent,dots]) {

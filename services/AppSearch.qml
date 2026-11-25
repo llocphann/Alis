@@ -63,6 +63,8 @@ Singleton {
         "zoom": "Zoom",
         
         // File managers
+        "org.alis.Files": "org.alis.Files",
+        "alis-files": "org.alis.Files",
         "org.gnome.Nautilus": "org.gnome.Nautilus",
         "nautilus": "org.gnome.Nautilus",
         "dolphin": "system-file-manager",

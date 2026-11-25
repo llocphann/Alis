@@ -918,10 +918,10 @@ if [[ -n "$TEXT_EDITOR" ]]; then
     done
 fi
 
-# Detect and set file manager (prefer Nautilus for GTK consistency with Niri)
+# Detect and set file manager (prefer Alis Files built-in native manager)
 FILE_MANAGER=""
-for fm in org.gnome.Nautilus.desktop thunar.desktop pcmanfm.desktop org.kde.dolphin.desktop; do
-    if [[ -f "/usr/share/applications/${fm}" ]] || [[ -f "${XDG_DATA_HOME:-$HOME/.local/share}/applications/${fm}" ]]; then
+for fm in org.alis.Files.desktop org.gnome.Nautilus.desktop thunar.desktop pcmanfm.desktop org.kde.dolphin.desktop; do
+    if [[ -f "${XDG_DATA_HOME:-$HOME/.local/share}/applications/${fm}" ]] || [[ -f "/usr/share/applications/${fm}" ]]; then
         FILE_MANAGER="$fm"
         break
     fi

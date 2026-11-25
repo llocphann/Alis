@@ -44,6 +44,46 @@ Item {
     readonly property Component immersionComponent:Component {
         AbyssFieldImmersion {sourcePass:pass}
     }
+    readonly property vector4d _zeroRect: Qt.vector4d(0,0,0,0)
+    property int _prevRecordCount: 0
+    function _syncRecordUniforms(): void {
+        const recs = root.records ?? []
+        const n = Math.min(recs.length, 40)
+        const limit = Math.max(n, root._prevRecordCount)
+        const defaultR = AbyssStyle.neckRadius
+        for (let i = 0; i < limit; ++i) {
+            const r = i < n ? recs[i]?.surface : null
+            const v = r ? Qt.vector4d(r.x, r.y, r.width, r.height) : root._zeroRect
+            const prop = "rect" + i
+            if (pass[prop] !== v)
+                pass[prop] = v
+        }
+        const groups = Math.ceil(limit / 4)
+        for (let g = 0; g < groups; ++g) {
+            const base = g * 4
+            const r0 = base < n ? (recs[base]?.radius ?? defaultR) : defaultR
+            const r1 = (base + 1) < n ? (recs[base + 1]?.radius ?? defaultR) : defaultR
+            const r2 = (base + 2) < n ? (recs[base + 2]?.radius ?? defaultR) : defaultR
+            const r3 = (base + 3) < n ? (recs[base + 3]?.radius ?? defaultR) : defaultR
+            const rv = Qt.vector4d(r0, r1, r2, r3)
+            const rprop = "radii" + g
+            if (pass[rprop] !== rv)
+                pass[rprop] = rv
+        }
+        root._prevRecordCount = n
+    }
+    onRecordsChanged: root._syncRecordUniforms()
+    Connections {
+        target: AbyssStyle
+        function onNeckRadiusChanged(): void {
+            root._prevRecordCount = 40
+            root._syncRecordUniforms()
+        }
+    }
+    Component.onCompleted: {
+        root._prevRecordCount = 40
+        root._syncRecordUniforms()
+    }
     function packed(index) {
         const r = root.records[index]?.surface
         return r ? Qt.vector4d(r.x,r.y,r.width,r.height) : Qt.vector4d(0,0,0,0)
@@ -91,7 +131,8 @@ Item {
         readonly property var wallpaper: wallpaperImage
         readonly property var waveSamples: root.waveTexture
         readonly property vector4d waveMaterial: Qt.vector4d(root.waveTexture?.width ?? 0,
-            root.waveTexture?.activeProfile ? 1 : 0,Appearance.effectsEnabled ? 1 : 0,root.boundInterior ? root.waveTexture?.encodedHeightCeiling ?? 0 : 0)
+            root.waveTexture?.activeProfile ? 1 : 0,Appearance.effectsEnabled ? 1 : 0,
+            root.boundInterior ? (root.waveTexture?.activePeakHeight ?? root.waveTexture?.encodedHeightCeiling ?? 0) : 0)
         readonly property vector4d effects: Qt.vector4d(AbyssStyle.blurRadius,AbyssStyle.refractionStrength,root.wallpaperReady ? 1 : 0,0)
         readonly property vector4d contentMaterial: Qt.vector4d(AbyssStyle.contentOpacity,AbyssStyle.contentBlurRadius,0,0)
         readonly property vector4d wallpaperCrop: {
@@ -106,56 +147,56 @@ Item {
         readonly property color rim: AbyssStyle.specular
         readonly property color shadow: AbyssStyle.shadow
         readonly property color glow: AbyssStyle.glow
-        readonly property vector4d radii0: root.packedRadii(0)
-        readonly property vector4d radii1: root.packedRadii(1)
-        readonly property vector4d radii2: root.packedRadii(2)
-        readonly property vector4d radii3: root.packedRadii(3)
-        readonly property vector4d radii4: root.packedRadii(4)
-        readonly property vector4d radii5: root.packedRadii(5)
-        readonly property vector4d radii6: root.packedRadii(6)
-        readonly property vector4d radii7: root.packedRadii(7)
-        readonly property vector4d radii8: root.packedRadii(8)
-        readonly property vector4d radii9: root.packedRadii(9)
-        readonly property vector4d rect0: root.packed(0)
-        readonly property vector4d rect1: root.packed(1)
-        readonly property vector4d rect2: root.packed(2)
-        readonly property vector4d rect3: root.packed(3)
-        readonly property vector4d rect4: root.packed(4)
-        readonly property vector4d rect5: root.packed(5)
-        readonly property vector4d rect6: root.packed(6)
-        readonly property vector4d rect7: root.packed(7)
-        readonly property vector4d rect8: root.packed(8)
-        readonly property vector4d rect9: root.packed(9)
-        readonly property vector4d rect10: root.packed(10)
-        readonly property vector4d rect11: root.packed(11)
-        readonly property vector4d rect12: root.packed(12)
-        readonly property vector4d rect13: root.packed(13)
-        readonly property vector4d rect14: root.packed(14)
-        readonly property vector4d rect15: root.packed(15)
-        readonly property vector4d rect16: root.packed(16)
-        readonly property vector4d rect17: root.packed(17)
-        readonly property vector4d rect18: root.packed(18)
-        readonly property vector4d rect19: root.packed(19)
-        readonly property vector4d rect20: root.packed(20)
-        readonly property vector4d rect21: root.packed(21)
-        readonly property vector4d rect22: root.packed(22)
-        readonly property vector4d rect23: root.packed(23)
-        readonly property vector4d rect24: root.packed(24)
-        readonly property vector4d rect25: root.packed(25)
-        readonly property vector4d rect26: root.packed(26)
-        readonly property vector4d rect27: root.packed(27)
-        readonly property vector4d rect28: root.packed(28)
-        readonly property vector4d rect29: root.packed(29)
-        readonly property vector4d rect30: root.packed(30)
-        readonly property vector4d rect31: root.packed(31)
-        readonly property vector4d rect32: root.packed(32)
-        readonly property vector4d rect33: root.packed(33)
-        readonly property vector4d rect34: root.packed(34)
-        readonly property vector4d rect35: root.packed(35)
-        readonly property vector4d rect36: root.packed(36)
-        readonly property vector4d rect37: root.packed(37)
-        readonly property vector4d rect38: root.packed(38)
-        readonly property vector4d rect39: root.packed(39)
+        property vector4d radii0: Qt.vector4d(29,29,29,29)
+        property vector4d radii1: Qt.vector4d(29,29,29,29)
+        property vector4d radii2: Qt.vector4d(29,29,29,29)
+        property vector4d radii3: Qt.vector4d(29,29,29,29)
+        property vector4d radii4: Qt.vector4d(29,29,29,29)
+        property vector4d radii5: Qt.vector4d(29,29,29,29)
+        property vector4d radii6: Qt.vector4d(29,29,29,29)
+        property vector4d radii7: Qt.vector4d(29,29,29,29)
+        property vector4d radii8: Qt.vector4d(29,29,29,29)
+        property vector4d radii9: Qt.vector4d(29,29,29,29)
+        property vector4d rect0: Qt.vector4d(0,0,0,0)
+        property vector4d rect1: Qt.vector4d(0,0,0,0)
+        property vector4d rect2: Qt.vector4d(0,0,0,0)
+        property vector4d rect3: Qt.vector4d(0,0,0,0)
+        property vector4d rect4: Qt.vector4d(0,0,0,0)
+        property vector4d rect5: Qt.vector4d(0,0,0,0)
+        property vector4d rect6: Qt.vector4d(0,0,0,0)
+        property vector4d rect7: Qt.vector4d(0,0,0,0)
+        property vector4d rect8: Qt.vector4d(0,0,0,0)
+        property vector4d rect9: Qt.vector4d(0,0,0,0)
+        property vector4d rect10: Qt.vector4d(0,0,0,0)
+        property vector4d rect11: Qt.vector4d(0,0,0,0)
+        property vector4d rect12: Qt.vector4d(0,0,0,0)
+        property vector4d rect13: Qt.vector4d(0,0,0,0)
+        property vector4d rect14: Qt.vector4d(0,0,0,0)
+        property vector4d rect15: Qt.vector4d(0,0,0,0)
+        property vector4d rect16: Qt.vector4d(0,0,0,0)
+        property vector4d rect17: Qt.vector4d(0,0,0,0)
+        property vector4d rect18: Qt.vector4d(0,0,0,0)
+        property vector4d rect19: Qt.vector4d(0,0,0,0)
+        property vector4d rect20: Qt.vector4d(0,0,0,0)
+        property vector4d rect21: Qt.vector4d(0,0,0,0)
+        property vector4d rect22: Qt.vector4d(0,0,0,0)
+        property vector4d rect23: Qt.vector4d(0,0,0,0)
+        property vector4d rect24: Qt.vector4d(0,0,0,0)
+        property vector4d rect25: Qt.vector4d(0,0,0,0)
+        property vector4d rect26: Qt.vector4d(0,0,0,0)
+        property vector4d rect27: Qt.vector4d(0,0,0,0)
+        property vector4d rect28: Qt.vector4d(0,0,0,0)
+        property vector4d rect29: Qt.vector4d(0,0,0,0)
+        property vector4d rect30: Qt.vector4d(0,0,0,0)
+        property vector4d rect31: Qt.vector4d(0,0,0,0)
+        property vector4d rect32: Qt.vector4d(0,0,0,0)
+        property vector4d rect33: Qt.vector4d(0,0,0,0)
+        property vector4d rect34: Qt.vector4d(0,0,0,0)
+        property vector4d rect35: Qt.vector4d(0,0,0,0)
+        property vector4d rect36: Qt.vector4d(0,0,0,0)
+        property vector4d rect37: Qt.vector4d(0,0,0,0)
+        property vector4d rect38: Qt.vector4d(0,0,0,0)
+        property vector4d rect39: Qt.vector4d(0,0,0,0)
         onStatusChanged: if (status === ShaderEffect.Error) console.error("[AbyssField]", log)
     }
 }

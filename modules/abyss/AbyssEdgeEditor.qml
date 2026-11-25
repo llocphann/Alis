@@ -13,6 +13,7 @@ import qs.modules.abyss.looks
 import qs.modules.abyss.settings
 import "looks/AbyssGeometry.js" as Geometry
 import "looks/AbyssLayout.js" as Placement
+import "looks/AbyssLayoutPresets.js" as LayoutPresets
 import "looks/AbyssSelection.js" as ModuleSelection
 import "looks/AbyssPresentation.js" as Presentation
 
@@ -100,6 +101,7 @@ Item {
         property string kind: "widgets"
         property string glyph: "widgets"
         property string edge: "top"
+        property string corner: ""
         property bool inDraft: false
         property bool active: false
         property bool locked: false
@@ -128,7 +130,11 @@ Item {
                 StyledText {
                     anchors.verticalCenter: parent.verticalCenter
                     text: artRoot.inDraft
-                        ? (artRoot.edge === "bottom" ? "BTM" : artRoot.edge.toUpperCase())
+                        ? (artRoot.corner === "topLeft" ? "TL"
+                            : artRoot.corner === "topRight" ? "TR"
+                            : artRoot.corner === "bottomLeft" ? "BL"
+                            : artRoot.corner === "bottomRight" ? "BR"
+                            : (artRoot.edge === "bottom" ? "BTM" : artRoot.edge.toUpperCase()))
                         : "NEW"
                     font.pixelSize: 8 * Appearance.fontSizeScale
                     font.weight: Font.DemiBold
@@ -434,11 +440,11 @@ Item {
     readonly property real desiredDockWidth: Math.min(
         2400,
         Math.max(680, Math.ceil(horizontalDock.implicitWidth + 12)))
-    readonly property real desiredDockHeight: Math.round(horizontalDock.implicitHeight + 8)
+    readonly property real desiredDockHeight: Math.ceil(horizontalDock.implicitHeight + 8)
     readonly property real desiredLeftDockWidth: Math.max(228, Math.round(Math.min(310, Math.max(244 * Appearance.fontSizeScale, previewPositions.compactKindWidth + 44))))
-    readonly property real desiredLeftDockHeight: Math.max(168, Math.round(popupsDockCard.implicitHeight + 12))
+    readonly property real desiredLeftDockHeight: Math.max(168, Math.ceil(popupsDockCard.implicitHeight + 14))
     readonly property real desiredRightDockWidth: Math.max(244, Math.round(262 * Appearance.fontSizeScale))
-    readonly property real desiredRightDockHeight: Math.max(200, Math.round(rightEdgeDockHeader.implicitHeight + rightEdgeDockScrollContent.implicitHeight + 26 * Appearance.fontSizeScale))
+    readonly property real desiredRightDockHeight: Math.max(200, Math.ceil(rightEdgeDockHeader.implicitHeight + rightEdgeDockScrollContent.implicitHeight + 12 + 14 * Appearance.fontSizeScale))
     // The editor stays on its current Screen Edge until a module/IPC preview
     // physically overlaps its control surface; selection alone never moves it.
     property string toolbarEdge: "bottom"
@@ -451,9 +457,15 @@ Item {
             && height >= 420 * Appearance.fontSizeScale))
     property string editorSection: "modules"
     property string moduleSearchText: ""
+    property string presetNameDraft: ""
+    property string activePresetId: ""
+    property var _prePresetSnapshot: null
+    readonly property bool presetPreviewActive: _prePresetSnapshot !== null
+    readonly property var availablePresets: LayoutPresets.allPresets(
+        Config.options?.abyss?.layoutPresets, Placement)
     readonly property string activeDockTab: splitSideDocks
-        ? "modules"
-        : (editingPopups ? "popups" : (editorSection === "edge" ? "edge" : "modules"))
+        ? (editorSection === "presets" ? "presets" : "modules")
+        : (editingPopups ? "popups" : (editorSection === "edge" ? "edge" : (editorSection === "presets" ? "presets" : "modules")))
     readonly property real dockToolbarSpan: Math.min(
         width - 48, 980 * Appearance.fontSizeScale)
     readonly property bool toolbarWideControls: !splitSideDocks
@@ -483,6 +495,15 @@ Item {
     property var _pendingPointerDrag: null
     property bool outputOnly: true
     property bool editingPopups: false
+    function cornerDisplayLabel(corner): string {
+        switch (String(corner)) {
+        case "topLeft": return Translation.tr("Top Left")
+        case "topRight": return Translation.tr("Top Right")
+        case "bottomLeft": return Translation.tr("Bottom Left")
+        case "bottomRight": return Translation.tr("Bottom Right")
+        default: return ""
+        }
+    }
     readonly property var galleryEntries: {
         const entries = draft.map(p => ({
             key: p.id,
@@ -491,6 +512,8 @@ Item {
             kind: p.kind,
             title: Placement.label(p.kind),
             edge: p.edge,
+            cornerWrap: p.cornerWrap === true,
+            corner: p.cornerWrap === true ? Placement.cornerWrapCorner(p) : "",
             enabled: p.enabled !== false,
             locked: p.locked === true
         }))
@@ -503,6 +526,8 @@ Item {
                     kind: kind,
                     title: Placement.label(kind),
                     edge: root.editingEdge,
+                    cornerWrap: false,
+                    corner: "",
                     enabled: false,
                     locked: false
                 })
@@ -516,7 +541,8 @@ Item {
         return galleryEntries.filter(entry =>
             entry.title.toLowerCase().includes(q)
             || entry.kind.toLowerCase().includes(q)
-            || entry.edge.toLowerCase().includes(q))
+            || entry.edge.toLowerCase().includes(q)
+            || (entry.corner && cornerDisplayLabel(entry.corner).toLowerCase().includes(q)))
     }
     property string companionDraftEdge: "bottom"
     property real companionDraftAlong: 0.72
@@ -527,6 +553,7 @@ Item {
     readonly property bool expandedControls: true
     property var draftPositions: []
     property var positionEdits: []
+    property bool _positionsReplaced: false
     property alias previewKind:previewPositions.kind
     readonly property var previewPosition: Presentation.resolve(draftPositions,previewKind,outputOnly ? outputName : "")
     property alias previewHost:previewBody
@@ -633,7 +660,8 @@ Item {
             edgeThicknesses:edgeThicknesses,edgeWidthAffectsModules:edgeWidthAffectsModules,
             edgeJoinModules:edgeJoinModules,edgeModuleRadii:edgeModuleRadii,edgeRoundZeroCorners:edgeRoundZeroCorners,moduleScale:moduleScale,
             singleModuleExpansion:singleModuleExpansion,outputOnly:outputOnly,
-            draftPositions:draftPositions,positionEdits:positionEdits,
+            draftPositions:draftPositions,positionEdits:positionEdits,_positionsReplaced:_positionsReplaced,
+            activePresetId:activePresetId,
             companionDraftEdge:companionDraftEdge,companionDraftAlong:companionDraftAlong}))
     }
     function queueHistory(): void {
@@ -658,17 +686,42 @@ Item {
         for(const key of ["edgeSizes","edgeThicknesses","edgeWidthAffectsModules","edgeJoinModules","edgeModuleRadii","edgeRoundZeroCorners","singleModuleExpansion"])values[key]=Placement.edgeMap(options?.[key])
         return JSON.stringify({global:values,profile:Array.from(options?.outputLayouts || []).find(p=>p.outputName===outputName) || null})
     }
+    function _restoreSnapshot(state, selection): void {
+        if (!state || typeof state !== "object") return
+        _historyReady=false;_dragging=false
+        Object.keys(state).forEach(key=>root[key]=JSON.parse(JSON.stringify(state[key])))
+        if (selection) {
+            selectedIds=selection.selectedIds ?? []
+            selectedId=selection.selectedId ?? ""
+            selectionAnchor=selection.anchor ?? selectedId
+            pruneSelection()
+        } else {
+            selectedIds=[];selectedId="";selectionAnchor=""
+        }
+        refreshHandles();guides=[];feedback="";clearDrag()
+        _lastSnapshot=snapshot();_lastSelection=selectionState();_historyReady=true
+    }
     function undo(): void {
         _dragging=false;rememberHistory()
         if(!undoStack.length)return
         const previous=undoStack[undoStack.length-1]
-        _historyReady=false;_dragging=false
         undoStack=undoStack.slice(0,-1)
-        Object.keys(previous.state).forEach(key=>root[key]=JSON.parse(JSON.stringify(previous.state[key])))
-        selectedIds=previous.selection?.selectedIds ?? []
-        selectedId=previous.selection?.selectedId ?? "";selectionAnchor=previous.selection?.anchor ?? selectedId;pruneSelection()
-        refreshHandles();guides=[];feedback="";clearDrag()
-        _lastSnapshot=snapshot();_lastSelection=selectionState();_historyReady=true
+        _restoreSnapshot(previous.state, previous.selection)
+    }
+    function restorePrePreset(): bool {
+        if (_prePresetSnapshot === null) return false
+        const saved = _prePresetSnapshot
+        _prePresetSnapshot = null
+        rememberHistory()
+        _restoreSnapshot(saved, null)
+        scheduleToolbarRelocation()
+        feedback = Translation.tr("Restored previous layout")
+        return true
+    }
+    function handleEscape(): bool {
+        if (restorePrePreset()) return true
+        finish(false)
+        return true
     }
     function toggleLock(id): void {
         const p=draft.find(p=>p.id===id)
@@ -746,7 +799,7 @@ Item {
         } else {clearDrag();guides=[];scheduleToolbarRelocation();queueHistory()}
     }
     function _clonePlacementItems(sourceList): var {
-        if (!Array.isArray(sourceList))
+        if (!sourceList || typeof sourceList.length !== "number")
             return []
         const out = new Array(sourceList.length)
         for (let i = 0; i < sourceList.length; ++i) {
@@ -772,8 +825,8 @@ Item {
         editingEdge = moduleLayer.edge
         guides = []
         draftPositions=_clonePlacementItems(Config.options?.abyss?.positions)
-        positionEdits=[];editingPopups=false
-        editorSection="modules";moduleSearchText=""
+        positionEdits=[];_positionsReplaced=false;editingPopups=false
+        editorSection="modules";moduleSearchText="";presetNameDraft="";activePresetId="";_prePresetSnapshot=null
         const companionCfg=Config.options?.abyss?.companion
         companionDraftEdge=["top","right","bottom","left"].includes(companionCfg?.edge)
             ? companionCfg.edge
@@ -797,9 +850,15 @@ Item {
             if(layoutConflicts.length){feedback=layoutConflicts[0];return}
             if(_sourceSignature!==sourceSignature()){feedback="This layout changed outside the editor. Cancel and reopen before saving.";return}
             const writes=Placement.saveProfile(Config.options?.abyss?.modules,outputName,draft,gap,outputOnly,edgeSizes,singleModuleExpansion,moduleScale,edgeThicknesses,edgeWidthAffectsModules,edgeJoinModules,edgeModuleRadii,edgeRoundZeroCorners)
-            let positions=Config.options?.abyss?.positions ?? []
+            const existingPositions=_clonePlacementItems(Config.options?.abyss?.positions)
+            let positions=_positionsReplaced
+                ? (outputOnly
+                    ? existingPositions.filter(p => p && p.outputName && p.outputName !== outputName)
+                        .concat(_clonePlacementItems(draftPositions))
+                    : _clonePlacementItems(draftPositions))
+                : existingPositions
             positionEdits.forEach(edit=>positions=Presentation.save(positions,edit.kind,edit.outputName,edit.values))
-            if(positionEdits.length) writes["abyss.positions"]=positions
+            if(_positionsReplaced || positionEdits.length) writes["abyss.positions"]=positions
             if(companionDraftEdge!==_initialCompanionEdge || Math.abs(companionDraftAlong-_initialCompanionAlong)>0.0005) {
                 writes["abyss.companion.edge"]=companionDraftEdge
                 writes["abyss.companion.along"]=Math.round(companionDraftAlong*1000)/1000
@@ -807,6 +866,7 @@ Item {
             Config.setNestedValues(writes)
         }
         guides = []
+        _prePresetSnapshot = null
         _historyReady=false
         _draggingCompanion=false
         clearDrag()
@@ -837,19 +897,112 @@ Item {
         selectedIds=[];selectionAnchor=""
         companionDraftEdge=["top","right","bottom","left"].includes(moduleLayer.edge) ? moduleLayer.edge : "bottom"
         companionDraftAlong=0.72
-        draftPositions=JSON.parse(JSON.stringify(Config.options?.abyss?.positions ?? []));positionEdits=[]
+        draftPositions=_clonePlacementItems(Config.options?.abyss?.positions);positionEdits=[];_positionsReplaced=false
+        activePresetId=""
         refreshHandles()
     }
+    function applyPreset(preset): void {
+        if (!preset || typeof preset !== "object") return
+        if (_dragging) {
+            feedback = Translation.tr("Finish moving the module group before applying a preset")
+            return
+        }
+        const normalized = LayoutPresets.normalizePreset(preset, Placement)
+        if (!normalized) return
+        clearDrag()
+        if (_prePresetSnapshot === null)
+            _prePresetSnapshot = snapshot()
+        rememberHistory()
+        const mods = normalized.modules
+        draft = _clonePlacementItems(mods.placements)
+        gap = mods.gap
+        moduleScale = mods.size
+        edgeSizes = Object.assign({top:1,right:1,bottom:1,left:1}, mods.edgeSizes)
+        edgeThicknesses = Object.assign({top:-1,right:-1,bottom:-1,left:-1}, mods.edgeThicknesses)
+        edgeWidthAffectsModules = Object.assign({top:true,right:true,bottom:true,left:true}, mods.edgeWidthAffectsModules)
+        edgeJoinModules = Object.assign({top:false,right:false,bottom:false,left:false}, mods.edgeJoinModules)
+        edgeModuleRadii = Object.assign({top:-1,right:-1,bottom:-1,left:-1}, mods.edgeModuleRadii)
+        edgeRoundZeroCorners = Object.assign({top:false,right:false,bottom:false,left:false}, mods.edgeRoundZeroCorners)
+        singleModuleExpansion = Object.assign({top:"edge",right:"edge",bottom:"edge",left:"edge"}, mods.singleModuleExpansion)
+        draftPositions = _clonePlacementItems(normalized.positions)
+        positionEdits = []
+        _positionsReplaced = true
+        companionDraftEdge = normalized.companion.edge
+        companionDraftAlong = normalized.companion.along
+        guides = []
+        selectedId = ""
+        selectedIds = []
+        selectionAnchor = ""
+        activePresetId = normalized.id
+        feedback = ""
+        refreshHandles()
+        root.scheduleToolbarRelocation()
+        queueHistory()
+    }
+    function saveCurrentPreset(rawName, existingId = ""): void {
+        if (_dragging) {
+            feedback = Translation.tr("Finish moving the module group before saving a preset")
+            return
+        }
+        const fallbackName = LayoutPresets.nextDefaultName(
+            Config.options?.abyss?.layoutPresets, Translation.tr("Preset"), Placement)
+        const name = String(rawName ?? "").trim() || fallbackName
+        const captured = LayoutPresets.capturePreset(name, {
+            draft: draft,
+            gap: gap,
+            moduleScale: moduleScale,
+            edgeSizes: edgeSizes,
+            edgeThicknesses: edgeThicknesses,
+            edgeWidthAffectsModules: edgeWidthAffectsModules,
+            edgeJoinModules: edgeJoinModules,
+            edgeModuleRadii: edgeModuleRadii,
+            edgeRoundZeroCorners: edgeRoundZeroCorners,
+            singleModuleExpansion: singleModuleExpansion,
+            draftPositions: draftPositions,
+            companionDraftEdge: companionDraftEdge,
+            companionDraftAlong: companionDraftAlong
+        }, Placement, existingId)
+        if (!captured) return
+        const updated = LayoutPresets.upsertUserPreset(
+            Config.options?.abyss?.layoutPresets, captured, Placement)
+        Config.setNestedValue("abyss.layoutPresets", updated)
+        activePresetId = captured.id
+        _prePresetSnapshot = null
+        presetNameDraft = ""
+        feedback = ""
+    }
+    function overwriteUserPreset(presetId): void {
+        const target = availablePresets.find(p => p.id === presetId)
+        if (!target) return
+        saveCurrentPreset(target.name, target.id)
+    }
+    function deleteUserPreset(presetId): void {
+        const updated = LayoutPresets.removeUserPreset(
+            Config.options?.abyss?.layoutPresets, presetId, Placement)
+        Config.setNestedValue("abyss.layoutPresets", updated)
+        if (activePresetId === presetId)
+            activePresetId = ""
+    }
     function change(key,value): void {
-        if(multiSelect || key==="rotation" || key==="cornerWrap" || key==="detached"){batch(key,value);return}
+        if(multiSelect || key==="rotation" || key==="cornerWrap" || key==="detached" || key==="corner" || (key==="edge" && selected?.cornerWrap===true)){batch(key,value);return}
         if(selected?.locked && ["edge","position","alignment","size","customSize","depth"].includes(key)) {
             feedback="Unlock this module before changing its placement or size";return
         }
         feedback=""
+        if(key==="customSize" || key==="size"){batch(key,value);return}
         draft = draft.map(p => p.id === selectedId ? Object.assign({},p,
-            key==="customSize" && value && !p.customSize ? {size:Placement.edgeSize(draftOptions,p.edge)} : {},
             key==="edge" && (Placement.hasExplicitRotation(p.rotation) || value!==p.edge) ? {rotation:Placement.effectiveRotation(p)} : {},
             {[key]:value}) : p)
+    }
+    function setBendGroupSize(value): void {
+        if (root.anyTargetLocked) {
+            feedback = "Unlock this module before changing its placement or size"
+            return
+        }
+        feedback = ""
+        const next = Placement.applyCornerWrapGroupSize(draft, targetIds, value)
+        if (next !== draft)
+            draft = next
     }
     function editPosition(positions,kind,output,values): void {
         draftPositions=positions
@@ -1057,7 +1210,10 @@ Item {
         _historyReady=false;clearDrag()
         if (GlobalStates.abyssEditorTargetOutput === outputName) GlobalStates.abyssEditing = false
     }
-    Keys.onEscapePressed: finish(false)
+    Keys.onEscapePressed: event => {
+        root.handleEscape()
+        event.accepted = true
+    }
     Keys.onReturnPressed: finish(true)
     Keys.onPressed:event=>{
         if(event.key===Qt.Key_Z && (event.modifiers & Qt.ControlModifier)){undo();event.accepted=true}
@@ -1551,7 +1707,8 @@ Item {
     readonly property Region dockPaletteRegion: Region { item: dockPalette.popup.contentItem; width: dockPalette.popup.visible ? dockPalette.popup.contentItem.width : 0 }
     readonly property Region dockAlignmentRegion: Region { item: dockAlignmentChoice.popup.contentItem; width: dockAlignmentChoice.popup.visible ? dockAlignmentChoice.popup.contentItem.width : 0 }
     readonly property Region dockIpcOutputRegion: Region { item: dockIpcOutputChoice.popup.contentItem; width: dockIpcOutputChoice.popup.visible ? dockIpcOutputChoice.popup.contentItem.width : 0 }
-    readonly property var externalPopupRegions: [paletteRegion, ipcKindRegion, ipcOutputRegion, edgeRegion, alignmentRegion, dockPaletteRegion, dockAlignmentRegion, dockIpcOutputRegion]
+    readonly property Region fallbackPresetRegion: Region { item: fallbackPresetChoice.popup.contentItem; width: fallbackPresetChoice.popup.visible ? fallbackPresetChoice.popup.contentItem.width : 0 }
+    readonly property var externalPopupRegions: [paletteRegion, ipcKindRegion, ipcOutputRegion, edgeRegion, alignmentRegion, dockPaletteRegion, dockAlignmentRegion, dockIpcOutputRegion, fallbackPresetRegion]
     readonly property var regions: inputRegions.concat(root.externallyDocked ? [] : [toolbarRegion], externalPopupRegions, [previewRegion, companionMannequinRegion], (root.editingPopups || root.splitSideDocks) ? previewPositions.inputRegions : [])
 
     Item {
@@ -1579,6 +1736,7 @@ Item {
             Item {
                 id: leftPopupsDockColumn
                 width: parent.width
+                height: implicitHeight
                 implicitHeight: popupsDockCard.implicitHeight
             }
         }
@@ -1699,8 +1857,24 @@ Item {
                 topBarHeight: 38 * Appearance.fontSizeScale
                 trayGap: 6 * Appearance.fontSizeScale
                 trayExpanded: true
-                trayHeight: (152 + (dockFeedbackBanner.visible ? 26 : 0)) * Appearance.fontSizeScale
-                contentPreferredWidth: !root.splitSideDocks && root.activeDockTab === "edge"
+                trayHeight: Math.ceil(
+                    (dockFeedbackLabel.text.length > 0
+                        ? (dockFeedbackBanner.Layout.preferredHeight + dockTrayColumn.spacing)
+                        : 0)
+                    + (root.activeDockTab === "presets"
+                        ? (30 + 6 + (root.availablePresets.length > 0 ? 104 : 76)) * Appearance.fontSizeScale
+                        : (!root.splitSideDocks && root.activeDockTab === "edge"
+                            ? Math.max(140 * Appearance.fontSizeScale,
+                                Math.max(edgeCard1Col.implicitHeight, edgeCard2Col.implicitHeight, edgeCard3Col.implicitHeight) + 16)
+                            : (!root.splitSideDocks && root.activeDockTab === "popups"
+                                ? Math.max(140 * Appearance.fontSizeScale, popupsDockCard.implicitHeight)
+                                : (Math.max(102 * Appearance.fontSizeScale,
+                                        Math.ceil(moduleGalleryRow.implicitHeight + 6 * Appearance.fontSizeScale))
+                                    + 6 * Appearance.fontSizeScale
+                                    + dockModuleInspector.Layout.preferredHeight)))))
+                contentPreferredWidth: root.activeDockTab === "presets"
+                    ? Math.max(540, Math.ceil(presetsStripRow.implicitWidth + 24))
+                    : (!root.splitSideDocks && root.activeDockTab === "edge"
                     ? Math.ceil(edgeCardsGrid.implicitWidth + 16)
                     : (!root.splitSideDocks && root.activeDockTab === "popups"
                         ? Math.ceil(popupsCardColumn.implicitWidth + 24)
@@ -1708,7 +1882,7 @@ Item {
                             Math.ceil(moduleGalleryRow.implicitWidth + 16),
                             dockModuleInspector.visible
                                 ? Math.ceil(dockModuleInspectorLayout.implicitWidth + 24)
-                                : 0))
+                                : 0)))
                 autoSwitchTab: false
                 activeTab: root.activeDockTab
                 tabs: root.splitSideDocks
@@ -1719,6 +1893,13 @@ Item {
                             icon: "widgets",
                             objectName: root.useHorizontalDock ? "abyssEditorModulesMode" : "",
                             tooltipText: Translation.tr("Screen Edge modules gallery and module inspector")
+                        },
+                        {
+                            key: "presets",
+                            label: Translation.tr("Presets"),
+                            icon: "bookmarks",
+                            objectName: root.useHorizontalDock ? "abyssEditorPresetsMode" : "",
+                            tooltipText: Translation.tr("Save and apply full Abyss layout presets")
                         }
                     ]
                     : [
@@ -1744,6 +1925,13 @@ Item {
                             icon: toolbarScroll.width >= 880 * Appearance.fontSizeScale ? "open_in_new" : "",
                             objectName: root.useHorizontalDock ? "abyssEditorIpcMode" : "",
                             tooltipText: Translation.tr("Position OSD and IPC indicator surfaces")
+                        },
+                        {
+                            key: "presets",
+                            label: Translation.tr("Presets"),
+                            icon: toolbarScroll.width >= 880 * Appearance.fontSizeScale ? "bookmarks" : "",
+                            objectName: root.useHorizontalDock ? "abyssEditorPresetsMode" : "",
+                            tooltipText: Translation.tr("Save and apply full Abyss layout presets")
                         }
                     ]
                 showUndo: true
@@ -1768,7 +1956,7 @@ Item {
                         root.editingPopups = true
                     } else {
                         root.editingPopups = false
-                        root.editorSection = key === "edge" ? "edge" : "modules"
+                        root.editorSection = key === "edge" ? "edge" : (key === "presets" ? "presets" : "modules")
                     }
                 }
 
@@ -1823,7 +2011,7 @@ Item {
                         id: dockFeedbackBanner
                         visible: dockFeedbackLabel.text.length > 0
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 22 * Appearance.fontSizeScale
+                        Layout.preferredHeight: Math.max(22 * Appearance.fontSizeScale, Math.ceil(dockFeedbackLabel.implicitHeight + 6 * Appearance.fontSizeScale))
                         radius: 8
                         color: Qt.alpha(Appearance.colors.colError, 0.14)
                         border.width: 1
@@ -1894,8 +2082,10 @@ Item {
                                             tileId: String(modelData.key)
                                             title: String(modelData.title)
                                             subtitle: modelData.inDraft
-                                                ? (String(modelData.edge).charAt(0).toUpperCase()
-                                                    + String(modelData.edge).slice(1)
+                                                ? ((modelData.cornerWrap && modelData.corner
+                                                    ? root.cornerDisplayLabel(modelData.corner)
+                                                    : (String(modelData.edge).charAt(0).toUpperCase()
+                                                        + String(modelData.edge).slice(1)))
                                                     + (modelData.locked ? " · Locked" : ""))
                                                 : Translation.tr("Available")
                                             icon: root.moduleGlyph(modelData.kind)
@@ -1932,6 +2122,7 @@ Item {
                                                 kind: String(modelData.kind)
                                                 glyph: root.moduleGlyph(modelData.kind)
                                                 edge: String(modelData.edge)
+                                                corner: String(modelData.corner ?? "")
                                                 inDraft: Boolean(modelData.inDraft)
                                                 active: Boolean(modelData.enabled)
                                                 locked: Boolean(modelData.locked)
@@ -2038,7 +2229,7 @@ Item {
                                     color: Qt.alpha(Appearance.colors.colOutlineVariant, 0.30)
                                 }
 
-                                // 4-way Screen Edge move pill group (T / B / L / R)
+                                // 4-way Screen Edge move pill group (T / B / L / R, or TL / TR / BL / BR for bend modules)
                                 Rectangle {
                                     Layout.alignment: Qt.AlignVCenter
                                     implicitHeight: 28 * Appearance.fontSizeScale
@@ -2055,18 +2246,29 @@ Item {
                                         spacing: 2
 
                                         Repeater {
-                                            model: [
-                                                { key: "top", label: "T", tip: Translation.tr("Move selected module to Top Edge") },
-                                                { key: "bottom", label: "B", tip: Translation.tr("Move selected module to Bottom Edge") },
-                                                { key: "left", label: "L", tip: Translation.tr("Move selected module to Left Edge") },
-                                                { key: "right", label: "R", tip: Translation.tr("Move selected module to Right Edge") }
-                                            ]
+                                            model: root.allTargetsCornerWrap
+                                                ? [
+                                                    { key: "topLeft", label: "TL", edge: "top", tip: Translation.tr("Move bend module to Top Left corner") },
+                                                    { key: "topRight", label: "TR", edge: "top", tip: Translation.tr("Move bend module to Top Right corner") },
+                                                    { key: "bottomLeft", label: "BL", edge: "bottom", tip: Translation.tr("Move bend module to Bottom Left corner") },
+                                                    { key: "bottomRight", label: "BR", edge: "bottom", tip: Translation.tr("Move bend module to Bottom Right corner") }
+                                                ]
+                                                : [
+                                                    { key: "top", label: "T", edge: "top", tip: Translation.tr("Move selected module to Top Edge") },
+                                                    { key: "bottom", label: "B", edge: "bottom", tip: Translation.tr("Move selected module to Bottom Edge") },
+                                                    { key: "left", label: "L", edge: "left", tip: Translation.tr("Move selected module to Left Edge") },
+                                                    { key: "right", label: "R", edge: "right", tip: Translation.tr("Move selected module to Right Edge") }
+                                                ]
                                             delegate: Rectangle {
                                                 required property var modelData
                                                 readonly property bool isSelectedEdge: root.targets.length > 0
-                                                    && root.targets.every(p => p.edge === modelData.key)
-                                                objectName: root.useHorizontalDock ? ("abyssModuleMoveEdge_" + modelData.key) : ""
-                                                width: 21 * Appearance.fontSizeScale
+                                                    && (root.allTargetsCornerWrap
+                                                        ? root.targets.every(p => Placement.cornerWrapCorner(p) === modelData.key)
+                                                        : root.targets.every(p => p.edge === modelData.key))
+                                                objectName: root.useHorizontalDock
+                                                    ? ((root.allTargetsCornerWrap ? "abyssModuleMoveCorner_" : "abyssModuleMoveEdge_") + modelData.key)
+                                                    : ""
+                                                width: (root.allTargetsCornerWrap ? 25 : 21) * Appearance.fontSizeScale
                                                 height: 24 * Appearance.fontSizeScale
                                                 radius: 7
                                                 color: isSelectedEdge
@@ -2092,9 +2294,14 @@ Item {
                                                     hoverEnabled: true
                                                     cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                                                     onClicked: {
-                                                        root.rememberHistory()
-                                                        root.change("edge", modelData.key)
-                                                        root.editingEdge = modelData.key
+                                                        if (root.allTargetsCornerWrap) {
+                                                            root.change("corner", modelData.key)
+                                                            root.editingEdge = modelData.edge
+                                                        } else {
+                                                            root.rememberHistory()
+                                                            root.change("edge", modelData.key)
+                                                            root.editingEdge = modelData.key
+                                                        }
                                                     }
                                                 }
 
@@ -2353,7 +2560,9 @@ Item {
                                     compact: true
                                     editorSquare: true
                                     checkable: true
-                                    description: "Use a custom size for the selected module"
+                                    description: root.allTargetsCornerWrap
+                                        ? "Use an individual custom size for this bend module (off = share size with adjacent bend modules)"
+                                        : "Use a custom size for the selected module"
                                     Layout.preferredWidth: 28 * Appearance.fontSizeScale
                                     Layout.preferredHeight: 28 * Appearance.fontSizeScale
                                     Layout.maximumWidth: root.editorActionSize
@@ -2374,11 +2583,19 @@ Item {
                                     stepSize: .01
                                     value: root.selected?.customSize
                                         ? root.selected.size
-                                        : Placement.edgeSize(
-                                            root.draftOptions,
-                                            root.selected?.edge ?? root.editingEdge)
-                                    enabled: root.allTargetsCustom && !root.anyTargetLocked
-                                    onMoved: root.change("size", value)
+                                        : (root.selected?.cornerWrap
+                                            ? Placement.effectiveCornerWrapBaseScale(
+                                                root.selected, root.draft, root.draftOptions)
+                                            : Placement.edgeSize(
+                                                root.draftOptions,
+                                                root.selected?.edge ?? root.editingEdge))
+                                    enabled: (root.allTargetsCustom || root.allTargetsCornerWrap) && !root.anyTargetLocked
+                                    onMoved: {
+                                        if (root.allTargetsCornerWrap && !root.allTargetsCustom)
+                                            root.setBendGroupSize(value)
+                                        else
+                                            root.change("size", value)
+                                    }
                                 }
 
                                 Item {
@@ -2902,10 +3119,11 @@ Item {
                         x: 0
                         y: 0
                         width: root.splitSideDocks ? leftPopupsDockColumn.width : undefined
+                        height: root.splitSideDocks ? implicitHeight : undefined
                         Layout.fillWidth: true
                         Layout.fillHeight: !root.splitSideDocks
                         Layout.preferredHeight: root.splitSideDocks ? implicitHeight : -1
-                        implicitHeight: popupsCardColumn.implicitHeight + 20
+                        implicitHeight: popupsCardColumn.implicitHeight + (root.splitSideDocks ? 12 : 20)
                         radius: 12
                         color: Qt.alpha(Appearance.colors.colLayer2, 0.46)
                         border.width: 1
@@ -3028,9 +3246,288 @@ Item {
                                 id: dockPopupsHost
                                 Layout.fillWidth: true
                                 Layout.fillHeight: !root.splitSideDocks
+                                Layout.minimumHeight: root.splitSideDocks ? previewPositions.implicitHeight : 0
                                 Layout.preferredHeight: previewPositions.implicitHeight
                                 implicitHeight: previewPositions.implicitHeight
                             }
+                        }
+                    }
+
+                    // Tier 2D: Layout Presets (built-in samples + saved user presets)
+                    ColumnLayout {
+                        id: presetsDockPane
+                        objectName: root.useHorizontalDock ? "abyssPresetsDockPane" : ""
+                        visible: root.activeDockTab === "presets"
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        spacing: 6 * Appearance.fontSizeScale
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: 0
+                            spacing: 6 * Appearance.fontSizeScale
+
+                            TextField {
+                                id: dockPresetNameField
+                                objectName: root.useHorizontalDock ? "abyssPresetNameInput" : ""
+                                Layout.fillWidth: true
+                                Layout.minimumWidth: 120 * Appearance.fontSizeScale
+                                Layout.maximumWidth: 260 * Appearance.fontSizeScale
+                                implicitHeight: 30 * Appearance.fontSizeScale
+                                text: root.presetNameDraft
+                                placeholderText: Translation.tr("Preset name...")
+                                font.pixelSize: Appearance.font.pixelSize.smaller
+                                color: Appearance.colors.colOnLayer1
+                                placeholderTextColor: Appearance.colors.colSubtext
+                                leftPadding: 10
+                                rightPadding: 10
+                                onTextEdited: root.presetNameDraft = text
+                                Keys.onReturnPressed: event => {
+                                    root.saveCurrentPreset(text)
+                                    event.accepted = true
+                                }
+                                Keys.onEnterPressed: event => {
+                                    root.saveCurrentPreset(text)
+                                    event.accepted = true
+                                }
+                                Keys.onEscapePressed: event => {
+                                    focus = false
+                                    event.accepted = true
+                                }
+                                background: Rectangle {
+                                    radius: 8
+                                    color: Qt.alpha(Appearance.colors.colLayer2, 0.72)
+                                    border.width: dockPresetNameField.activeFocus ? 1.5 : 1
+                                    border.color: dockPresetNameField.activeFocus
+                                        ? Appearance.colors.colPrimary
+                                        : Qt.alpha(Appearance.colors.colOutlineVariant, 0.28)
+                                }
+                            }
+
+                            RippleButton {
+                                id: dockSavePresetBtn
+                                objectName: root.useHorizontalDock ? "abyssPresetSaveButton" : ""
+                                implicitWidth: dockSavePresetRow.implicitWidth + 18
+                                implicitHeight: 30 * Appearance.fontSizeScale
+                                buttonRadius: 8
+                                colBackground: Appearance.colors.colPrimary
+                                colBackgroundHover: Appearance.colors.colPrimaryHover
+                                onClicked: root.saveCurrentPreset(dockPresetNameField.text)
+
+                                contentItem: Item {
+                                    Row {
+                                        id: dockSavePresetRow
+                                        anchors.centerIn: parent
+                                        spacing: 5
+                                        MaterialSymbol {
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            text: "bookmark_add"
+                                            iconSize: 15 * Appearance.fontSizeScale
+                                            color: Appearance.colors.colOnPrimary
+                                        }
+                                        StyledText {
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            text: Translation.tr("Save current")
+                                            font.pixelSize: Appearance.font.pixelSize.smallest
+                                            font.weight: Font.DemiBold
+                                            color: Appearance.colors.colOnPrimary
+                                        }
+                                    }
+                                }
+                            }
+
+                            StyledText {
+                                Layout.fillWidth: true
+                                Layout.minimumWidth: 0
+                                elide: Text.ElideRight
+                                text: Translation.tr("Saves modules, Screen Edge settings, Popup/IPC positions & Companion")
+                                font.pixelSize: Appearance.font.pixelSize.smallest
+                                color: Appearance.colors.colSubtext
+                            }
+                        }
+
+                        Flickable {
+                            id: presetsStripFlick
+                            visible: root.availablePresets.length > 0
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            clip: true
+                            contentWidth: presetsStripRow.implicitWidth
+                            contentHeight: height
+                            flickableDirection: Flickable.HorizontalFlick
+                            boundsBehavior: Flickable.StopAtBounds
+                            interactive: contentWidth > width
+
+                            WheelHandler {
+                                acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                                onWheel: event => {
+                                    if (toolbarScroll.interactive && Math.abs(event.angleDelta.y) > Math.abs(event.angleDelta.x)) {
+                                        event.accepted = false
+                                        return
+                                    }
+                                    const delta = Math.abs(event.angleDelta.x) > Math.abs(event.angleDelta.y)
+                                        ? event.angleDelta.x : event.angleDelta.y
+                                    const maxX = Math.max(0, presetsStripFlick.contentWidth - presetsStripFlick.width)
+                                    presetsStripFlick.contentX = Math.max(0, Math.min(maxX, presetsStripFlick.contentX - delta * 0.65))
+                                    event.accepted = true
+                                }
+                            }
+
+                            Row {
+                                id: presetsStripRow
+                                height: presetsStripFlick.height
+                                spacing: 8 * Appearance.fontSizeScale
+
+                                Repeater {
+                                    model: root.availablePresets
+                                    delegate: Rectangle {
+                                        id: presetCard
+                                        required property var modelData
+                                        required property int index
+                                        objectName: "abyssPresetCard"
+                                        readonly property bool selected: root.activePresetId === modelData.id
+                                        readonly property int moduleCount: (modelData.modules?.placements ?? []).filter(p => p.enabled !== false).length
+                                        width: Math.round(168 * Appearance.fontSizeScale)
+                                        height: Math.max(76, presetsStripRow.height - 2)
+                                        radius: 10
+                                        color: presetCard.selected
+                                            ? Qt.alpha(Appearance.colors.colPrimary, 0.16)
+                                            : (presetCardMouse.containsMouse
+                                                ? Appearance.colors.colLayer2Hover
+                                                : Qt.alpha(Appearance.colors.colLayer2, 0.62))
+                                        border.width: presetCard.selected ? 1.5 : 1
+                                        border.color: presetCard.selected
+                                            ? Appearance.colors.colPrimary
+                                            : Qt.alpha(Appearance.colors.colOutlineVariant, 0.26)
+
+                                        MouseArea {
+                                            id: presetCardMouse
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: root.applyPreset(presetCard.modelData)
+                                        }
+
+                                        ColumnLayout {
+                                            anchors.fill: parent
+                                            anchors.margins: 8
+                                            spacing: 4
+
+                                            RowLayout {
+                                                Layout.fillWidth: true
+                                                Layout.minimumWidth: 0
+                                                spacing: 5
+
+                                                MaterialSymbol {
+                                                    text: presetCard.modelData.icon || "bookmark"
+                                                    iconSize: 15 * Appearance.fontSizeScale
+                                                    color: presetCard.selected ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer1
+                                                }
+
+                                                StyledText {
+                                                    Layout.fillWidth: true
+                                                    Layout.minimumWidth: 0
+                                                    text: presetCard.modelData.name
+                                                    font.pixelSize: Appearance.font.pixelSize.smaller
+                                                    font.weight: Font.DemiBold
+                                                    color: Appearance.colors.colOnLayer1
+                                                    elide: Text.ElideRight
+                                                    maximumLineCount: 1
+                                                }
+                                            }
+
+                                            StyledText {
+                                                Layout.fillWidth: true
+                                                Layout.minimumWidth: 0
+                                                text: Translation.tr("%1 modules").arg(presetCard.moduleCount)
+                                                font.pixelSize: Appearance.font.pixelSize.smallest
+                                                color: presetCard.selected ? Appearance.colors.colPrimary : Appearance.colors.colSubtext
+                                                elide: Text.ElideRight
+                                                maximumLineCount: 1
+                                            }
+
+                                            Item { Layout.fillHeight: true }
+
+                                            RowLayout {
+                                                Layout.fillWidth: true
+                                                spacing: 4
+
+                                                Rectangle {
+                                                    implicitHeight: 20
+                                                    implicitWidth: applyTagLbl.implicitWidth + 12
+                                                    radius: 10
+                                                    color: presetCard.selected
+                                                        ? Appearance.colors.colPrimary
+                                                        : Appearance.colors.colSecondaryContainer
+                                                    StyledText {
+                                                        id: applyTagLbl
+                                                        anchors.centerIn: parent
+                                                        text: presetCard.selected ? Translation.tr("Applied") : Translation.tr("Apply")
+                                                        font.pixelSize: 10 * Appearance.fontSizeScale
+                                                        font.weight: Font.DemiBold
+                                                        color: presetCard.selected
+                                                            ? Appearance.colors.colOnPrimary
+                                                            : Appearance.colors.colOnSecondaryContainer
+                                                    }
+                                                }
+
+                                                Item { Layout.fillWidth: true }
+
+                                                RippleButton {
+                                                    z: 2
+                                                    implicitWidth: 22
+                                                    implicitHeight: 22
+                                                    buttonRadius: 11
+                                                    colBackground: "transparent"
+                                                    colBackgroundHover: Appearance.colors.colLayer3Hover
+                                                    onClicked: root.overwriteUserPreset(presetCard.modelData.id)
+                                                    contentItem: Item {
+                                                        MaterialSymbol {
+                                                            anchors.centerIn: parent
+                                                            text: "save"
+                                                            iconSize: 13 * Appearance.fontSizeScale
+                                                            color: Appearance.colors.colOnLayer1
+                                                        }
+                                                    }
+                                                    StyledToolTip { text: Translation.tr("Update preset with current layout") }
+                                                }
+
+                                                RippleButton {
+                                                    z: 2
+                                                    implicitWidth: 22
+                                                    implicitHeight: 22
+                                                    buttonRadius: 11
+                                                    colBackground: "transparent"
+                                                    colBackgroundHover: Qt.alpha(Appearance.colors.colError, 0.16)
+                                                    onClicked: root.deleteUserPreset(presetCard.modelData.id)
+                                                    contentItem: Item {
+                                                        MaterialSymbol {
+                                                            anchors.centerIn: parent
+                                                            text: "delete"
+                                                            iconSize: 13 * Appearance.fontSizeScale
+                                                            color: Appearance.colors.colError
+                                                        }
+                                                    }
+                                                    StyledToolTip { text: Translation.tr("Delete preset") }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        StyledText {
+                            objectName: "abyssPresetsEmptyLabel"
+                            visible: root.availablePresets.length === 0
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            Layout.minimumHeight: 76
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                            text: Translation.tr("No presets saved yet")
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            color: Appearance.colors.colSubtext
                         }
                     }
                 }
@@ -3240,6 +3737,7 @@ Item {
                     x:0
                     y:0
                     width:root.useHorizontalDock ? dockPopupsHost.width : toolbarScroll.width
+                    height:root.useHorizontalDock ? implicitHeight : undefined
                     Layout.fillWidth:true
                     Layout.minimumWidth:0
                     Layout.maximumWidth:root.useHorizontalDock ? dockPopupsHost.width : toolbarScroll.width
@@ -3605,7 +4103,9 @@ Item {
                             objectName:!root.useHorizontalDock ? "abyssModuleCustomSizeToggle" : ""
                             text:"Custom size";glyph:"aspect_ratio"
                             compact:true;editorSquare:true;checkable:true
-                            description:"Use a custom size for the selected module"
+                            description:root.allTargetsCornerWrap
+                            ? "Use an individual custom size for this bend module (off = share size with adjacent bend modules)"
+                            : "Use a custom size for the selected module"
                             Layout.preferredWidth:root.editorActionSize
                             Layout.preferredHeight:root.editorActionSize
                             Layout.maximumWidth:root.editorActionSize
@@ -3629,12 +4129,20 @@ Item {
                             from:.6;to:1.8;stepSize:.01
                             value:root.selected?.customSize
                             ? root.selected.size
+                            : (root.selected?.cornerWrap
+                            ? Placement.effectiveCornerWrapBaseScale(
+                            root.selected,root.draft,root.draftOptions)
                             : Placement.edgeSize(
                             root.draftOptions,
-                            root.selected?.edge ?? root.editingEdge)
-                            enabled:root.allTargetsCustom && !root.anyTargetLocked
+                            root.selected?.edge ?? root.editingEdge))
+                            enabled:(root.allTargetsCustom || root.allTargetsCornerWrap) && !root.anyTargetLocked
                             
-                            onMoved:root.change("size",value)
+                            onMoved:{
+                                if (root.allTargetsCornerWrap && !root.allTargetsCustom)
+                                    root.setBendGroupSize(value)
+                                else
+                                    root.change("size",value)
+                            }
                             }
                             }
                             }
@@ -3875,6 +4383,76 @@ Item {
                             StyledToolTip { text:"Overall module scale" }
                             }
                             }
+                    }
+                }
+
+                // Compact Presets bar for narrow/side fallback toolbar
+                RowLayout {
+                    id: fallbackPresetsBar
+                    objectName: !root.useHorizontalDock ? "abyssPresetsDockPane" : ""
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    spacing: 4
+
+                    StyledComboBox {
+                        id: fallbackPresetChoice
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        baseHeight: 26 * Appearance.fontSizeScale
+                        popupMinimumWidth: 168 * Appearance.fontSizeScale
+                        enabled: root.availablePresets.length > 0
+                        displayText: root.availablePresets.length > 0 ? "" : Translation.tr("No presets")
+                        textRole: "name"
+                        valueRole: "id"
+                        model: root.availablePresets
+                        currentIndex: {
+                            const idx = root.availablePresets.findIndex(p => p.id === root.activePresetId)
+                            return idx >= 0 ? idx : 0
+                        }
+                        onActivated: {
+                            const picked = root.availablePresets[currentIndex]
+                            if (picked) root.applyPreset(picked)
+                        }
+                        StyledToolTip { text: Translation.tr("Apply layout preset") }
+                    }
+
+                    RippleButton {
+                        objectName: !root.useHorizontalDock ? "abyssPresetSaveButton" : ""
+                        implicitWidth: 26 * Appearance.fontSizeScale
+                        implicitHeight: 26 * Appearance.fontSizeScale
+                        buttonRadius: 7
+                        colBackground: Appearance.colors.colPrimary
+                        colBackgroundHover: Appearance.colors.colPrimaryHover
+                        onClicked: root.saveCurrentPreset(root.presetNameDraft)
+                        contentItem: Item {
+                            MaterialSymbol {
+                                anchors.centerIn: parent
+                                text: "bookmark_add"
+                                iconSize: 14 * Appearance.fontSizeScale
+                                color: Appearance.colors.colOnPrimary
+                            }
+                        }
+                        StyledToolTip { text: Translation.tr("Save current layout as preset") }
+                    }
+
+                    RippleButton {
+                        readonly property var selectedPreset: root.availablePresets[fallbackPresetChoice.currentIndex] ?? null
+                        visible: Boolean(selectedPreset)
+                        implicitWidth: 26 * Appearance.fontSizeScale
+                        implicitHeight: 26 * Appearance.fontSizeScale
+                        buttonRadius: 7
+                        colBackground: "transparent"
+                        colBackgroundHover: Qt.alpha(Appearance.colors.colError, 0.16)
+                        onClicked: if (selectedPreset) root.deleteUserPreset(selectedPreset.id)
+                        contentItem: Item {
+                            MaterialSymbol {
+                                anchors.centerIn: parent
+                                text: "delete"
+                                iconSize: 14 * Appearance.fontSizeScale
+                                color: Appearance.colors.colError
+                            }
+                        }
+                        StyledToolTip { text: Translation.tr("Delete selected preset") }
                     }
                 }
 

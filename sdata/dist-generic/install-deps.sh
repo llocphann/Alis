@@ -213,7 +213,7 @@ echo "  polkit, networkmanager, gnome-keyring, blueman"
 echo ""
 
 echo -e "${STY_BLUE}Optional but recommended:${STY_RST}"
-echo "  kitty (terminal), nautilus (file manager), easyeffects, mpv, tesseract-ocr"
+echo "  kitty (terminal), gtk4 (for built-in Alis Files), easyeffects, mpv, tesseract-ocr"
 echo ""
 
 #####################################################################################

@@ -19,7 +19,7 @@ ContentPage {
         const label = parts[parts.length - 1].trim()
         if (label.includes("todo") || label.includes("to-do") || label.includes("nexus")
                 || label.includes("zettelkasten") || label.includes("quick note")
-                || label.includes("calendar") || label === "data") {
+                || label === "data") {
             if(label === "data")root.activeSection="data"
             else SettingsPageRegistry.navigateToKey("integrations",section)
             return true
@@ -59,6 +59,7 @@ ContentPage {
 
         SettingsGroup {
             GridLayout {
+                id: idleTimeoutsGrid
                 Layout.fillWidth: true
                 columns: width >= 680 * Appearance.fontSizeScale ? 2 : 1
                 uniformCellWidths: columns > 1
@@ -96,6 +97,7 @@ ContentPage {
                 }
 
                 ConfigSpinBox {
+                    Layout.columnSpan: idleTimeoutsGrid.columns
                     Layout.fillWidth: true
                     Layout.minimumWidth: 0
                     icon: "dark_mode"
@@ -138,6 +140,7 @@ ContentPage {
             }
 
             GridLayout {
+                id: batteryTimeoutsGrid
                 Layout.fillWidth: true
                 visible: Config.options?.idle?.onBattery?.enable ?? false
                 columns: width >= 680 * Appearance.fontSizeScale ? 2 : 1
@@ -170,6 +173,7 @@ ContentPage {
                 }
 
                 ConfigSpinBox {
+                    Layout.columnSpan: batteryTimeoutsGrid.columns
                     Layout.fillWidth: true
                     Layout.minimumWidth: 0
                     icon: "dark_mode"
@@ -282,6 +286,7 @@ ContentPage {
 
         SettingsGroup {
             GridLayout {
+                id: updatesThresholdGrid
                 Layout.fillWidth: true
                 columns: width >= 680 * Appearance.fontSizeScale ? 2 : 1
                 uniformCellWidths: columns > 1
@@ -319,6 +324,7 @@ ContentPage {
                 }
 
                 ConfigSpinBox {
+                    Layout.columnSpan: updatesThresholdGrid.columns
                     Layout.fillWidth: true
                     Layout.minimumWidth: 0
                     icon: "warning"
@@ -335,6 +341,7 @@ ContentPage {
             }
 
             MaterialTextArea {
+                visible: (Config.options?.panelFamily ?? "abyss") !== "abyss"
                 Layout.fillWidth: true
                 placeholderText: Translation.tr("Update command")
                 text: Config.options?.apps?.update ?? ""
@@ -676,15 +683,25 @@ ContentPage {
                 visible: Config.options?.shellUpdates?.enabled ?? true
 
                 RippleButton {
+                    id: checkUpdatesBtn
                     Layout.fillWidth: true
                     implicitHeight: 36
-                    buttonRadius: Appearance.rounding.small
-                    colBackground: Appearance.colors.colSurfaceContainerLow
-                    colBackgroundHover: Appearance.colors.colLayer1Hover
-                    colRipple: Appearance.colors.colLayer1Active
+                    buttonRadius: 10
+                    colBackground: SettingsMaterialPreset.controlSurface
+                    colBackgroundHover: SettingsMaterialPreset.controlSurfaceHover
+                    colRipple: SettingsMaterialPreset.controlSurfaceActive
                     enabled: !ShellUpdates.isChecking && !ShellUpdates.isUpdating && !ShellUpdates.managedExternally
                     opacity: enabled ? 1.0 : 0.5
                     onClicked: ShellUpdates.check()
+
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: checkUpdatesBtn.buttonEffectiveRadius
+                        color: "transparent"
+                        border.width: 1
+                        border.color: SettingsMaterialPreset.controlBorderColor
+                        z: 1
+                    }
 
                     contentItem: Item {
                         Row {
@@ -694,25 +711,27 @@ ContentPage {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: "refresh"
                                 iconSize: Appearance.font.pixelSize.normal
-                                color: Appearance.colors.colOnSurface
+                                color: SettingsMaterialPreset.textColor
                             }
                             StyledText {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: ShellUpdates.isChecking ? Translation.tr("Checking…") : Translation.tr("Check Now")
                                 font.pixelSize: Appearance.font.pixelSize.smaller
-                                color: Appearance.colors.colOnSurface
+                                font.weight: Font.Medium
+                                color: SettingsMaterialPreset.textColor
                             }
                         }
                     }
                 }
 
                 RippleButton {
+                    id: openUpdateDetailsBtn
                     Layout.fillWidth: true
                     implicitHeight: 36
-                    buttonRadius: Appearance.rounding.small
-                    colBackground: Appearance.colors.colSurfaceContainerLow
-                    colBackgroundHover: Appearance.colors.colLayer1Hover
-                    colRipple: Appearance.colors.colLayer1Active
+                    buttonRadius: 10
+                    colBackground: SettingsMaterialPreset.controlSurface
+                    colBackgroundHover: SettingsMaterialPreset.controlSurfaceHover
+                    colRipple: SettingsMaterialPreset.controlSurfaceActive
                     onClicked: {
                         if (Config.options?.settingsUi?.overlayMode ?? false) {
                             // Overlay mode: settings runs inside the main shell process — direct call works
@@ -725,6 +744,15 @@ ContentPage {
                         }
                     }
 
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: openUpdateDetailsBtn.buttonEffectiveRadius
+                        color: "transparent"
+                        border.width: 1
+                        border.color: SettingsMaterialPreset.controlBorderColor
+                        z: 1
+                    }
+
                     contentItem: Item {
                         Row {
                             anchors.centerIn: parent
@@ -733,13 +761,14 @@ ContentPage {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: "open_in_new"
                                 iconSize: Appearance.font.pixelSize.normal
-                                color: Appearance.colors.colOnSurface
+                                color: SettingsMaterialPreset.textColor
                             }
                             StyledText {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: Translation.tr("Open Details")
                                 font.pixelSize: Appearance.font.pixelSize.smaller
-                                color: Appearance.colors.colOnSurface
+                                font.weight: Font.Medium
+                                color: SettingsMaterialPreset.textColor
                             }
                         }
                     }
@@ -949,6 +978,8 @@ ContentPage {
                     ConfigSelectionArray {
                         Layout.fillWidth: true
                         Layout.minimumWidth: 0
+                        Layout.alignment: Qt.AlignVCenter
+                        fillWidthSegments: true
                         currentValue: Config.options?.search?.style ?? "default"
                         onSelected: newValue => {
                             Config.setNestedValue("search.style", newValue);
@@ -1036,6 +1067,41 @@ ContentPage {
                         checked: Config.options?.search?.globalActions?.enableMedia ?? true
                         onCheckedChanged: Config.setNestedValue("search.globalActions.enableMedia", checked)
                     }
+                }
+
+                ConfigRow {
+                    uniform: true
+
+                    SettingsSwitch {
+                        buttonIcon: "package_2"
+                        text: Translation.tr("Package actions in Search")
+                        checked: Config.options?.search?.globalActions?.enablePackages ?? true
+                        onCheckedChanged: Config.setNestedValue("search.globalActions.enablePackages", checked)
+                    }
+
+                    SettingsSwitch {
+                        buttonIcon: "deployed_code"
+                        text: Translation.tr("Setup actions in Search")
+                        checked: Config.options?.search?.globalActions?.enableSetup ?? true
+                        onCheckedChanged: Config.setNestedValue("search.globalActions.enableSetup", checked)
+                    }
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "extension"
+                    text: Translation.tr("Custom actions in Search")
+                    checked: Config.options?.search?.globalActions?.enableCustom ?? true
+                    onCheckedChanged: Config.setNestedValue("search.globalActions.enableCustom", checked)
+                }
+
+                ConfigSpinBox {
+                    icon: "timer"
+                    text: Translation.tr("Launcher result delay (ms)")
+                    value: Config.options?.search?.nonAppResultDelay ?? 30
+                    from: 0
+                    to: 250
+                    stepSize: 10
+                    onValueChanged: Config.setNestedValue("search.nonAppResultDelay", value)
                 }
             }
         }

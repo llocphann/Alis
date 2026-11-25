@@ -59,4 +59,15 @@ const acrossMidnight={...row,startDate:new Date('2026-10-12T23:30:00'),
 const moved=G.rangeForGesture(acrossMidnight,'move',102,0,102,52);
 assert.equal(new Date(moved.startIso).getDate(),13);
 assert.equal(new Date(moved.endIso).getDate(),14);
+const nowMs=Date.parse('2026-10-15T12:00:00Z');
+const notifiedEvent={...combined.event,occurrences:combined.event.occurrences.map((s,i)=>i===0?{...s,notified:true,reminderNotified:true}:s)};
+const keptEndOnly=E.reschedule(notifiedEvent,0,'2026-10-12T09:00:00Z','2026-10-12T10:30:00Z',nowMs);
+assert.equal(keptEndOnly.occurrences[0].notified,true,'unchanged start time must preserve notified flag');
+assert.equal(keptEndOnly.occurrences[0].reminderNotified,true,'unchanged start time must preserve reminderNotified flag');
+const movedPast=E.reschedule(notifiedEvent,0,'2026-10-13T09:00:00Z','2026-10-13T10:00:00Z',nowMs);
+assert.equal(movedPast.occurrences[0].notified,true,'rescheduling into the past must mark notified');
+assert.equal(movedPast.occurrences[0].reminderNotified,true,'rescheduling into the past must mark reminderNotified');
+const movedFuture=E.reschedule(notifiedEvent,0,'2026-10-20T09:00:00Z','2026-10-20T10:00:00Z',nowMs);
+assert.equal(movedFuture.occurrences[0].notified,false,'rescheduling into the future must re-arm notified');
+assert.equal(movedFuture.occurrences[0].reminderNotified,false,'rescheduling into the future must re-arm reminderNotified');
 console.log('PASS canonical multi-date Events, dedup identity, read-only and drag/resize policy');

@@ -333,8 +333,8 @@
         "browser": "firefox",
         "discord": "discord",
         "editor": "code",
-        "fileManager": "nautilus",
-        "fileExplorer": "nautilus",
+        "fileManager": "alis-files",
+        "fileExplorer": "alis-files",
         "pdfViewer": "okular",
         "officeSuite": "libreoffice",
         "htmlViewer": "firefox",
@@ -1057,7 +1057,7 @@
         "ignoredAppRegexes": [],
         "monochromeIcons": true,
         "pinnedApps": [
-            "org.gnome.Nautilus",
+            "org.alis.Files",
             "firefox",
             "kitty"
         ],
@@ -1088,9 +1088,9 @@
         "pageOrder": [
             "dashboard",
             "music",
-            "weeklyPlanner",
-            "spacedRepetition"
+            "weeklyPlanner"
         ],
+        "tabIcons": [],
         "music": {
             "enable": true,
             "showScrollbars": false
@@ -1692,7 +1692,7 @@
                 {
                     "icon": "folder",
                     "name": "Files",
-                    "cmd": "/usr/bin/nautilus"
+                    "cmd": "alis-files"
                 },
                 {
                     "icon": "terminal",
@@ -2082,6 +2082,7 @@
     },
     "familyTransitionAnimation": true,
     "abyss": {
+        "layoutPresets": [],
         "sidebars": {
             "hoverEnabled": true
         },
@@ -2122,6 +2123,10 @@
             "ambientVisualPeek": false,
             "a2uiEnabled": true,
             "a2uiGenerativeEnabled": false,
+            "liveGuiControlEnabled": false,
+            "localSttEndpoint": "",
+            "sttLanguage": "auto",
+            "ambientLanguage": "auto",
             "temperature": 0.7,
             "hasTemperatureOverride": false,
             "ragUseNexus": true,
@@ -2325,9 +2330,10 @@
         "alisIntergration": {
             "tlp": false,
             "thinkfan": false,
-            "nexus": false,
-            "spaced_repetition": false,
-            "exercises_tracker": false
+            "nexus": true,
+            "spaced_repetition": true,
+            "exercises_tracker": true,
+            "alis_files": true
         },
         "nexus": {
             "autoTheme": false,
@@ -2338,6 +2344,7 @@
     },
     "todo": {
         "backend": "internal",
+        "autoLinkNexus": true,
         "nexus": {
             "vaultPath": "",
             "sourceMode": "markdown-note",

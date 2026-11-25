@@ -474,6 +474,89 @@ function joinCorner(record, adjacent, width, height, insets) {
     return Object.assign({},record,{surface:surface,joinedEdge:adjacent});
 }
 
+// Trim coplanar overlapping painted surfaces along the same Screen Edge before
+// SDF union so stacked L-shaped pairs (e.g. Sidebar + expanded Edgebar) do not
+// suffer smooth-union contour inflation along their shared top/bottom seam.
+function trimCoplanarOverlap(records, softness) {
+    if (!records || records.length < 2 || !(softness > 0)) return records;
+    var out = records.slice();
+    var cloned = {};
+    function cloneSurface(idx) {
+        if (cloned[idx]) return out[idx].surface;
+        var orig = out[idx];
+        var nextSurf = orig && orig.surface ? Object.assign({}, orig.surface) : {x:0,y:0,width:0,height:0};
+        out[idx] = Object.assign({}, orig, {surface: nextSurf});
+        cloned[idx] = true;
+        return out[idx].surface;
+    }
+    for (var i = 0; i < records.length; i++) {
+        var aRec = records[i];
+        if (!aRec || !aRec.surface || aRec.surface.width <= 0 || aRec.surface.height <= 0) continue;
+        var edge = String(aRec.edge || "");
+        if (!["top", "bottom", "left", "right"].includes(edge)) continue;
+        var h = horizontal(edge);
+        var as = aRec.surface;
+        var aC0 = h ? as.y : as.x;
+        var aC1 = aC0 + (h ? as.height : as.width);
+        var aCW = aC1 - aC0;
+        var aT0 = h ? as.x : as.y;
+        var aT1 = aT0 + (h ? as.width : as.height);
+
+        for (var j = 0; j < records.length; j++) {
+            if (i === j) continue;
+            var bRec = records[j];
+            if (!bRec || String(bRec.edge || "") !== edge) continue;
+            var bsOrig = bRec.surface;
+            if (!bsOrig || bsOrig.width <= 0 || bsOrig.height <= 0) continue;
+            var bC0 = h ? bsOrig.y : bsOrig.x;
+            var bC1 = bC0 + (h ? bsOrig.height : bsOrig.width);
+            var bCW = bC1 - bC0;
+            if (aC0 > bC0 + 1 || aC1 < bC1 - 1) continue;
+
+            var bT0Orig = h ? bsOrig.x : bsOrig.y;
+            var bT1Orig = bT0Orig + (h ? bsOrig.width : bsOrig.height);
+            var wider = aCW > bCW + 1;
+            var bs = out[j].surface;
+            var bT0 = h ? bs.x : bs.y;
+            var bT1 = bT0 + (h ? bs.width : bs.height);
+            if (bs.width <= 0 || bs.height <= 0) continue;
+
+            // Case 1: B is wholly inside A's footprint -> suppress duplicate SDF box.
+            if (aT0 <= bT0Orig + 1.5 && aT1 >= bT1Orig - 1.5
+                    && (wider || (Math.abs(aT0 - bT0Orig) <= 1.5 && Math.abs(aT1 - bT1Orig) <= 1.5 && i < j))) {
+                var zeroSurf = cloneSurface(j);
+                zeroSurf.width = 0;
+                zeroSurf.height = 0;
+                continue;
+            }
+            // Case 2: Coplanar start seam with B extending past A's end -> recede B start inside A.
+            if ((wider || bT1Orig > aT1 + 1.5)
+                    && bT0 >= aT0 - 1.5 && bT0 < aT0 + softness
+                    && bT1Orig > aT1 + 1.5 && aT1 > aT0 + softness + 2) {
+                var nextStart = Math.min(aT0 + softness + 0.5, aT1 - 2);
+                if (bT1 > nextStart + 2 && nextStart > bT0) {
+                    var startSurf = cloneSurface(j);
+                    if (h) { startSurf.x = nextStart; startSurf.width = bT1 - nextStart; }
+                    else { startSurf.y = nextStart; startSurf.height = bT1 - nextStart; }
+                }
+                continue;
+            }
+            // Case 3: Coplanar end seam with B extending past A's start -> recede B end inside A.
+            if ((wider || bT0Orig < aT0 - 1.5)
+                    && bT1 <= aT1 + 1.5 && bT1 > aT1 - softness
+                    && bT0Orig < aT0 - 1.5 && aT0 < aT1 - softness - 2) {
+                var nextEnd = Math.max(aT1 - softness - 0.5, aT0 + 2);
+                if (nextEnd > bT0 + 2 && nextEnd < bT1) {
+                    var endSurf = cloneSurface(j);
+                    if (h) endSurf.width = nextEnd - bT0;
+                    else endSurf.height = nextEnd - bT0;
+                }
+            }
+        }
+    }
+    return out;
+}
+
 // Corner ownership is OR: either enabled zero-width adjoining Edge owns one arc.
 // This changes only the workspace-facing quarter curve, never the outer boundary.
 function physicalContactMask(insets,choices) {

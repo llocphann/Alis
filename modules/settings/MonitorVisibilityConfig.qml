@@ -19,7 +19,9 @@ ContentPage {
     // leaving an unused band under the embedded arrangement card.
     // Reserve 55 px for the card/group chrome and keep monitor tiles compact.
     readonly property real arrangementCanvasHeight:
-        embeddedArrangementOnly ? Math.max(80, height - 55) : 292
+        settingsFormPreview
+            ? Math.max(180, height)
+            : (embeddedArrangementOnly ? Math.max(80, height - 55) : 292)
     readonly property real settingsArrangementCanvasHeight: 320
     readonly property real arrangementVisualScale:
         settingsFormPreview ? 1 : embeddedArrangementOnly ? 0.65 : 0.70
@@ -814,7 +816,7 @@ ContentPage {
 
                 MaterialSymbol {
                     text: primary ? "star" : "monitor"
-                    iconSize: Appearance.font.pixelSize.normal
+                    iconSize: root.settingsFormPreview ? Appearance.font.pixelSize.large : Appearance.font.pixelSize.normal
                     color: !monitorRect.validPosition
                         ? Appearance.colors.colOnErrorContainer
                         : primary ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colPrimary
@@ -822,7 +824,7 @@ ContentPage {
 
                 StyledText {
                     text: monitorRect.outputName
-                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    font.pixelSize: root.settingsFormPreview ? Appearance.font.pixelSize.small : Appearance.font.pixelSize.smaller
                     font.weight: Font.Medium
                     color: !monitorRect.validPosition
                         ? Appearance.colors.colOnErrorContainer
@@ -843,9 +845,10 @@ ContentPage {
 
             StyledText {
                 Layout.alignment: Qt.AlignHCenter
-                visible: !root.embeddedArrangementOnly && monitorRect.height >= 62
+                visible: (!root.embeddedArrangementOnly || root.settingsFormPreview) && monitorRect.height >= 62
                 text: Math.round(monitorRect.logicalWidth) + "×" + Math.round(monitorRect.logicalHeight)
-                font.pixelSize: Appearance.font.pixelSize.smallest
+                font.pixelSize: root.settingsFormPreview ? Appearance.font.pixelSize.smaller : Appearance.font.pixelSize.smallest
+                font.family: Appearance.font.family.numbers
                 color: !monitorRect.validPosition
                     ? Appearance.colors.colOnErrorContainer
                     : primary ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colSubtext
@@ -1239,6 +1242,7 @@ ContentPage {
         settingsTaskSection: "outputs"
         visible: CompositorService.isNiri
         expanded: true
+        flatEmbedded: root.settingsFormPreview
         collapsible: root.arrangementChromeVisible
         showHeader: root.arrangementChromeVisible
         enableSettingsSearch: root.arrangementChromeVisible
@@ -1246,6 +1250,7 @@ ContentPage {
         title: Translation.tr("Monitor arrangement")
 
         SettingsGroup {
+            flatEmbedded: root.settingsFormPreview
             NoticeBox {
                 id: monitorArrangementNotice
                 visible: root.arrangementChromeVisible
@@ -1268,14 +1273,18 @@ ContentPage {
                     ? root.arrangementCanvasHeight
                     : root.settingsArrangementCanvasHeight
                 radius: Appearance.rounding.normal
-                color: Appearance.colors.colLayer1
+                color: root.settingsFormPreview ? Appearance.colors.colLayer0 : Appearance.colors.colLayer1
                 border.width: 1
                 border.color: SettingsMaterialPreset.groupBorderColor
                 clip: true
 
                 readonly property var layoutBounds: root.monitorLayoutBounds()
-                readonly property real worldPaddingX: Math.max(240, layoutBounds.width * 0.12)
-                readonly property real worldPaddingY: Math.max(180, layoutBounds.height * 0.28)
+                readonly property real worldPaddingX: root.settingsFormPreview
+                    ? Math.max(160, layoutBounds.width * 0.10)
+                    : Math.max(240, layoutBounds.width * 0.12)
+                readonly property real worldPaddingY: root.settingsFormPreview
+                    ? Math.max(140, layoutBounds.height * 0.18)
+                    : Math.max(180, layoutBounds.height * 0.28)
                 readonly property var bounds: ({
                     minX: layoutBounds.minX - worldPaddingX,
                     minY: layoutBounds.minY - worldPaddingY,
@@ -1284,9 +1293,9 @@ ContentPage {
                 })
                 readonly property real innerPadding: Appearance.sizes.spacingLarge
                 readonly property real fitScale: {
-                    // Increasing the canvas height must not enlarge monitor
-                    // tiles again: keep the original 252 px fit-height budget.
-                    const tileFitHeight = root.embeddedArrangementOnly
+                    // Increasing the canvas height in Utilities keeps the 252 px fit-height budget;
+                    // in Settings form preview, scale generously to fill the full-width canvas cleanly.
+                    const tileFitHeight = (root.embeddedArrangementOnly && !root.settingsFormPreview)
                         ? Math.min(height, 252) : height
                     return ArrangementViewport.fitScale(bounds, width, tileFitHeight, innerPadding)
                 }
@@ -1548,6 +1557,7 @@ ContentPage {
 
         SettingsGroup {
             ConfigSelectionArray {
+                fillWidthSegments: true
                 currentValue: Config.options?.display?.primaryMonitor ?? ""
                 onSelected: newValue => Config.setNestedValue("display.primaryMonitor", newValue)
                 options: root.monitorOptions()

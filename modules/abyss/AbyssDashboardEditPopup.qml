@@ -32,7 +32,7 @@ Item {
     readonly property real desiredLeftDockHeight: toolbar?.desiredLeftDockHeight ?? 0
     readonly property real desiredRightDockWidth: toolbar?.desiredRightDockWidth ?? 0
     readonly property real desiredRightDockHeight: toolbar?.desiredRightDockHeight ?? 0
-    readonly property bool editing: canvasController?.editMode ?? false
+    readonly property bool editing: (tabController?.editMode ?? false) || (canvasController?.editMode ?? false)
     readonly property bool naming: tabController?.tabNamingActive ?? false
     readonly property bool controlsVisible: root.editing || root.naming
     readonly property var contentRect: body?.targetRecord?.content
@@ -77,7 +77,8 @@ Item {
         // The body can release its clearance before controlsVisible and
         // revealRequested reevaluate. Read the editor's semantic state now,
         // so that binding order cannot overwrite the closing snapshot.
-        const requested = (root.canvasController?.editMode ?? false)
+        const requested = (root.tabController?.editMode ?? false)
+            || (root.canvasController?.editMode ?? false)
             || (root.tabController?.tabNamingActive ?? false)
         if (requested && root.revealRequested)
             root.retainedRect = root.targetRect

@@ -334,6 +334,7 @@ Singleton {
     property bool countdownPaused: Persistent.states?.timer?.countdown?.paused ?? false
     property int countdownDuration: root._positiveInt(Persistent.states?.timer?.countdown?.duration, 300)
     property int countdownSecondsLeft: countdownDuration
+    property string countdownLabel: ""
 
     function _restorePersistedTimers(): void {
         if (!Persistent.ready)
@@ -580,9 +581,13 @@ Singleton {
         if (countdownSecondsLeft <= 0 && countdownRunning) {
             Persistent.states.timer.countdown.running = false;
             Persistent.states.timer.countdown.paused = false;
+            const finishBody = root.countdownLabel.length > 0
+                ? (Translation.tr("Time's up!") + " · " + root.countdownLabel)
+                : Translation.tr("Time's up!");
+            root.countdownLabel = "";
             Notifications.sendInternal({
                 summary: "Timer",
-                body: Translation.tr("Time's up!"),
+                body: finishBody,
                 appName: "Shell",
                 appIcon: "alarm-symbolic",
             });
@@ -590,6 +595,19 @@ Singleton {
                 Audio.playEvent("timerDone");
             }
         }
+    }
+
+    function startCountdown(seconds: int, label = ""): void {
+        const normalized = root._positiveInt(seconds, 300);
+        root.countdownLabel = String(label ?? "").trim();
+        if (Persistent.ready && Persistent.states?.timer?.countdown) {
+            Persistent.states.timer.countdown.duration = normalized;
+            Persistent.states.timer.countdown.start = getCurrentTimeInSeconds();
+            Persistent.states.timer.countdown.paused = false;
+            Persistent.states.timer.countdown.running = true;
+            Persistent.states.timer.tab = 1;
+        }
+        countdownSecondsLeft = normalized;
     }
 
     function toggleCountdown(): void {
@@ -625,6 +643,7 @@ Singleton {
     function resetCountdown(): void {
         Persistent.states.timer.countdown.running = false;
         Persistent.states.timer.countdown.paused = false;
+        root.countdownLabel = "";
         countdownSecondsLeft = countdownDuration;
         Persistent.states.timer.countdown.start = getCurrentTimeInSeconds();
     }

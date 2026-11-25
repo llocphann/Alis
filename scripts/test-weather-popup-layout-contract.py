@@ -20,36 +20,30 @@ def main() -> None:
     orbital = (WEATHER_DIR / "OrbitalWeather.qml").read_text()
     dashboard = (ROOT / "modules/dashboard/DashWeather.qml").read_text()
 
-    # Keep one narrow, stable popup footprint for both tabs. Detailed Weather
-    # must reflow instead of widening the connected surface.
+    # Merged orientation-aware popup: Orbital and Detailed appear together in one
+    # surface (side-by-side on top/bottom edges, vertical Orbital-top / Detailed-bottom on left/right edges).
     require(wrapper, "StyledPopup {", "WeatherPopupContent {",
+            "verticalLayout: root._attachmentVertical",
             "compact: (root.presentationWindow?.width ?? 1920)")
-    require(source, "readonly property real panelWidth: root.compact ? 360 : 390",
-            "readonly property real panelHeight: root.compact ? 270 : 300",
+    require(source, "property bool verticalLayout: false",
+            "readonly property real panelWidth: root.compact ? 344 : 372",
+            "readonly property real orbitHeight: root.compact ? 250 : 276",
             "readonly property real orbitalInset: root.compact ? 6 : 8",
             "readonly property real orbitalRightInset: root.orbitalInset",
             "columns: 2",
-            "implicitHeight: root.compact ? 36 : 42",
-            "readonly property int tabCount: 2", "property int currentTab: 0")
+            "implicitHeight: root.compact ? 36 : 42")
 
-    # Two pages still slide inside one clipped surface, with the dot rail
-    # remaining at the right edge as the compact tab control.
-    require(source, "id: tabViewport", "clip: true",
-            "y: -root.tabPosition * tabViewport.height",
-            "y: (1 - root.tabPosition) * tabViewport.height",
+    require(source, "id: weatherViewport", "clip: true",
+            "id: timeWeatherPanel", "id: sectionDivider",
             "liquidMode: true", "id: detailPanel",
-            "id: tabIndicator", "anchors.right: parent.right",
-            "anchors.verticalCenter: parent.verticalCenter",
-            "id: primaryMetrics", "id: sunTimeline", "WheelHandler {")
-    # Both pages share one animated choice. Pixel-position animations replay on
-    # popup reveal/rehost and briefly overlay Detailed on Orbital. The native
-    # test-weather-tab-motion.sh exercises reveal, selection, resize and rehost.
-    require(source, "Behavior on tabPosition")
-    for removed in ("id: modeSwitch", "component OrbitArrow:",
+            "liquidAnimationActive: root.visible",
+            "id: primaryMetrics", "id: sunTimeline")
+    for removed in ("id: tabIndicator", "WheelHandler {", "property int currentTab:",
+                    "Behavior on tabPosition", "id: modeSwitch", "component OrbitArrow:",
                     "selectedHourIndex", "function cycleHour(",
                     "model: (Weather.data?.forecast ?? []).slice("):
         if removed in source:
-            raise AssertionError(f"Removed large-popup control remains: {removed}")
+            raise AssertionError(f"Removed tab/large-popup control remains: {removed}")
 
     require(orbital, "(Weather.data?.hourly ?? []).slice(0, 8)",
             "function orbitAngleForHour(label, tables): real",

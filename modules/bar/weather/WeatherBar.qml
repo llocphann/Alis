@@ -105,7 +105,7 @@ MouseArea {
         anchors.centerIn: parent
         visible: !root.vertical && root.verticalContent
         rotation: -root.contentRotation
-        spacing: 2 * Appearance.sizes.barModuleScale
+        spacing: 1 * Appearance.sizes.barModuleScale
 
         MaterialSymbol {
             fill: 0
@@ -116,7 +116,8 @@ MouseArea {
         }
 
         StyledText {
-            font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * Appearance.sizes.barModuleScale)
+            font.pixelSize: Math.max(11, Math.round(Appearance.font.pixelSize.small * Appearance.sizes.barModuleScale))
+            font.weight: Font.Medium
             color: root.foregroundColor
             text: Weather.data?.temp ?? "--°"
             Layout.alignment: Qt.AlignHCenter

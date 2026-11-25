@@ -167,8 +167,13 @@ const hdInsets={left:14,right:14,top:40,bottom:14};
 function hdRequest(id,edge,order,depth,along,span,options={}) {
  const padding=options.padding ?? 14;
  const record=panel(1920,1080,hdInsets,edge,along,span,depth,1,padding,[],options.largeSurface ?? true);
- return {id,open:true,order,priority:options.priority ?? 0,padding,
+ return {id,open:true,order,priority:options.priority ?? 0,intentWeight:options.intentWeight ?? 0,padding,
    allowInward:options.allowInward ?? true,
+   allowLateralShift:options.allowLateralShift ?? (options.maxLateralShift > 0),
+   maxLateralShift:options.maxLateralShift,
+   cooperativeShrink:options.cooperativeShrink ?? false,
+   cooperativePeer:options.cooperativePeer ?? false,
+   stackPolicy:options.stackPolicy ?? '',
    preserveAspect:options.preserveAspect ?? false,
    minSpan:Math.min(record.span,options.minSpan ?? (options.largeSurface ? 520 : 220)),
    minDepth:Math.min(record.targetDepth,options.minDepth ?? (options.largeSurface ? 360 : 120)),record};
@@ -222,6 +227,81 @@ assert(hdPacked.quickNotes.visible && hdPacked.quickNotes.inward===0 && !hdPacke
 assert(hdPacked.leftPanel.visible && hdPacked.leftPanel.inward===342 && !hdPacked.leftPanel.shrunk,
     'Sidebar opened first is pushed outward to inward=342 while keeping full original size');
 
-console.log('PASS: anchors retained, inward partitioning, readable reflow, edge-locked Dock eviction/restoration and exact geometry');
+// Cooperative shrinking (A1): Dashboard + 2 Sidebars on 1920x1080 share width cleanly
+// above readable minimums (320px Left, 360px Right, 920px Dashboard) with zero crushing.
+const coopLeft=hdRequest('leftPanel','left',1,460,190,700,{priority:2,intentWeight:1,largeSurface:false,minDepth:320,minSpan:320,cooperativePeer:true});
+const coopRight=hdRequest('rightPanel','right',2,460,190,700,{priority:2,intentWeight:0,largeSurface:false,minDepth:360,minSpan:420,cooperativePeer:true});
+const coopDash=hdRequest('dashboard','bottom',3,818,249,1422,{priority:3,intentWeight:2,largeSurface:true,minSpan:920,minDepth:460,cooperativeShrink:true});
+hdPacked=arrange([coopLeft,coopRight,coopDash],1920,1080,hdInsets);
+assert(hdPacked.dashboard.visible && hdPacked.dashboard.shrunk && hdPacked.dashboard.span>=920,
+    'Dashboard cooperatively narrows within its readable minimum');
+assert(hdPacked.leftPanel.visible && hdPacked.leftPanel.depth>=320,
+    'Left sidebar stays at or above 320px readable minimum');
+assert(hdPacked.rightPanel.visible && hdPacked.rightPanel.depth>=360,
+    'Right sidebar stays at or above 360px readable minimum');
+
+// Bounded tangential lateral shift (A2 #1): partially overlapping same-edge popup shifts
+// along the edge at inward=0 before shrinking or Pyramid stacking.
+const latA=hdRequest('latA','top',1,180,400,360,{priority:1,stackPolicy:'pyramid',maxLateralShift:220,largeSurface:false});
+const latB=hdRequest('latB','top',2,180,660,260,{priority:0,stackPolicy:'pyramid',maxLateralShift:220,largeSurface:false});
+hdPacked=arrange([latA,latB],1920,1080,hdInsets);
+assert(hdPacked.latB.visible && hdPacked.latB.inward===0 && !hdPacked.latB.shrunk && Math.abs(hdPacked.latB.lateralShift)>0,
+    'Partially overlapping same-edge popup shifts laterally along the same edge before stacking inward');
+
+// Modal Polkit + bottom overlays (Files, Dashboard, Settings, Nexus) on 1920x1200 and 1920x1080:
+// Polkit keeps full size below top bar, never welds via SDF with bottom overlays, and bottom overlays
+// shrink gracefully without overlapping or clipping Polkit controls.
+function polkitScenario(vw, vh, ovId, ovW, ovH, ovMinW, ovMinH) {
+    const barInsets={left:10,right:10,top:48,bottom:10};
+    const bodyInsets={left:10,right:10,top:10,bottom:10};
+    const pad=20;
+    const polSpan=400+pad*2, polDepth=250+pad*2;
+    const polRec=panel(vw,vh,barInsets,'top',(vw-polSpan)/2,polSpan,polDepth,1,pad,[],false);
+    const polReq={id:'polkit',open:true,order:10,priority:5,intentWeight:2,intent:'modal',padding:pad,
+        allowInward:true,allowLateralShift:false,allowPerpendicularShift:false,
+        edgeInsets:barInsets,minSpan:polSpan,minDepth:polDepth,record:polRec};
+    const ovSpan=ovW, ovDepth=ovH;
+    const ovRec=panel(vw,vh,bodyInsets,'bottom',(vw-ovSpan)/2,ovSpan,ovDepth,1,pad,[],true);
+    const ovReq={id:ovId,open:true,order:2,priority:3,intentWeight:2,intent:'overlay',padding:pad,
+        allowInward:true,cooperativeShrink:true,edgeInsets:bodyInsets,
+        minSpan:Math.min(ovSpan,ovMinW),minDepth:Math.min(ovDepth,ovMinH),record:ovRec};
+    const placed=arrange([polReq,ovReq],vw,vh,bodyInsets,24,[],24);
+    assert(placed.polkit.visible && !placed.polkit.shrunk && placed.polkit.inward===0,
+        `${ovId} (${vw}x${vh}): Polkit remains unshrunk at direct top slot`);
+    assert(placed[ovId].visible, `${ovId} (${vw}x${vh}): bottom overlay remains visible below Polkit`);
+    const polSurfBottom = barInsets.top + placed.polkit.depth;
+    const ovSurfTop = vh - bodyInsets.bottom - placed[ovId].depth;
+    assert(ovSurfTop - polSurfBottom >= 31.9,
+        `${ovId} (${vw}x${vh}): painted surface separation (${ovSurfTop - polSurfBottom}) exceeds SDF connectionSoftness (24px)`);
+    assert(placed[ovId].content.y - (placed.polkit.content.y + placed.polkit.content.height) >= 71.9,
+        `${ovId} (${vw}x${vh}): readable content clearance preserved`);
+}
+for (const [vw, vh] of [[1920, 1200], [1920, 1080]]) {
+    polkitScenario(vw, vh, 'files', Math.min(1680, vw*0.9), Math.min(1080, vh*0.9), Math.round(vw*0.48), Math.round(vh*0.52));
+    polkitScenario(vw, vh, 'dashboard', vw*0.72+40, vh*0.72+40, Math.round(vw*0.48), Math.round(vh*0.52));
+    polkitScenario(vw, vh, 'settings', vw*0.72+40, vh*0.72+40, Math.round(vw*0.48), Math.round(vh*0.52));
+    polkitScenario(vw, vh, 'nexus', Math.min(1680, vw*0.9), Math.min(1080, vh*0.9), Math.round(vw*0.48), Math.round(vh*0.52));
+}
+// Tight viewport (1366x768) where bottom overlay minimumDepth (430px) cannot fit under modal Polkit (290px)
+{
+    const barInsets={left:10,right:10,top:48,bottom:10};
+    const bodyInsets={left:10,right:10,top:10,bottom:10};
+    const pad=20;
+    const polRec=panel(1366,768,barInsets,'top',(1366-440)/2,440,290,1,pad,[],false);
+    const polReq={id:'polkit',open:true,order:10,priority:5,intentWeight:2,intent:'modal',padding:pad,
+        edgeInsets:barInsets,minSpan:440,minDepth:290,record:polRec};
+    const ovRec=panel(1366,768,bodyInsets,'bottom',(1366-1200)/2,1200,680,1,pad,[],true);
+    const ovReq={id:'files',open:true,order:2,priority:3,intentWeight:2,intent:'overlay',padding:pad,
+        edgeInsets:bodyInsets,minSpan:760,minDepth:430,record:ovRec};
+    const evicted=arrange([polReq,ovReq],1366,768,bodyInsets,24,[],24);
+    assert(evicted.polkit.visible && !evicted.polkit.shrunk && evicted.files.evicted,
+        'Lower-priority overlay yields/evicts cleanly on tight viewports instead of colliding with Polkit');
+    polReq.open=false;
+    const restored=arrange([polReq,ovReq],1366,768,bodyInsets,24,[],24);
+    assert(restored.files.visible && !restored.files.evicted,
+        'Overlay restores automatically after Polkit closes');
+}
+
+console.log('PASS: anchors retained, inward partitioning, readable reflow, cooperative shrinking, bounded lateral shift, edge-locked Dock eviction/restoration and exact geometry');
 """
 raise SystemExit(subprocess.run(["node","-e",program],cwd=root).returncode)

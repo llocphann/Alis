@@ -265,6 +265,18 @@ ApplicationWindow {
 
     // Keyboard shortcuts
     Shortcut {
+        sequence: "Escape"
+        context: Qt.WindowShortcut
+        onActivated: {
+            if (settingsContent.searchText && settingsContent.searchText.length > 0) {
+                settingsContent.searchText = ""
+                return
+            }
+            root.close()
+        }
+    }
+
+    Shortcut {
         sequence: "Ctrl+PageDown"
         onActivated: root.currentPage = Math.min(root.currentPage + 1, root.pages.length - 1)
     }

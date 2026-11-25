@@ -219,6 +219,7 @@ SettingsGroup {
 
         ConfigSelectionArray {
             enableSettingsSearch: false
+            fillWidthSegments: true
             currentValue: root.operationMode
             onSelected: newValue => { root.operationMode = newValue }
             options: [
@@ -238,6 +239,7 @@ SettingsGroup {
 
         ConfigSelectionArray {
             enableSettingsSearch: false
+            fillWidthSegments: true
             currentValue: root.convertSource
             onSelected: newValue => { root.convertSource = newValue }
             options: [
@@ -449,6 +451,7 @@ SettingsGroup {
 
         ConfigSelectionArray {
             enableSettingsSearch: false
+            fillWidthSegments: true
             currentValue: root.upscaleModel
             onSelected: newValue => { root.upscaleModel = newValue }
             options: [
@@ -458,28 +461,24 @@ SettingsGroup {
             ]
         }
 
-        RowLayout {
+        SettingsPresetRow {
             Layout.fillWidth: true
-            spacing: 8
-
-            MaterialSymbol { text: "zoom_out_map"; iconSize: 16; color: Appearance.colors.colSubtext }
-            Slider {
-                Layout.fillWidth: true
-                from: 2
-                to: 4
-                stepSize: 1
-                value: root.upscaleScale
-                onMoved: root.upscaleScale = Math.round(value)
-                enabled: root.upscaleModel !== "realesrgan-x4plus"
-            }
-            StyledText {
-                text: root.upscaleModel === "realesrgan-x4plus" ? "4x" : (root.upscaleScale.toFixed(0) + "x")
-                font.pixelSize: Appearance.font.pixelSize.small
-                font.family: Appearance.font.family.monospace
-                color: Appearance.colors.colOnLayer1
-                Layout.preferredWidth: 32
-                horizontalAlignment: Text.AlignRight
-            }
+            icon: "zoom_out_map"
+            text: Translation.tr("Upscale factor")
+            enabled: root.upscaleModel !== "realesrgan-x4plus"
+            from: 2
+            to: 4
+            stepSize: 1
+            showStepper: false
+            enableSettingsSearch: false
+            value: root.upscaleModel === "realesrgan-x4plus" ? 4 : root.upscaleScale
+            displayValue: (root.upscaleModel === "realesrgan-x4plus" ? 4 : Math.round(liveValue)) + "×"
+            presets: [
+                { label: "2×", value: 2 },
+                { label: "3×", value: 3 },
+                { label: "4×", value: 4 }
+            ]
+            onMoved: nextVal => { root.upscaleScale = Math.round(nextVal) }
         }
 
         StyledText {
@@ -518,6 +517,7 @@ SettingsGroup {
 
         ConfigSelectionArray {
             enableSettingsSearch: false
+            fillWidthSegments: true
             currentValue: root.selectedEffect
             onSelected: newValue => { root.selectedEffect = newValue }
             options: [
@@ -528,28 +528,19 @@ SettingsGroup {
             ]
         }
 
-        RowLayout {
+        SettingsMetricControl {
+            id: brightnessSlider
             visible: root.selectedEffect === "br"
             Layout.fillWidth: true
-            spacing: 8
-
-            MaterialSymbol { text: "brightness_low"; iconSize: 16; color: Appearance.colors.colSubtext }
-            Slider {
-                id: brightnessSlider
-                Layout.fillWidth: true
-                from: 0.3; to: 2.0; stepSize: 0.05
-                value: root.brightnessFactor
-                onMoved: root.brightnessFactor = value
-            }
-            StyledText {
-                text: (root.brightnessFactor * 100).toFixed(0) + "%"
-                font.pixelSize: Appearance.font.pixelSize.small
-                font.family: Appearance.font.family.monospace
-                color: Appearance.colors.colOnLayer1
-                Layout.preferredWidth: 42
-                horizontalAlignment: Text.AlignRight
-            }
-            MaterialSymbol { text: "brightness_high"; iconSize: 16; color: Appearance.colors.colSubtext }
+            icon: "brightness_6"
+            text: Translation.tr("Brightness")
+            from: 0.3
+            to: 2.0
+            stepSize: 0.05
+            enableSettingsSearch: false
+            currentValue: root.brightnessFactor
+            valueText: Math.round(liveValue * 100) + "%"
+            onMoved: nextVal => { root.brightnessFactor = nextVal }
         }
     }
 
@@ -559,26 +550,18 @@ SettingsGroup {
         title: Translation.tr("Pixelation scale")
         tooltip: Translation.tr("Lower values = more pixelated. Range 1–25. Large images may need lower values (3–8).")
 
-        RowLayout {
+        SettingsMetricControl {
+            id: pixelSlider
             Layout.fillWidth: true
-            spacing: 8
-
-            MaterialSymbol { text: "grid_on"; iconSize: 16; color: Appearance.colors.colSubtext }
-            Slider {
-                id: pixelSlider
-                Layout.fillWidth: true
-                from: 1; to: 25; stepSize: 1
-                value: root.pixelateScale
-                onMoved: root.pixelateScale = value
-            }
-            StyledText {
-                text: root.pixelateScale.toFixed(0)
-                font.pixelSize: Appearance.font.pixelSize.small
-                font.family: Appearance.font.family.monospace
-                color: Appearance.colors.colOnLayer1
-                Layout.preferredWidth: 28
-                horizontalAlignment: Text.AlignRight
-            }
+            icon: "grid_on"
+            text: Translation.tr("Pixelation scale")
+            from: 1
+            to: 25
+            stepSize: 1
+            enableSettingsSearch: false
+            currentValue: root.pixelateScale
+            valueText: Math.round(liveValue) + "×"
+            onMoved: nextVal => { root.pixelateScale = Math.round(nextVal) }
         }
     }
 
@@ -589,6 +572,7 @@ SettingsGroup {
 
         ConfigSelectionArray {
             enableSettingsSearch: false
+            fillWidthSegments: true
             currentValue: root.selectedFormat
             onSelected: newValue => { root.selectedFormat = newValue }
             options: [
@@ -712,7 +696,7 @@ SettingsGroup {
 
                 Rectangle {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 160
+                    Layout.preferredHeight: Math.max(140, Math.min(220, Math.round(width * 9 / 16)))
                     radius: Appearance.rounding.small
                     color: SettingsMaterialPreset.groupColor
                     border.width: 1
@@ -722,7 +706,7 @@ SettingsGroup {
                     Image {
                         anchors.fill: parent
                         anchors.margins: 2
-                        fillMode: Image.PreserveAspectCrop
+                        fillMode: Image.PreserveAspectFit
                         source: root.sourceUrl
                         cache: false
                         asynchronous: true
@@ -742,7 +726,7 @@ SettingsGroup {
 
                 Rectangle {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 160
+                    Layout.preferredHeight: Math.max(140, Math.min(220, Math.round(width * 9 / 16)))
                     radius: Appearance.rounding.small
                     color: SettingsMaterialPreset.groupColor
                     border.width: 1
@@ -752,7 +736,7 @@ SettingsGroup {
                     Image {
                         anchors.fill: parent
                         anchors.margins: 2
-                        fillMode: Image.PreserveAspectCrop
+                        fillMode: Image.PreserveAspectFit
                         source: GowallService.previewUrl
                         cache: false
                         asynchronous: true

@@ -31,6 +31,7 @@ Bar.StyledPopup {
     // has real output-relative geometry and must not snap to the far corner.
     property bool moduleAnchorMode: false
     property string cornerAttachmentEdge: "bottom"
+    property string cornerTangentEdge: "end"
     property real cornerAttachmentThickness: Math.max(1, Math.min(32,
         Math.round(Config.options?.appearance?.screenEdge?.width ?? 10)))
 
@@ -113,12 +114,9 @@ Bar.StyledPopup {
 
     hoverTarget: root.anchorItem
     barAutoHideHoldEnabled: false
-    // ScreenCorners owns this anchor in a tiny bottom-right layer surface.
-    // Its local x/y are therefore near zero; pin the popup to the trailing
-    // tangent edge of the full output instead of interpreting those locals as
-    // output coordinates (which incorrectly placed the body bottom-left).
-    // Default corner mode uses tangentEdgeOverride: "end"
-    tangentEdgeOverride: root.moduleAnchorMode ? "" : "end"
+    // ScreenCorners owns this anchor in a corner layer surface (moduleAnchorMode=false)
+    // and passes cornerTangentEdge from the nearest corner of the placement.
+    tangentEdgeOverride: root.moduleAnchorMode ? "" : root.cornerTangentEdge
     attachmentEdgeOverride: root.cornerAttachmentEdge
     attachmentThicknessOverride: root.cornerAttachmentThickness
     hoverActivates: root.hoverAllowed && root.hoverSessionArmed
@@ -191,7 +189,10 @@ Bar.StyledPopup {
         root.entryBridgeHeld = false
         root.exitGraceHeld = false
         root.keyboardInteraction = false
-        root.hoverSessionArmed = false
+        // Disarm only while the pointer is still on the anchor; external
+        // eviction/dismissal while the pointer is elsewhere must never strand
+        // hoverSessionArmed at false.
+        root.hoverSessionArmed = !root._anchorHovered
         if (contentLoader.item)
             contentLoader.item.clearSearchFocus()
         GlobalStates.setNotificationCenterHoverOutput(root.outputName, false)
@@ -205,6 +206,11 @@ Bar.StyledPopup {
 
     onRequestClose: root.dismissAndDisarm()
 
+    on_AnchorHoveredChanged: {
+        if (!root._anchorHovered && !root.presentationActive)
+            root.hoverSessionArmed = true
+    }
+
     onPopupHoveredChanged: {
         if (root.popupHovered && root.entryBridgeHeld) {
             entryBridgeTimer.stop()
@@ -215,8 +221,12 @@ Bar.StyledPopup {
     onHoverAllowedChanged: {
         if (!hoverAllowed && !explicitForThisOutput) {
             entryBridgeTimer.stop()
+            exitGraceTimer.stop()
             entryBridgeHeld = false
+            exitGraceHeld = false
         }
+        if (hoverAllowed && !root.presentationActive && !root._anchorHovered)
+            root.hoverSessionArmed = true
     }
 
     onHoverLeaseRequestedChanged: {
@@ -227,7 +237,7 @@ Bar.StyledPopup {
             return
         }
 
-        if (root.presentationActive && !root.explicitForThisOutput) {
+        if (root.hoverAllowed && root.presentationActive && !root.explicitForThisOutput) {
             root.exitGraceHeld = true
             exitGraceTimer.restart()
             return

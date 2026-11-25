@@ -118,7 +118,7 @@ def main() -> None:
     require(
         popup,
         "liquidMode: true",
-        "liquidAnimationActive: root.currentTab === 0",
+        "liquidAnimationActive: root.visible",
     )
     if "liquidMode: true" in dashboard:
         raise AssertionError("Dashboard must retain its simpler shared orbital view")

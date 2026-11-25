@@ -98,3 +98,10 @@ window-rule {
     default-column-width {}
     default-window-height {}
 }
+
+// Alis Files: crisp Abyss corner rounding and clean initial geometry.
+window-rule {
+    match app-id=r#"^org\.alis\.Files$"#
+    geometry-corner-radius 16
+    clip-to-geometry true
+}

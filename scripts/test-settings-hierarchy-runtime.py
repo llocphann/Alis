@@ -15,6 +15,7 @@ import QtTest
 import Quickshell
 import qs
 import qs.modules.common
+import qs.modules.common.widgets
 import qs.modules.settings
 import qs.services
 Window {
@@ -47,12 +48,15 @@ Window {
    check(!overlay.visibleNavItems.some(item=>Boolean(item.back || item.groupKey)),"single-level sidebar retained nested folder or back rows")
    clickNavigation("settingsNav_abyss");wait(180)
    check(overlay.overlayCurrentPage===2,"Abyss page changed its numeric route: "+overlay.overlayCurrentPage)
-   clickNavigation("settingsNav_abyss-modules");wait(180)
-   check(overlay.overlayCurrentPage===34,"Bar modules page changed its numeric route: "+overlay.overlayCurrentPage)
-   check(SettingsPageRegistry.navigateToKey("integrations","Calendar Sync"),"integration deep link is unreachable")
-   tryVerify(()=>overlay.pageHost?.currentIndex===38 && overlay.pageHost?.currentItem?.activeSection==="calendar",7000)
+   clickNavigation("settingsNav_system");wait(180)
+   check(overlay.overlayCurrentPage===1,"System page changed its numeric route: "+overlay.overlayCurrentPage)
+   check(SettingsPageRegistry.navigateToKey("services","Search"),"Weather & Search route failed")
+   tryVerify(()=>overlay.pageHost?.currentIndex===7,7000)
+   check(SettingsPageRegistry.navigateToKey("integrations","Nexus"),"integration deep link is unreachable")
+   tryVerify(()=>overlay.pageHost?.currentIndex===38 && overlay.pageHost?.currentItem?.activePlugin==="management" && !overlay.pageHost?.currentItem?.detailOpen,7000)
+   check(!AlisIntergration.spacedRepetitionDemanded && !AlisIntergration.exercisesTrackerDemanded,"visiting Integrations eagerly demanded SR/ET workers")
    check(SettingsPageRegistry.navigateToKey("modules","Modules"),"legacy Modules route is unreachable")
-   tryVerify(()=>overlay.pageHost?.currentIndex===34 && overlay.pageHost?.currentItem?.activeSection==="modules",7000)
+   tryVerify(()=>overlay.pageHost?.currentIndex===2,7000)
    check(SettingsPageRegistry.navigateToKey("modules","panels"),"Shell availability route is unreachable")
    tryVerify(()=>overlay.pageHost?.currentIndex===10 && overlay.pageHost?.currentItem?.settingsTaskNavigator!==null,7000)
    const modulePage=overlay.pageHost.currentItem
@@ -76,9 +80,10 @@ Window {
    // suite. Core navigation must work without activating a missing package.
    check(!AlisIntergration.nexusEnabled && !NexusTheme.enabled && !NexusTheme.busy,
          "missing optional integration activated a worker")
-   overlay.navEditMode=true;wait(100)
-   check(overlay.visibleNavItems.length===overlay.navPageOrder.length,"navigation editor lost full page order")
-   overlay.navEditMode=false;overlay.settingsOpen=false;wait(200)
+   check(!overlay.hasOwnProperty("navEditMode"),"retired Edit Navigation mode remained on SettingsOverlay")
+   check(SettingsLayoutManager.editMode===false,"retired Edit Layout mode was not inert")
+   check(overlay.visibleNavItems.length===overlay.navPageOrder.length,"flat navigation order lost pages")
+   overlay.settingsOpen=false;wait(200)
    const component=Qt.createComponent("settings.qml")
    check(component.status===Component.Ready,"standalone Settings could not compile: "+component.errorString())
    const standalone=component.createObject(null)
@@ -91,14 +96,14 @@ Window {
    const wc=Qt.createComponent("waffleSettings.qml")
    check(wc.status===Component.Ready,"Waffle Settings could not compile: "+wc.errorString())
    const waffle=wc.createObject(null);check(waffle!==null,"Waffle Settings could not open")
-   waffle.currentPage=19
+   waffle.currentPage=17
    tryCompare(Persistent,"ready",true,3000)
    tryCompare(waffle,"_navigationInitialized",true,3000)
-   waffle.currentPage=19
+   waffle.currentPage=17
    tryVerify(()=>find(waffle.contentItem,"waffleIntegration")!==null,5000)
    const integration=find(waffle.contentItem,"waffleIntegration")
-   integration.activateSettingsSearchSection("Calendar Sync")
-   check(integration.settingsPageIndex===19 && integration.activeSection==="calendar","Waffle integration changed old numeric routes")
+   integration.activateSettingsSearchSection("Nexus")
+   check(integration.settingsPageIndex===17 && integration.activePlugin==="management" && !integration.detailOpen,"Waffle integration changed old numeric routes")
    waffle.destroy()
    console.info("SETTINGS_HIERARCHY_NATIVE_PASS pointer-parent child Back deep-link legacy-search edit-order standalone")
   }catch(e){console.error("SETTINGS_HIERARCHY_NATIVE_FAIL",e.message,e.stack)}Qt.quit()}

@@ -45,13 +45,17 @@ ContentPage {
         { displayName: Translation.tr("Compositor blur"), value: "compositor" },
         { displayName: Translation.tr("Off"), value: "off" }
     ]
-    readonly property var areaDescriptors: [
-        { key: "bar", icon: "toast", label: Translation.tr("Bars") },
-        { key: "dock", icon: "dock_to_bottom", label: Translation.tr("Dock") },
-        { key: "panels", icon: "side_navigation", label: Translation.tr("Popups") },
-        { key: "islands", icon: "blur_on", label: Translation.tr("Islands") },
-        { key: "widgets", icon: "widgets", label: Translation.tr("Desktop widgets") }
-    ]
+    readonly property var areaDescriptors: (Config.options?.panelFamily ?? "abyss") === "ii"
+        ? [
+            { key: "bar", icon: "toast", label: Translation.tr("Bars") },
+            { key: "dock", icon: "dock_to_bottom", label: Translation.tr("Dock") },
+            { key: "panels", icon: "side_navigation", label: Translation.tr("Popups") },
+            { key: "widgets", icon: "widgets", label: Translation.tr("Desktop widgets") }
+        ]
+        : [
+            { key: "panels", icon: "side_navigation", label: Translation.tr("Popups") },
+            { key: "widgets", icon: "widgets", label: Translation.tr("Desktop widgets") }
+        ]
 
     SettingsCardSection {
         _preventBentoReparent: true
@@ -138,24 +142,6 @@ ContentPage {
                     checked: Config.options?.performance?.lowPower ?? false
                     onCheckedChanged: Config.setNestedValue("performance.lowPower", checked)
                 }
-                SettingsSwitch {
-                    Layout.fillWidth: true
-                    Layout.preferredWidth: 1
-                    Layout.minimumWidth: 0
-                    buttonIcon: "layers"
-                    text: Translation.tr("Island glass")
-                    checked: Config.options?.appearance?.island?.glass ?? true
-                    onCheckedChanged: Config.setNestedValue("appearance.island.glass", checked)
-                }
-                SettingsSwitch {
-                    Layout.fillWidth: true
-                    Layout.preferredWidth: 1
-                    Layout.minimumWidth: 0
-                    buttonIcon: "flare"
-                    text: Translation.tr("Island edge sheen")
-                    checked: Config.options?.appearance?.island?.sheen ?? true
-                    onCheckedChanged: Config.setNestedValue("appearance.island.sheen", checked)
-                }
             }
         }
     }
@@ -225,15 +211,18 @@ ContentPage {
             GridLayout {
                 id: wallpaperEffectFlags
                 Layout.fillWidth: true
-                columns: Config.options?.panelFamily === "abyss"
-                    ? LayoutPolicy.fittedControlColumns(wallpaperEffectFlags, 3) : (width >= 460 ? 3 : 1)
-                uniformCellWidths: Config.options?.panelFamily !== "abyss" && columns > 1
-                columnSpacing: 12
+                Layout.minimumWidth: 0
+                readonly property bool _showIiRipple: (Config.options?.panelFamily ?? "abyss") === "ii"
+                columns: _showIiRipple
+                    ? (width >= 660 * Appearance.fontSizeScale ? 3 : 1)
+                    : (width >= 460 * Appearance.fontSizeScale ? 2 : 1)
+                uniformCellWidths: columns > 1
+                columnSpacing: 14
                 rowSpacing: 8
 
                 SettingsSwitch {
                     Layout.fillWidth: true
-                    Layout.preferredWidth: Config.options?.panelFamily === "abyss" ? implicitWidth : 1
+                    Layout.preferredWidth: 1
                     Layout.minimumWidth: 0
                     buttonIcon: "blur_on"
                     text: Translation.tr("Blur behind windows")
@@ -243,8 +232,9 @@ ContentPage {
                 }
 
                 SettingsSwitch {
+                    visible: wallpaperEffectFlags._showIiRipple
                     Layout.fillWidth: true
-                    Layout.preferredWidth: Config.options?.panelFamily === "abyss" ? implicitWidth : 1
+                    Layout.preferredWidth: 1
                     Layout.minimumWidth: 0
                     buttonIcon: "water_drop"
                     text: Translation.tr("Wallpaper ripple")
@@ -254,7 +244,7 @@ ContentPage {
 
                 SettingsSwitch {
                     Layout.fillWidth: true
-                    Layout.preferredWidth: Config.options?.panelFamily === "abyss" ? implicitWidth : 1
+                    Layout.preferredWidth: 1
                     Layout.minimumWidth: 0
                     buttonIcon: "opacity"
                     text: Translation.tr("Transparency")
@@ -269,16 +259,16 @@ ContentPage {
             GridLayout {
                 id: wallpaperEffectValues
                 Layout.fillWidth: true
-                columns: Config.options?.panelFamily === "abyss"
-                    ? LayoutPolicy.fittedControlColumns(wallpaperEffectValues, 3) : (width >= 520 ? 3 : 1)
-                uniformCellWidths: Config.options?.panelFamily !== "abyss" && columns > 1
-                columnSpacing: 12
+                Layout.minimumWidth: 0
+                columns: width >= 720 * Appearance.fontSizeScale ? 3 : 1
+                uniformCellWidths: columns > 1
+                columnSpacing: 14
                 rowSpacing: 8
 
                 ConfigSpinBox {
                     enabled: Config.options?.background?.effects?.enableBlur ?? false
                     Layout.fillWidth: true
-                    Layout.preferredWidth: Config.options?.panelFamily === "abyss" ? implicitWidth : 1
+                    Layout.preferredWidth: 1
                     Layout.minimumWidth: 0
                     icon: "blur_medium"
                     text: Translation.tr("Blur radius")
@@ -291,7 +281,7 @@ ContentPage {
 
                 ConfigSpinBox {
                     Layout.fillWidth: true
-                    Layout.preferredWidth: Config.options?.panelFamily === "abyss" ? implicitWidth : 1
+                    Layout.preferredWidth: 1
                     Layout.minimumWidth: 0
                     icon: "brightness_6"
                     text: Translation.tr("Dim (%)")
@@ -305,7 +295,7 @@ ContentPage {
 
                 ConfigSpinBox {
                     Layout.fillWidth: true
-                    Layout.preferredWidth: Config.options?.panelFamily === "abyss" ? implicitWidth : 1
+                    Layout.preferredWidth: 1
                     Layout.minimumWidth: 0
                     icon: "brightness_low"
                     text: Translation.tr("Window dim (%)")
@@ -340,7 +330,7 @@ ContentPage {
             GridLayout {
                 Layout.fillWidth: true
                 visible: Config.options?.background?.backdrop?.enable ?? true
-                columns: width >= 440 ? 2 : 1
+                columns: (!(Config.options?.background?.backdrop?.hideWallpaper ?? false) && width >= 440) ? 2 : 1
                 uniformCellWidths: columns === 2
                 columnSpacing: 12
                 rowSpacing: 8
@@ -444,12 +434,14 @@ ContentPage {
         SettingsGroup {
             GridLayout {
                 Layout.fillWidth: true
-                columns: width >= 440 ? 2 : 1
+                readonly property bool _showIiDesat: (Config.options?.panelFamily ?? "abyss") === "ii"
+                columns: (_showIiDesat && width >= 440) ? 2 : 1
                 uniformCellWidths: columns === 2
                 columnSpacing: 12
                 rowSpacing: 8
 
                 SettingsSwitch {
+                    visible: parent._showIiDesat
                     Layout.fillWidth: true
                     Layout.preferredWidth: 1
                     Layout.minimumWidth: 0

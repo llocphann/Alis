@@ -261,8 +261,9 @@ Open or toggle the settings window. GUI config so you don't have to edit JSON by
 
 | Function | Description |
 |----------|-------------|
-| `open` | Open the settings window |
-| `toggle` | Toggle settings (overlay mode toggles, window mode opens) |
+| `open` | Open the settings window (or close an already open Settings window) |
+| `openOverlay` | Open the settings overlay explicitly |
+| `toggle` | Toggle settings (overlay mode toggles, window mode opens/closes) |
 
 ```kdl
 bind "Super+Comma" { spawn "alis" "settings"; }
@@ -1117,3 +1118,18 @@ Optional Exercises Tracker integration on the Home Dashboard.
 | Function | Description |
 |----------|-------------|
 | `open` | Open the Exercises Tracker view on the Home Dashboard |
+
+---
+
+### alis-files
+
+Optional Alis Files native file manager plugin (overlay or window mode).
+
+| Function | Description |
+|----------|-------------|
+| `toggle` | Toggle the Alis Files workspace |
+| `open` | Open the Alis Files workspace in its configured presentation mode |
+| `openOverlay` | Open the Alis Files workspace in fullscreen overlay mode |
+| `openWindow` | Open the Alis Files workspace in native GTK4 window mode |
+| `close` | Close the Alis Files workspace |
+| `openPath(path)` | Open Alis Files directly at `path` |

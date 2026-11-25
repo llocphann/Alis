@@ -20,7 +20,7 @@ function week(value, firstDay) {
     start.setDate(start.getDate() - (start.getDay() - Number(firstDay || 0) + 7) % 7);
     return Array.from({length:7}, function(_, index) {
         var date = addDays(start, index), end = addDays(date, 1);
-        return {date:date, end:end, minutes:(end-date)/minute, timed:[], allDay:[], overflow:0};
+        return {date:date, end:end, minutes:(end-date)/minute, timed:[], allDay:[], holidays:[], holidayCount:0, overflow:0};
     });
 }
 function civilIndex(value) {
@@ -170,10 +170,11 @@ function project(local, external, value, firstDay, futureSchedule) {
                         var bucket=event.allDay ? day.allDay : day.timed;
                         if (bucket.length>=512) {day.overflow++;return;}
                         var from=Math.max(start,day.date),to=Math.min(finish,day.end);
+                        var isHol=event.isHoliday===true || event.kind==="holiday";
                         bucket.push({key:pair[1]+":"+String(event.id || event.uid || "")
                                 +":"+slotIndex+":"+start.getTime()+":"+index,
                             event:event,source:pair[1],occurrenceIndex:slotIndex,
-                            virtual:!saved,
+                            virtual:!saved,isHoliday:isHol,
                             // The original projected date is an immutable
                             // exception key even after this instance moves.
                             plannerOriginalStartIso:saved ? "" : occurrence.toISOString(),
@@ -207,6 +208,13 @@ function project(local, external, value, firstDay, futureSchedule) {
             });
         });
     });
-    days.forEach(function(day) {pack(day.timed);});
+    days.forEach(function(day) {
+        pack(day.timed);
+        day.allDay.sort(function(a,b) {
+            return (b.isHoliday ? 1 : 0) - (a.isHoliday ? 1 : 0);
+        });
+        day.holidays = day.allDay.filter(function(item) { return item.isHoliday === true; });
+        day.holidayCount = day.holidays.length;
+    });
     return days;
 }

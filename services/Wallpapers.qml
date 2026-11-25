@@ -53,6 +53,26 @@ Singleton {
     property string internalPreviewPath: ""
     property string internalPreviewMonitor: ""
     readonly property bool internalPreviewActive: internalPreviewPath.length > 0
+    property var activeTransitionMeta: ({
+        source: "",
+        type: "",
+        direction: "right",
+        originX: 0.5,
+        originY: 0.5,
+        angleRad: 0.0,
+        wallfxActive: false,
+        wallfxMode: 0,
+        durationMs: 800,
+        seq: 0
+    })
+
+    function publishTransitionMeta(meta): void {
+        if (!meta || typeof meta !== "object")
+            return
+        root.activeTransitionMeta = Object.assign({}, root.activeTransitionMeta, meta, {
+            seq: (root.activeTransitionMeta?.seq ?? 0) + 1
+        })
+    }
 
     function previewWallpaper(path: string, monitorName = ""): void {
         const normalizedPath = FileUtils.trimFileProtocol(String(path ?? ""))
@@ -403,7 +423,7 @@ Singleton {
     property bool _knownThumbnailsPreloaded: false
     readonly property var _libraryScanCache: ({ order: [], entries: {} })
 
-    function getCachedLibraryScan(signature: string) {
+    function getCachedLibraryScan(signature: string): var {
         const sig = String(signature ?? "")
         if (!sig)
             return null
@@ -423,6 +443,30 @@ Singleton {
             }
         }
         cache.entries[sig] = payload
+    }
+
+    readonly property var _colorTagsCache: ({ order: [], entries: {} })
+
+    function getCachedColorTags(signature: string): var {
+        const sig = String(signature ?? "")
+        if (!sig)
+            return null
+        return root._colorTagsCache.entries[sig] ?? null
+    }
+
+    function setCachedColorTags(signature: string, tags): void {
+        const sig = String(signature ?? "")
+        if (!sig || !tags || typeof tags !== "object")
+            return
+        const cache = root._colorTagsCache
+        if (!cache.entries[sig]) {
+            cache.order.push(sig)
+            while (cache.order.length > 4) {
+                const oldest = cache.order.shift()
+                delete cache.entries[oldest]
+            }
+        }
+        cache.entries[sig] = tags
     }
 
     signal changed()

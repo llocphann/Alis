@@ -1,4 +1,5 @@
 mod vkeyboard;
+mod vpointer;
 
 use std::collections::{HashMap, HashSet};
 use std::ffi::CString;
@@ -702,6 +703,15 @@ fn main() {
                     Ok(()) => std::process::exit(0),
                     Err(err) => {
                         eprintln!("alis-inputd vkeyboard-session failed: {err:#}");
+                        std::process::exit(1);
+                    }
+                }
+            }
+            "--pointer" | "pointer" => {
+                match vpointer::run_pointer_command(&raw[2..]) {
+                    Ok(()) => std::process::exit(0),
+                    Err(err) => {
+                        eprintln!("alis-inputd pointer failed: {err:#}");
                         std::process::exit(1);
                     }
                 }

@@ -62,7 +62,9 @@ PathView {
                 }
             }
             if (color) {
-                const tags = tagMap[entry.path] ?? []
+                const tags = tagMap[entry.path]
+                    ?? tagMap[String(entry.path ?? "").replace(/\/+/g, "/")]
+                    ?? []
                 if (!Array.isArray(tags) || !tags.includes(color))
                     return false
             }

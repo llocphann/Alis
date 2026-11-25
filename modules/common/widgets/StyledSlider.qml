@@ -47,31 +47,21 @@ Slider {
     property real unsharpenRadius: Appearance.rounding.unsharpen
     property string sliderLayoutId: ""
     property bool _inSettingsPage: false
-    readonly property var _savedSliderConfig: (root._inSettingsPage && root.sliderLayoutId.length > 0 && SettingsLayoutManager.hasAnySliderCustomizations)
-        ? SettingsLayoutManager.getSliderConfig(root.sliderLayoutId)
-        : null
-    readonly property string _savedOrientation: root._savedSliderConfig?.orientation ?? ""
-    property real _previewLength: -1
-    property real _previewThickness: -1
-    readonly property real customLength: root._previewLength >= 0 ? root._previewLength : (root._savedSliderConfig?.length ?? 0)
-    readonly property real customThickness: root._previewThickness >= 0 ? root._previewThickness : (root._savedSliderConfig?.thickness ?? 0)
-    readonly property bool hasCustomSliderLayout: root._savedOrientation === "vertical"
-        || root.customLength > 0
-        || root.customThickness > 0
+    readonly property real customLength: 0
+    readonly property real customThickness: 0
+    readonly property bool hasCustomSliderLayout: false
 
-    orientation: root._savedOrientation === "vertical" ? Qt.Vertical : Qt.Horizontal
+    orientation: Qt.Horizontal
     readonly property bool isVertical: root.orientation === Qt.Vertical
 
-    property real trackWidth: abyssStyle ? 4 : configuration
-    readonly property real effectiveTrackWidth: root.customThickness > 0
-        ? root.customThickness
-        : root.trackWidth
-    property real trackRadius: abyssStyle && root.customThickness <= 0 ? 2 : effectiveTrackWidth >= StyledSlider.Configuration.XL ? 21
+    property real trackWidth: abyssStyle ? 5 : configuration
+    readonly property real effectiveTrackWidth: root.trackWidth
+    property real trackRadius: abyssStyle ? 2.5 : effectiveTrackWidth >= StyledSlider.Configuration.XL ? 21
         : effectiveTrackWidth >= StyledSlider.Configuration.L ? 12
         : effectiveTrackWidth >= StyledSlider.Configuration.M ? 9
         : effectiveTrackWidth >= StyledSlider.Configuration.S ? 6
         : Math.max(2, effectiveTrackWidth / 2)
-    property real handleHeight: (abyssStyle && root.customThickness <= 0) ? handleWidth : (configuration === StyledSlider.Configuration.Wavy) ? 24 : Math.max(33, effectiveTrackWidth + 9)
+    property real handleHeight: abyssStyle ? handleWidth : (configuration === StyledSlider.Configuration.Wavy) ? 24 : Math.max(33, effectiveTrackWidth + 9)
     property real handleWidth: root.pressed ? handlePressedWidth : handleDefaultWidth
     property real handleMargins: abyssStyle ? 8 : 4
     property real trackDotSize: 3
@@ -95,12 +85,12 @@ Slider {
     readonly property bool usesWaveTrack: !abyssStyle && (wavy || configuration === StyledSlider.Configuration.Wavy)
 
     implicitWidth: root.isVertical
-        ? Math.max(36, root.effectiveTrackWidth + 16, root.handleHeight + 8, (root._inSettingsPage && SettingsLayoutManager.editMode && SettingsLayoutManager.innerEditMode) ? 88 : 36)
-        : (root.customLength > 0 ? root.customLength : Math.round(190 * Appearance.fontSizeScale))
+        ? Math.max(36, root.effectiveTrackWidth + 16, root.handleHeight + 8)
+        : Math.round(190 * Appearance.fontSizeScale)
     implicitHeight: root.isVertical
-        ? (root.customLength > 0 ? root.customLength : 132)
-        : (abyssStyle && root.customThickness <= 0
-            ? 36
+        ? 132
+        : (abyssStyle
+            ? 32
             : Math.max((background?.implicitHeight ?? 0) + topPadding + bottomPadding, (handle?.implicitHeight ?? 0) + topPadding + bottomPadding))
     opacity: enabled ? 1 : .4
 
@@ -463,286 +453,6 @@ Slider {
                 family: Appearance.font.family.numbers
                 variableAxes: Appearance.font.variableAxes.numbers
                 features: { "tnum": 1 }
-            }
-        }
-    }
-
-    // Interactive Edit Mode overlay for rotating & resizing sliders inside Settings modules
-    Loader {
-        id: sliderEditOverlayLoader
-        anchors.fill: parent
-        z: 30
-        active: root._inSettingsPage
-            && root.sliderLayoutId.length > 0
-            && SettingsLayoutManager.editMode
-            && SettingsLayoutManager.innerEditMode
-        sourceComponent: Item {
-            id: sliderEditOverlay
-
-            property real startLength: 0
-            property real startThickness: 0
-
-            HoverHandler {
-                id: sliderEditHover
-            }
-
-            readonly property bool isSliderControlsActive: sliderEditHover.hovered
-                || sliderPillHover.hovered
-                || sliderResizeDrag.pressed
-                || rotateMouse.containsMouse
-                || thickMouse.containsMouse
-                || resetSliderMouse.containsMouse
-
-            Rectangle {
-                anchors.fill: parent
-                radius: Appearance.rounding.small
-                color: sliderResizeDrag.pressed
-                    ? Qt.alpha(Appearance.colors.colPrimary, 0.14)
-                    : (sliderEditOverlay.isSliderControlsActive ? Qt.alpha(Appearance.colors.colPrimary, 0.06) : "transparent")
-                border.width: (sliderEditOverlay.isSliderControlsActive || root.hasCustomSliderLayout) ? 1 : 0
-                border.color: Qt.alpha(Appearance.colors.colPrimary, sliderResizeDrag.pressed || root.hasCustomSliderLayout ? 0.75 : 0.38)
-            }
-
-            // Floating compact toolbar pill on the slider: Rotate (H/V), Thickness cycle, Reset, Size drag handle
-            Rectangle {
-                id: sliderControlPill
-                objectName: "sliderControlPill"
-                visible: sliderEditOverlay.isSliderControlsActive
-                x: (root.isVertical || parent.width < width) ? 0 : Math.max(0, parent.width - width)
-                y: -4
-                height: 22
-                width: pillRow.implicitWidth + 8
-                radius: 11
-                color: Appearance.colors.colLayer3
-                border.width: 1
-                border.color: Qt.alpha(Appearance.colors.colPrimary, 0.55)
-                z: 10
-
-                HoverHandler {
-                    id: sliderPillHover
-                }
-
-                Row {
-                    id: pillRow
-                    anchors.centerIn: parent
-                    spacing: 2
-
-                    // Rotate Horizontal <-> Vertical
-                    Rectangle {
-                        width: 18
-                        height: 18
-                        radius: 9
-                        color: rotateMouse.containsMouse
-                            ? Qt.alpha(Appearance.colors.colPrimary, 0.22)
-                            : (root.isVertical ? Qt.alpha(Appearance.colors.colPrimary, 0.16) : "transparent")
-
-                        MaterialSymbol {
-                            anchors.centerIn: parent
-                            text: root.isVertical ? "swap_vert" : "swap_horiz"
-                            iconSize: 13
-                            color: Appearance.colors.colPrimary
-                        }
-
-                        MouseArea {
-                            id: rotateMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: SettingsLayoutManager.toggleSliderOrientation(root.sliderLayoutId)
-                        }
-
-                        StyledToolTip {
-                            extraVisibleCondition: rotateMouse.containsMouse
-                            text: root.isVertical
-                                ? Translation.tr("Rotate slider to Horizontal")
-                                : Translation.tr("Rotate slider to Vertical")
-                        }
-                    }
-
-                    // Cycle thickness (6 -> 10 -> 16 -> 24 -> 34 -> default)
-                    Rectangle {
-                        width: 18
-                        height: 18
-                        radius: 9
-                        color: thickMouse.containsMouse
-                            ? Qt.alpha(Appearance.colors.colPrimary, 0.22)
-                            : (root.customThickness > 0 ? Qt.alpha(Appearance.colors.colPrimary, 0.16) : "transparent")
-
-                        MaterialSymbol {
-                            anchors.centerIn: parent
-                            text: "line_weight"
-                            iconSize: 12
-                            color: Appearance.colors.colOnLayer2
-                        }
-
-                        MouseArea {
-                            id: thickMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                const steps = [0, 6, 10, 16, 24, 34]
-                                let nextT = 8
-                                for (let i = 0; i < steps.length; i++) {
-                                    if (Math.abs(root.customThickness - steps[i]) <= 1) {
-                                        nextT = steps[(i + 1) % steps.length]
-                                        break
-                                    }
-                                }
-                                SettingsLayoutManager.resizeSlider(root.sliderLayoutId, root.customLength, nextT, "")
-                            }
-                        }
-
-                        StyledToolTip {
-                            extraVisibleCondition: thickMouse.containsMouse
-                            text: Translation.tr("Cycle slider track thickness")
-                        }
-                    }
-
-                    // Reset slider customization
-                    Rectangle {
-                        visible: root.hasCustomSliderLayout
-                        width: 18
-                        height: 18
-                        radius: 9
-                        color: resetSliderMouse.containsMouse
-                            ? Qt.alpha(Appearance.colors.colError, 0.2)
-                            : "transparent"
-
-                        MaterialSymbol {
-                            anchors.centerIn: parent
-                            text: "restart_alt"
-                            iconSize: 12
-                            color: Appearance.colors.colSubtext
-                        }
-
-                        MouseArea {
-                            id: resetSliderMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: SettingsLayoutManager.resetSlider(root.sliderLayoutId)
-                        }
-
-                        StyledToolTip {
-                            extraVisibleCondition: resetSliderMouse.containsMouse
-                            text: Translation.tr("Reset slider orientation and dimensions")
-                        }
-                    }
-
-                    // Drag handle for resizing slider length (and perpendicular thickness)
-                    Rectangle {
-                        width: 18
-                        height: 18
-                        radius: 9
-                        color: sliderResizeDrag.pressed || sliderResizeDrag.containsMouse
-                            ? Qt.alpha(Appearance.colors.colPrimary, 0.28)
-                            : Qt.alpha(Appearance.colors.colPrimary, 0.12)
-
-                        MaterialSymbol {
-                            anchors.centerIn: parent
-                            text: "open_in_full"
-                            iconSize: 11
-                            color: Appearance.colors.colPrimary
-                        }
-
-                        MouseArea {
-                            id: sliderResizeDrag
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            preventStealing: true
-                            cursorShape: root.isVertical ? Qt.SizeVerCursor : Qt.SizeHorCursor
-
-                            property real pressSceneX: 0
-                            property real pressSceneY: 0
-                            property bool resizingSlider: false
-
-                            onPressed: mouse => {
-                                const pt = sliderResizeDrag.mapToItem(null, mouse.x, mouse.y)
-                                pressSceneX = pt.x
-                                pressSceneY = pt.y
-                                sliderEditOverlay.startLength = root.customLength > 0
-                                    ? root.customLength
-                                    : (root.isVertical ? root.height : root.width)
-                                sliderEditOverlay.startThickness = root.effectiveTrackWidth
-                                resizingSlider = true
-                            }
-
-                            onPositionChanged: mouse => {
-                                if (!pressed || !resizingSlider)
-                                    return
-                                const pt = sliderResizeDrag.mapToItem(null, mouse.x, mouse.y)
-                                const dx = pt.x - pressSceneX
-                                const dy = pt.y - pressSceneY
-                                const nextLen = root.isVertical
-                                    ? Math.max(56, Math.min(640, Math.round(sliderEditOverlay.startLength + dy)))
-                                    : Math.max(56, Math.min(640, Math.round(sliderEditOverlay.startLength + dx)))
-                                const perpDelta = root.isVertical ? dx : -dy
-                                const nextThick = Math.abs(perpDelta) > 8
-                                    ? Math.max(4, Math.min(48, Math.round(sliderEditOverlay.startThickness + perpDelta * 0.4)))
-                                    : (root._savedSliderConfig?.thickness ?? 0)
-                                root._previewLength = nextLen
-                                root._previewThickness = nextThick
-                            }
-
-                            onReleased: {
-                                const wasResizing = resizingSlider
-                                resizingSlider = false
-                                if (wasResizing && (root._previewLength >= 0 || root._previewThickness >= 0)) {
-                                    const finalLen = root._previewLength >= 0 ? root._previewLength : root.customLength
-                                    const finalThick = root._previewThickness >= 0 ? root._previewThickness : root.customThickness
-                                    root._previewLength = -1
-                                    root._previewThickness = -1
-                                    SettingsLayoutManager.resizeSlider(root.sliderLayoutId, finalLen, finalThick, "")
-                                } else {
-                                    root._previewLength = -1
-                                    root._previewThickness = -1
-                                }
-                            }
-
-                            onCanceled: {
-                                resizingSlider = false
-                                root._previewLength = -1
-                                root._previewThickness = -1
-                            }
-
-                            onDoubleClicked: {
-                                resizingSlider = false
-                                root._previewLength = -1
-                                root._previewThickness = -1
-                                SettingsLayoutManager.resetSlider(root.sliderLayoutId)
-                            }
-                        }
-
-                        StyledToolTip {
-                            extraVisibleCondition: sliderResizeDrag.containsMouse && !sliderResizeDrag.pressed
-                            text: Translation.tr("Drag to resize slider length and thickness")
-                        }
-                    }
-                }
-            }
-
-            // Live dimension badge while dragging or hovered when customized
-            Rectangle {
-                visible: sliderEditOverlay.isSliderControlsActive && (sliderResizeDrag.pressed || root.hasCustomSliderLayout)
-                anchors.left: parent.left
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: -4
-                height: 16
-                width: dimText.implicitWidth + 8
-                radius: 8
-                color: Appearance.colors.colLayer3
-                border.width: 1
-                border.color: Qt.alpha(Appearance.colors.colPrimary, 0.45)
-
-                StyledText {
-                    id: dimText
-                    anchors.centerIn: parent
-                    text: `${Math.round(root.isVertical ? root.height : root.width)}×${Math.round(root.effectiveTrackWidth)} ${root.isVertical ? "V" : "H"}`
-                    font.pixelSize: 9
-                    font.family: Appearance.font.family.monospace
-                    color: Appearance.colors.colPrimary
-                }
             }
         }
     }

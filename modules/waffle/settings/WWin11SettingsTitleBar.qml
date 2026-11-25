@@ -15,10 +15,8 @@ Item {
     property bool canGoBack: false
     property bool embedded: false
     property bool isOverlay: true
-    property string editButtonObjectName: ""
 
     signal backRequested()
-    signal toggleEditLayout()
     signal switchModeRequested()
     signal lockRequested()
     signal closeRequested()
@@ -79,33 +77,6 @@ Item {
 
         Item {
             Layout.fillWidth: true
-        }
-
-        Waffle.WBorderlessButton {
-            objectName: root.editButtonObjectName
-            implicitWidth: Waffle.Looks.dp(34)
-            implicitHeight: Waffle.Looks.dp(30)
-            Layout.alignment: Qt.AlignVCenter
-            checked: SettingsLayoutManager.editMode
-            onClicked: root.toggleEditLayout()
-
-            contentItem: Item {
-                Waffle.FluentIcon {
-                    anchors.centerIn: parent
-                    monochrome: true
-                    icon: SettingsLayoutManager.editMode ? "checkmark" : "options"
-                    implicitSize: Waffle.Looks.dp(15)
-                    color: SettingsLayoutManager.editMode
-                        ? Waffle.Looks.colors.accentFg
-                        : SettingsMaterialPreset.textColor
-                }
-            }
-
-            Waffle.WToolTip {
-                text: SettingsLayoutManager.editMode
-                    ? Translation.tr("Finish editing Settings layout")
-                    : Translation.tr("Edit Settings layout & cards")
-            }
         }
 
         Waffle.WBorderlessButton {

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from contextlib import nullcontext
+import importlib.util
 import json
 import os
 import struct
@@ -13,6 +14,7 @@ from pathlib import Path
 from native_test_session import private_wayland, run_qs
 
 ROOT = Path(__file__).resolve().parents[1]
+INTERGRATION_ROOT = ROOT.parent / "Alis-Intergration"
 
 QML = r'''
 pragma ComponentBehavior: Bound
@@ -65,14 +67,19 @@ Window {
         function run() {
             try {
                 tryCompare(Config, "ready", true, 6000);
+                tryCompare(AlisIntergration, "initialProbeDone", true, 6000);
+                AlisIntergration.demandSpacedRepetition();
+                tryCompare(AlisIntergration, "spacedRepetitionEnabled", true, 6000);
                 tryCompare(SpacedRepetition, "ready", true, 6000);
+                const sr = AlisIntergration.spacedRepetition;
+                check(!!sr && SpacedRepetition.available && SpacedRepetition.enabled, "SpacedRepetition proxy not bound");
 
                 if (Quickshell.env("SR_RUNTIME_ACTION") === "restart") {
-                    check(SpacedRepetition.cards.some(c => c.term === "Herausforderung" && c.gender === "die" && c.cefrLevel === "B1"),
+                    check(sr.cards.some(c => c.term === "Herausforderung" && c.gender === "die" && c.cefrLevel === "B1"),
                         "Added German vocabulary card did not survive restart");
-                    check(SpacedRepetition.cards.some(c => c.term === "quintessential" && c.cefrLevel === "C2"),
+                    check(sr.cards.some(c => c.term === "quintessential" && c.cefrLevel === "C2"),
                         "Bulk-imported C2 English card did not survive restart");
-                    check(SpacedRepetition.todayReviewedCount >= 1,
+                    check(sr.todayReviewedCount >= 1,
                         "Today reviewed count did not survive restart");
                     console.info("SR_RUNTIME_RESTART_PASS", checks);
                     Qt.quit();
@@ -93,12 +100,12 @@ Window {
 
                 const srView = findChild(dashboard, "dashboardSpacedRepetition");
                 check(!!srView && srView.visible, "DashboardSpacedRepetition view did not mount");
-                check(SpacedRepetition.totalCount >= 86, "Starter cards + 78 Unit 01-04 vocabulary cards were not seeded");
-                check(SpacedRepetition.cards.filter(c => (c.deck || "").startsWith("Unit ")).length === 0,
+                check(sr.totalCount >= 86, "Starter cards + 78 Unit 01-04 vocabulary cards were not seeded");
+                check(sr.cards.filter(c => (c.deck || "").startsWith("Unit ")).length === 0,
                     "No card should retain 'Unit 01..04' deck; all should be synchronized to 'English Vocabulary'");
-                check(SpacedRepetition.cards.filter(c => String(c.id || "").startsWith("sr-unit") && c.deck === "English Vocabulary" && (c.definitionEn || "").length > 0 && (c.meaningVi || "").length > 0 && c.reps === 0 && c.interval === 0 && c.state === "new").length === 78,
+                check(sr.cards.filter(c => String(c.id || "").startsWith("sr-unit") && c.deck === "English Vocabulary" && (c.definitionEn || "").length > 0 && (c.meaningVi || "").length > 0 && c.reps === 0 && c.interval === 0 && c.state === "new").length === 78,
                     "All 78 imported vocabulary cards must be under 'English Vocabulary' with both English definitionEn + Vietnamese meaningVi and fresh review state");
-                check(SpacedRepetition.hasActiveCard, "Study queue should have an active card");
+                check(sr.hasActiveCard, "Study queue should have an active card");
 
                 // 0a. Verify Reverse Flashcard & Reverse Multiple Choice are removed, and Smart Mix starts in an active mode (not Flashcard)
                 check(findChild(srView, "srStudyMode-reverse") === null && findChild(srView, "srStudyMode-rmc") === null,
@@ -109,8 +116,8 @@ Window {
                     && !!findChild(srView, "srStudyMode-cloze")
                     && !!findChild(srView, "srStudyMode-flashcard"),
                     "Smart Mix, Matching, Multiple Choice, Cloze Reading, and Flashcard mode pills must exist");
-                check(SpacedRepetition.smartMixEnabled === true && ["matching", "mc", "cloze"].includes(SpacedRepetition.studyMode),
-                    "When multiple cards are due today, Smart Mix must select one of [matching, mc, cloze], keeping flashcard as last resort; got: " + SpacedRepetition.studyMode);
+                check(sr.smartMixEnabled === true && ["matching", "mc", "cloze"].includes(sr.studyMode),
+                    "When multiple cards are due today, Smart Mix must select one of [matching, mc, cloze], keeping flashcard as last resort; got: " + sr.studyMode);
 
                 // 0b. Verify Analytics column inner cards are darker than colSurfaceElevated, >= Analytics column luminance, and bound to Appearance.colors
                 const analyticsCol = findChild(srView, "srStudyTrackerAnalyticsColumn");
@@ -140,8 +147,8 @@ Window {
                 wait(20);
 
                 // 0c. Verify Matching Mode (2 columns: 5 words on left, 6 definitions on right with 1 distractor)
-                SpacedRepetition.smartMixEnabled = false;
-                SpacedRepetition.studyMode = "matching";
+                sr.smartMixEnabled = false;
+                sr.studyMode = "matching";
                 srView.resetCardInteraction(true);
                 wait(60);
                 const matchingBoard = findChild(srView, "srMatchingBoard");
@@ -164,19 +171,19 @@ Window {
                     `Matching mode must leave a middle corridor >= 60px for connecting lines, got ${matchingHorizontalGap}px`);
 
                 // Verify changing filter (CEFR C1) while in Matching mode immediately rebuilds the Matching board
-                SpacedRepetition.selectedCefrLevel = "C1";
+                sr.selectedCefrLevel = "C1";
                 wait(40);
                 check(srView.matchingLeftWords.length === 5 && srView.matchingLeftWords.filter(w => w.inQueue).every(w => w.cefrLevel === "C1"),
                     "Selecting CEFR C1 filter in Matching mode must rebuild the board with C1 due cards");
 
                 // Verify selecting an empty filter (CEFR A1, 0 cards) in Matching mode clears the board and hides showStudyArenaCard
-                SpacedRepetition.selectedCefrLevel = "A1";
+                sr.selectedCefrLevel = "A1";
                 wait(40);
                 check(srView.matchingLeftWords.length === 0 && srView.showStudyArenaCard === false,
                     "Selecting empty filter (A1) in Matching mode must clear matchingLeftWords and hide showStudyArenaCard so caught-up screen appears");
 
                 // Restore all filter in Matching mode
-                SpacedRepetition.selectedCefrLevel = "all";
+                sr.selectedCefrLevel = "all";
                 wait(40);
                 check(srView.matchingLeftWords.length === 5 && srView.showStudyArenaCard === true,
                     "Restoring filter in Matching mode must rebuild the 5-word Matching board");
@@ -195,11 +202,11 @@ Window {
                 mouseClick(findChild(srView, "srMatchingLeftWord-0"));
                 mouseClick(findChild(srView, "srMatchingRightDef-" + rightIdx0));
                 wait(50);
-                check(srView.matchingMatchedCount === 1 && SpacedRepetition.todayReviewedCount === 1 && matchingLinesCanvas.matchedLinesCount === 1,
+                check(srView.matchingMatchedCount === 1 && sr.todayReviewedCount === 1 && matchingLinesCanvas.matchedLinesCount === 1,
                     "Matching 1 word must increment matchingMatchedCount, todayReviewedCount, and matchedLinesCount");
                 mouseClick(findChild(srView, "srUndoButton"));
                 wait(50);
-                check(SpacedRepetition.todayReviewedCount === 0 && srView.matchingMatchedCount === 0 && srView.matchingLeftWords.every(w => !w.matched) && matchingLinesCanvas.matchedLinesCount === 0,
+                check(sr.todayReviewedCount === 0 && srView.matchingMatchedCount === 0 && srView.matchingLeftWords.every(w => !w.matched) && matchingLinesCanvas.matchedLinesCount === 0,
                     "Clicking srUndoButton in Matching mode must undo the review and reset the Matching board");
 
                 for (let li = 0; li < 5; li++) {
@@ -230,25 +237,25 @@ Window {
                     "Matching all 5 words must mark matchingRoundComplete === true");
                 check(srView.matchingRightDefs.filter(d => !d.matched && d.isDistractor).length === 1,
                     "After matching all 5 words, only the 1 distractor definition should remain unmatched");
-                tryCompare(SpacedRepetition, "todayReviewedCount", 5, 2000);
+                tryCompare(sr, "todayReviewedCount", 5, 2000);
                 const matchingContBtn = findChild(srView, "srMatchingContinueButton");
                 check(!!matchingContBtn && matchingContBtn.visible, "Matching continue button must appear when round completes");
                 // Undo the 5 matching reviews so subsequent tests start from clean todayReviewedCount === 0
                 for (let u = 0; u < 5; u++) {
-                    SpacedRepetition.undoLastReview();
+                    sr.undoLastReview();
                 }
-                tryCompare(SpacedRepetition, "todayReviewedCount", 0, 2000);
+                tryCompare(sr, "todayReviewedCount", 0, 2000);
 
                 // 1. Reveal & Rate & Undo flow (in Flashcard mode)
-                SpacedRepetition.smartMixEnabled = false;
-                SpacedRepetition.studyMode = "flashcard";
+                sr.smartMixEnabled = false;
+                sr.studyMode = "flashcard";
                 srView.resetCardInteraction(true);
                 wait(40);
-                const firstCardId = SpacedRepetition.currentCard.id;
+                const firstCardId = sr.currentCard.id;
                 const revealBtn = findChild(srView, "srRevealButton");
                 check(!!revealBtn && revealBtn.visible, "Reveal button not visible");
                 mouseClick(revealBtn);
-                tryCompare(SpacedRepetition, "cardRevealed", true, 2000);
+                tryCompare(sr, "cardRevealed", true, 2000);
                 const studyMorphStrip = findChild(srView, "srStudyMorphologyStrip");
                 const studyMeaningVi = findChild(srView, "srStudyCardMeaningVi");
                 const studyAnswerEn = findChild(srView, "srCardAnswerText");
@@ -277,22 +284,22 @@ Window {
                 const rateGoodBtn = findChild(srView, "srRateGood");
                 check(!!rateGoodBtn && rateGoodBtn.visible, "Rate Good button not visible after reveal");
                 mouseClick(rateGoodBtn);
-                tryVerify(() => SpacedRepetition.todayReviewedCount >= 1, 2000);
-                check(SpacedRepetition.canUndoReview, "Undo stack should be populated after rating");
+                tryVerify(() => sr.todayReviewedCount >= 1, 2000);
+                check(sr.canUndoReview, "Undo stack should be populated after rating");
 
                 const undoBtn = findChild(srView, "srUndoButton");
                 check(!!undoBtn && undoBtn.enabled, "Undo button should be enabled");
                 mouseClick(undoBtn);
-                tryCompare(SpacedRepetition, "todayReviewedCount", 0, 2000);
-                check(SpacedRepetition.currentCard.id === firstCardId, "Undo did not restore previous active card");
+                tryCompare(sr, "todayReviewedCount", 0, 2000);
+                check(sr.currentCard.id === firstCardId, "Undo did not restore previous active card");
 
                 // Rate again so we persist 1 review to disk
-                SpacedRepetition.revealCard();
-                SpacedRepetition.submitRating("good");
-                tryCompare(SpacedRepetition, "todayReviewedCount", 1, 2000);
+                sr.revealCard();
+                sr.submitRating("good");
+                tryCompare(sr, "todayReviewedCount", 1, 2000);
 
                 // Verify Cloze mode target check against {{c1::...}} target and prefix guard
-                SpacedRepetition.studyMode = "cloze";
+                sr.studyMode = "cloze";
                 srView.resetCardInteraction();
                 wait(40);
                 const clozeInput = findChild(srView, "srClozeInput");
@@ -300,7 +307,7 @@ Window {
                 check(!!clozeInput && !!checkClozeBtn, "Cloze input or check button missing");
                 check(srView.selectClozeChoice(99) === false && srView.answerRevealed === false,
                     "Out-of-bounds selectClozeChoice(99) must return false without revealing the card");
-                const expectedClozeTarget = SpacedRepetition.extractClozeTarget(SpacedRepetition.currentCard);
+                const expectedClozeTarget = sr.extractClozeTarget(sr.currentCard);
                 clozeInput.text = expectedClozeTarget.slice(0, 1);
                 mouseClick(checkClozeBtn);
                 check(srView.clozeCheckState === "miss", "Single-character prefix should not pass as close match");
@@ -310,24 +317,24 @@ Window {
                 check(srView.clozeCheckState === "exact", "Exact {{c1::...}} cloze target did not match as exact");
 
                 // Verify Cloze Reading shortcuts 0, 1, 2, 3, 4 in Smart Mix across natural mode transitions, rapid <40ms keypresses, and focused srClozeInput
-                SpacedRepetition.smartMixEnabled = true;
+                sr.smartMixEnabled = true;
                 // Simulate transitioning from MC into Cloze Reading without manual srView.resetCardInteraction()
-                SpacedRepetition.studyMode = "mc";
+                sr.studyMode = "mc";
                 clozeInput.focus = true;
                 wait(30);
-                SpacedRepetition.studyMode = "cloze";
+                sr.studyMode = "cloze";
                 wait(60);
-                const clozeStartReviewed = SpacedRepetition.todayReviewedCount;
+                const clozeStartReviewed = sr.todayReviewedCount;
                 check(srView.isClozeMode === true && srView.answerRevealed === false && clozeInput.focus === false && srView.multipleChoiceOptions.length === 4,
                     "Natural Smart Mix transition to Cloze mode must clear clozeInput.focus, keep answerRevealed === false, and populate 4 Cloze options");
                 // Test rapid <40ms two-key sequence: '0' (cloze-reveal) immediately followed by '4' (rate easy) without wait between them
                 keyClick(Qt.Key_0);
                 keyClick(Qt.Key_4);
                 wait(60);
-                check(SpacedRepetition.todayReviewedCount === clozeStartReviewed + 1,
+                check(sr.todayReviewedCount === clozeStartReviewed + 1,
                     "Rapid back-to-back '0' (reveal) + '4' (rate easy) in Cloze mode must execute both distinct actions without dropping the second key");
                 // Test focused srClozeInput + '1' (pick option 0) and '0' after reveal (rate again), plus focused empty srClozeInput + Space reveal
-                SpacedRepetition.studyMode = "cloze";
+                sr.studyMode = "cloze";
                 wait(50);
                 mouseClick(clozeInput);
                 wait(40);
@@ -338,10 +345,10 @@ Window {
                     "Pressing '1' in Cloze Reading while srClozeInput is focused must select option 0, mark clozeInput readOnly, & reveal answer without typing '1'");
                 keyClick(Qt.Key_2);
                 wait(50);
-                check(SpacedRepetition.todayReviewedCount === clozeStartReviewed + 2,
+                check(sr.todayReviewedCount === clozeStartReviewed + 2,
                     "Pressing '2' after reveal in Cloze Reading must submit 'good' rating");
                 // Test keys '2', '3', '4' before reveal and '0', '1', '3' after reveal
-                SpacedRepetition.studyMode = "cloze";
+                sr.studyMode = "cloze";
                 wait(40);
                 keyClick(Qt.Key_3);
                 wait(40);
@@ -349,15 +356,15 @@ Window {
                     "Pressing '3' before reveal in Cloze Reading must select option 2 (index 2) and reveal");
                 keyClick(Qt.Key_1);
                 wait(40);
-                check(SpacedRepetition.todayReviewedCount === clozeStartReviewed + 3,
+                check(sr.todayReviewedCount === clozeStartReviewed + 3,
                     "Pressing '1' after reveal in Cloze Reading must submit 'hard' rating");
                 // Undo the 3 Cloze shortcut reviews so todayReviewedCount returns to 1
-                SpacedRepetition.undoLastReview();
-                SpacedRepetition.undoLastReview();
-                SpacedRepetition.undoLastReview();
-                tryCompare(SpacedRepetition, "todayReviewedCount", 1, 2000);
-                SpacedRepetition.smartMixEnabled = false;
-                SpacedRepetition.studyMode = "flashcard";
+                sr.undoLastReview();
+                sr.undoLastReview();
+                sr.undoLastReview();
+                tryCompare(sr, "todayReviewedCount", 1, 2000);
+                sr.smartMixEnabled = false;
+                sr.studyMode = "flashcard";
                 srView.resetCardInteraction();
 
                 // 2. Switch to Capture & Auto-Syntax sub-tab
@@ -396,12 +403,12 @@ Window {
                 check(srView.composerExample.length > 0, "Expected composerExample to auto-populate example for 'ubiquitous'");
 
                 // Verify German adjective 'nachhaltig' never gets noun article 'der'
-                const nachhaltigCard = SpacedRepetition.cards.find(c => c.term === "nachhaltig");
+                const nachhaltigCard = sr.cards.find(c => c.term === "nachhaltig");
                 check(!!nachhaltigCard && nachhaltigCard.front === "nachhaltig" && nachhaltigCard.gender === "",
                     "German adjective 'nachhaltig' must not have noun article 'der'");
 
                 // Verify enrichCardOnline preserves user-authored back/example while filling missing metadata
-                const customAdded = SpacedRepetition.addCard({
+                const customAdded = sr.addCard({
                     front: "pragmatic",
                     back: "custom user definition",
                     example: "Custom user example for pragmatic.",
@@ -409,8 +416,8 @@ Window {
                     language: "en"
                 });
                 check(!!customAdded, "Failed to add custom card");
-                SpacedRepetition.enrichCardOnline(customAdded.id);
-                const enrichedCustom = SpacedRepetition.cards.find(c => c.id === customAdded.id);
+                sr.enrichCardOnline(customAdded.id);
+                const enrichedCustom = sr.cards.find(c => c.id === customAdded.id);
                 check(enrichedCustom.back === "custom user definition", "enrichCardOnline overwrote user's custom back");
                 check(enrichedCustom.example === "Custom user example for pragmatic.", "enrichCardOnline overwrote user's custom example");
 
@@ -438,7 +445,7 @@ Window {
                 check(!!quickField, "Quick add field missing");
                 quickField.text = "die Herausforderung - challenge; demanding task // Das ist eine große Herausforderung.";
                 quickField.accepted();
-                tryVerify(() => SpacedRepetition.cards.some(
+                tryVerify(() => sr.cards.some(
                     c => c.term === "Herausforderung"
                       && c.gender === "die"
                       && c.cefrLevel === "B1"
@@ -451,7 +458,7 @@ Window {
                 check(!!bulkArea && !!bulkImportBtn, "Bulk input controls missing");
                 bulkArea.text = "quintessential - representing the most perfect example // Active recall is the quintessential study method.";
                 mouseClick(bulkImportBtn);
-                tryVerify(() => SpacedRepetition.cards.some(
+                tryVerify(() => sr.cards.some(
                     c => c.term === "quintessential" && c.cefrLevel === "C2"
                 ), 3000);
                 check(bulkArea.text === "", "Bulk input TextArea did not clear after import");
@@ -460,8 +467,8 @@ Window {
                 const libraryTabBtn = findChild(srView, "srSubTabLibrary");
                 mouseClick(libraryTabBtn);
                 tryCompare(srView, "activeSubTab", "library", 2000);
-                SpacedRepetition.searchQuery = "allot";
-                tryVerify(() => SpacedRepetition.filteredLibraryCards.length === 1 && srView.filteredLibraryCards.length === 1, 2000);
+                sr.searchQuery = "allot";
+                tryVerify(() => sr.filteredLibraryCards.length === 1 && srView.filteredLibraryCards.length === 1, 2000);
                 wait(80);
 
                 // Verify Library card shows English definition in 1-line summary by default and reveals Vietnamese meaning + full details on hover
@@ -482,7 +489,7 @@ Window {
                     "Hovered library card must display Vietnamese definition meaningVi, got: " + firstLibMeaningVi.text);
                 firstLibDelegate.forceHoverDetail = false;
 
-                SpacedRepetition.clearFilters();
+                sr.clearFilters();
                 const libSearchField = findChild(srView, "srLibrarySearch");
                 check(!!libSearchField, "Library search field missing");
                 libSearchField.text = "";
@@ -495,7 +502,7 @@ Window {
                 keyClick(Qt.Key_I);
                 keyClick(Qt.Key_N);
                 keyClick(Qt.Key_T);
-                tryVerify(() => srView.filteredLibraryCards.length === 1 && SpacedRepetition.filteredLibraryCards.length === 1, 2000);
+                tryVerify(() => srView.filteredLibraryCards.length === 1 && sr.filteredLibraryCards.length === 1, 2000);
                 libSearchField.text = "";
 
                 // Verify switching subTab away from a focused input transfers activeFocus back to srView
@@ -507,35 +514,35 @@ Window {
                 check(srView.activeFocus === true, "srView must reclaim activeFocus when switching to study subTab");
 
                 // Verify Study keyboard shortcuts (Space to reveal only, disabled after reveal; 0-3 to rate; M to cycle mode; Ctrl+Z to undo)
-                SpacedRepetition.studyMode = "flashcard";
+                sr.studyMode = "flashcard";
                 srView.resetCardInteraction();
                 wait(60);
                 check(srView.answerRevealed === false, "Expected answerRevealed === false before pressing Space");
                 keyClick(Qt.Key_Space);
                 wait(60);
                 check(srView.answerRevealed === true, "Pressing Space in Study mode must reveal answer");
-                const beforeShortcutReviewCount = SpacedRepetition.todayReviewedCount;
-                const activeCardBeforeSpace = SpacedRepetition.currentCard.id;
+                const beforeShortcutReviewCount = sr.todayReviewedCount;
+                const activeCardBeforeSpace = sr.currentCard.id;
                 keyClick(Qt.Key_Space);
                 wait(60);
-                check(SpacedRepetition.todayReviewedCount === beforeShortcutReviewCount
+                check(sr.todayReviewedCount === beforeShortcutReviewCount
                     && srView.answerRevealed === true
-                    && SpacedRepetition.currentCard.id === activeCardBeforeSpace,
+                    && sr.currentCard.id === activeCardBeforeSpace,
                     "Pressing Space again after answer is revealed must NOT submit a rating or advance to the next card");
                 keyClick(Qt.Key_2);
                 wait(60);
-                check(SpacedRepetition.todayReviewedCount === beforeShortcutReviewCount + 1 && srView.answerRevealed === false,
+                check(sr.todayReviewedCount === beforeShortcutReviewCount + 1 && srView.answerRevealed === false,
                     "Pressing '2' (Good) when answer is revealed must submit 'good' rating and advance card");
                 keyClick(Qt.Key_Z, Qt.ControlModifier);
                 wait(60);
-                check(SpacedRepetition.todayReviewedCount === beforeShortcutReviewCount,
+                check(sr.todayReviewedCount === beforeShortcutReviewCount,
                     "Pressing Ctrl+Z in Study mode must undo last review");
                 keyClick(Qt.Key_M);
                 wait(60);
-                check(SpacedRepetition.studyMode === "matching", "Pressing 'M' in Study mode from flashcard must cycle studyMode to 'matching'");
+                check(sr.studyMode === "matching", "Pressing 'M' in Study mode from flashcard must cycle studyMode to 'matching'");
 
                 // Verify Multiple Choice ('mc') mode (4 options, reveal all 4 answers after selection)
-                SpacedRepetition.studyMode = "mc";
+                sr.studyMode = "mc";
                 srView.resetCardInteraction();
                 wait(60);
                 const mcGrid = findChild(srView, "srMultipleChoiceGrid");
@@ -563,17 +570,17 @@ Window {
                 check(srView.answerRevealed === false && srView.pendingChoiceIndex === 0 && !!pendingBadge0 && pendingBadge0.visible,
                     "Pressing 'A' in MC mode before reveal must stage option A (index 0) and show Space badge");
                 // Regression: pressing 'd' / 'D' repeatedly in MC mode (with Smart Mix enabled) never jumps exercise or card
-                const mcCardIdBeforeD = SpacedRepetition.currentCard.id;
-                SpacedRepetition.smartMixEnabled = true;
+                const mcCardIdBeforeD = sr.currentCard.id;
+                sr.smartMixEnabled = true;
                 for (const dKey of [Qt.Key_D, Qt.Key_D]) {
                     keyClick(dKey);
                     wait(40);
-                    check(SpacedRepetition.studyMode === "mc" && SpacedRepetition.currentCard.id === mcCardIdBeforeD
+                    check(sr.studyMode === "mc" && sr.currentCard.id === mcCardIdBeforeD
                         && srView.answerRevealed === false && srView.pendingChoiceIndex === 3,
                         "Pressing 'd' in MC mode must stage option D without jumping exercise or card");
                 }
-                check(SpacedRepetition.interactionLocked === true,
-                    "Staging option D in MC mode must set SpacedRepetition.interactionLocked === true");
+                check(sr.interactionLocked === true,
+                    "Staging option D in MC mode must set sr.interactionLocked === true");
                 keyClick(Qt.Key_A);
                 wait(40);
                 keyClick(Qt.Key_Space);
@@ -582,9 +589,9 @@ Window {
                     "Pressing Space after staging an option in MC mode must confirm selection and reveal the answer");
                 keyClick(Qt.Key_D);
                 wait(40);
-                check(SpacedRepetition.studyMode === "mc" && SpacedRepetition.currentCard.id === mcCardIdBeforeD && srView.answerRevealed === true,
+                check(sr.studyMode === "mc" && sr.currentCard.id === mcCardIdBeforeD && srView.answerRevealed === true,
                     "Pressing 'd' after MC reveal (before grading) must not jump to another exercise");
-                SpacedRepetition.smartMixEnabled = false;
+                sr.smartMixEnabled = false;
                 check(enViRow.visible === false,
                     "Bottom EN|VI definition row must be hidden in Multiple Choice mode since options already show definitions");
                 for (let idx = 0; idx < 4; idx++) {
@@ -608,28 +615,28 @@ Window {
                 }
 
                 // Verify legacy 'rmc' and 'reverse' studyMode values normalize automatically to 'matching'
-                SpacedRepetition.studyMode = "rmc";
+                sr.studyMode = "rmc";
                 wait(30);
-                check(SpacedRepetition.studyMode === "matching",
-                    "Setting legacy studyMode 'rmc' must normalize to 'matching', got: " + SpacedRepetition.studyMode);
-                SpacedRepetition.studyMode = "reverse";
+                check(sr.studyMode === "matching",
+                    "Setting legacy studyMode 'rmc' must normalize to 'matching', got: " + sr.studyMode);
+                sr.studyMode = "reverse";
                 wait(30);
-                check(SpacedRepetition.studyMode === "matching",
-                    "Setting legacy studyMode 'reverse' must normalize to 'matching', got: " + SpacedRepetition.studyMode);
+                check(sr.studyMode === "matching",
+                    "Setting legacy studyMode 'reverse' must normalize to 'matching', got: " + sr.studyMode);
 
                 // Verify Smart Mix mode button re-enables random rotation across [matching, mc, cloze]
                 mouseClick(findChild(srView, "srStudyMode-smart"));
                 wait(40);
-                check(SpacedRepetition.smartMixEnabled === true && ["matching", "mc", "cloze"].includes(SpacedRepetition.studyMode),
+                check(sr.smartMixEnabled === true && ["matching", "mc", "cloze"].includes(sr.studyMode),
                     "Clicking Smart Mix must enable smartMixEnabled and select an active mode");
 
-                SpacedRepetition.smartMixEnabled = false;
-                SpacedRepetition.studyMode = "flashcard";
+                sr.smartMixEnabled = false;
+                sr.studyMode = "flashcard";
                 srView.resetCardInteraction();
 
                 // Ensure saveToFile completes
-                SpacedRepetition.saveToFile();
-                tryCompare(SpacedRepetition, "persistenceBusy", false, 4000);
+                sr.saveToFile();
+                tryCompare(sr, "persistenceBusy", false, 4000);
 
                 console.info("SR_RUNTIME_PASS", checks);
             } catch (e) {
@@ -677,7 +684,12 @@ ShellRoot {
         function runTest() {
             try {
                 tryCompare(Config, "ready", true, 5000);
+                tryCompare(AlisIntergration, "initialProbeDone", true, 5000);
+                AlisIntergration.demandSpacedRepetition();
+                tryCompare(AlisIntergration, "spacedRepetitionEnabled", true, 5000);
                 tryCompare(SpacedRepetition, "ready", true, 5000);
+                const sr = AlisIntergration.spacedRepetition;
+                check(!!sr && SpacedRepetition.available && SpacedRepetition.enabled, "SpacedRepetition proxy not bound");
                 GlobalStates.shellEntryReady = true;
                 GlobalStates.deferredPanelsReady = true;
                 tryVerify(() => perimeter.outputHosts.length > 0 && perimeter.outputHosts[0].nativeFieldReady, 6000);
@@ -691,22 +703,22 @@ ShellRoot {
                 wait(150);
                 // Verify Study shortcuts work inside AbyssPerimeter after switching to Spaced Repetition tab
                 srView.subTab = "study";
-                SpacedRepetition.smartMixEnabled = true;
-                SpacedRepetition.studyMode = "cloze";
+                sr.smartMixEnabled = true;
+                sr.studyMode = "cloze";
                 srView.resetCardInteraction();
                 wait(80);
-                const beforePerimeterClozeRev = SpacedRepetition.todayReviewedCount;
+                const beforePerimeterClozeRev = sr.todayReviewedCount;
                 keyClick(Qt.Key_2);
                 wait(80);
                 check(srView.answerRevealed === true && srView.selectedChoiceIndex === 1,
                     "Pressing '2' in Cloze Reading inside AbyssPerimeter Smart Mix must select option 1 and reveal answer");
                 keyClick(Qt.Key_3);
                 wait(80);
-                check(SpacedRepetition.todayReviewedCount === beforePerimeterClozeRev + 1,
+                check(sr.todayReviewedCount === beforePerimeterClozeRev + 1,
                     "Pressing '3' after reveal in Cloze Reading inside AbyssPerimeter Smart Mix must submit rating");
-                SpacedRepetition.undoLastReview();
-                SpacedRepetition.smartMixEnabled = false;
-                SpacedRepetition.studyMode = "flashcard";
+                sr.undoLastReview();
+                sr.smartMixEnabled = false;
+                sr.studyMode = "flashcard";
                 srView.resetCardInteraction();
                 wait(80);
                 keyClick(Qt.Key_Space);
@@ -777,20 +789,51 @@ ShellRoot {
                 check(actionIndicator.targetItem?.toggled === true && modeIndicator.targetItem?.toggled === true,
                     "Expected OptionsToolbar active tab buttons to have toggled === true for colPrimaryContainer background");
 
-                // 4b. Verify Edit Dashboard Layout custom tab buttons and Create Custom Tab input cursor/typing inside AbyssPerimeter
+                // 4b. Verify Edit Dashboard Layout header buttons removed in favor of external dock and input cursor/typing inside AbyssPerimeter
                 GlobalStates.dashboardPageId = "dashboard";
                 const editBtn = findChild(win.contentItem, "dashboardEditLayoutButton");
-                const createTabBtn = findChild(win.contentItem, "dashboardCreateCustomTab");
-                const renameTabBtn = findChild(win.contentItem, "dashboardRenameCustomTab");
-                const deleteTabBtn = findChild(win.contentItem, "dashboardDeleteCustomTab");
-                const toolbarCreateBtn = findChild(win.contentItem, "dashboardToolbarActionCreateTab");
-                const tabNameInput = findChild(win.contentItem, "dashboardToolbarTabName");
-                check(!!editBtn && !!createTabBtn && !!renameTabBtn && !!deleteTabBtn && !!toolbarCreateBtn && !!tabNameInput,
-                    "Missing Edit Dashboard Layout custom tab controls or tabNameInput inside AbyssPerimeter");
+                check(findChild(win.contentItem, "dashboardCreateCustomTab") === null
+                    && findChild(win.contentItem, "dashboardDeleteCustomTab") === null
+                    && findChild(win.contentItem, "dashboardSetDefaultTab") === null
+                    && findChild(win.contentItem, "dashboardRenameCustomTab") === null
+                    && findChild(win.contentItem, "dashboardCustomTabActions") === null,
+                    "Inline Add/Rename/Delete/SetDefault header buttons must be removed in favor of external dock");
+                check(!!editBtn,
+                    "Missing Edit Dashboard Layout header button inside AbyssPerimeter");
                 editBtn.clicked();
-                tryVerify(() => createTabBtn.visible && renameTabBtn.visible && deleteTabBtn.visible && toolbarCreateBtn.visible && toolbarCreateBtn.enabled, 3000);
+                tryVerify(() => (findChild(win.contentItem, "dashboardTabReorderHandle")?.visible ?? false)
+                    && findChild(win.contentItem, "dashboardToolbarActionCreateTab") !== null
+                    && findChild(win.contentItem, "dashboardToolbarActionTabIcon") !== null
+                    && findChild(win.contentItem, "dashboardToolbarTabName") !== null, 3000);
+                const toolbarCreateBtn = findChild(win.contentItem, "dashboardToolbarActionCreateTab");
+                const tabIconToggle = findChild(win.contentItem, "dashboardToolbarActionTabIcon");
+                const leftIconPicker = findChild(win.contentItem, "dashboardLeftTabIconPicker");
+                const tabNameInput = findChild(win.contentItem, "dashboardToolbarTabName");
+                check(!!tabIconToggle && !!leftIconPicker,
+                    "Missing split Left Tabs dock Tab Icon picker controls");
+                tryVerify(() => toolbarCreateBtn.visible && toolbarCreateBtn.enabled
+                    && tabIconToggle.visible && tabIconToggle.enabled, 3000);
+                tabIconToggle.clicked();
+                tryVerify(() => leftIconPicker.visible, 2000);
+                const musicChip = findChild(leftIconPicker, "dashboardToolbarIconTab_music");
+                const headphonesPreset = findChild(leftIconPicker, "dashboardToolbarTabIconPreset_headphones");
+                const musicHeaderIcon = findChild(win.contentItem, "dashboardPageIcon1");
+                const iconInput = findChild(leftIconPicker, "dashboardToolbarTabIconInput");
+                check(!!musicChip && !!headphonesPreset && !!musicHeaderIcon && !!iconInput,
+                    "Missing Tab Icon picker chips/presets/input in Left Tabs dock");
+                musicChip.clicked();
+                headphonesPreset.clicked();
+                tryVerify(() => musicHeaderIcon.text === "headphones"
+                    && iconInput.text === "headphones", 2000);
+                const resetIconBtn = findChild(leftIconPicker, "dashboardToolbarTabIconReset");
+                tryVerify(() => !!resetIconBtn && resetIconBtn.visible, 2000);
+                resetIconBtn.clicked();
+                tryVerify(() => musicHeaderIcon.text === "library_music"
+                    && iconInput.text === "", 2000);
+                tabIconToggle.clicked();
+                tryVerify(() => !leftIconPicker.visible, 2000);
                 wait(100);
-                createTabBtn.clicked();
+                toolbarCreateBtn.clicked();
                 tryVerify(() => tabNameInput.visible && tabNameInput.width > 80, 2000);
                 wait(150);
                 check(tabNameInput.activeFocus === true && tabNameInput.cursorVisible === true,
@@ -916,6 +959,9 @@ def _install_offscreen_modules_overlay(folder: Path, host_root: Path) -> None:
 
 
 def main() -> None:
+    if not INTERGRATION_ROOT.is_dir():
+        print("SKIP: Spaced Repetition runtime test requires companion Alis-Intergration repo")
+        raise SystemExit(0)
     with tempfile.TemporaryDirectory(prefix="alis-sr-runtime-") as tmp:
         folder = Path(tmp)
         for name in (
@@ -960,12 +1006,21 @@ def main() -> None:
             if not native_wayland:
                 _install_offscreen_modules_overlay(folder, ROOT)
 
+            spec = importlib.util.spec_from_file_location("alis_intergration_manager", ROOT / "scripts/alis-intergration-manager.py")
+            manager_mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(manager_mod)
+            data_home = Path(env.get("XDG_DATA_HOME", folder / "data"))
+            integ_home = data_home / "alis-intergration"
+            manager_mod.operate("install-base", integ_home, ROOT)
+            manager_mod.operate("install-plugin", integ_home, ROOT, plugin_id="spaced_repetition", source_dir=INTERGRATION_ROOT)
+
             for cfg_rel in ("config/alis/config.json", "config/illogical-impulse/config.json"):
                 cfg_file = folder / cfg_rel
                 cfg_file.parent.mkdir(parents=True, exist_ok=True)
                 sample = json.loads((ROOT / "defaults/config.json").read_text(encoding="utf-8"))
                 sample["panelFamily"] = "abyss"
                 sample["abyss"]["companion"]["enabled"] = False
+                sample["integrations"]["alisIntergration"]["spaced_repetition"] = True
                 cfg_file.write_text(json.dumps(sample), encoding="utf-8")
 
             result = run_qs(folder, env, timeout=35)

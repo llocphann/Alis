@@ -176,7 +176,7 @@ exec_rust_daemon_or_fallback() {
 
 cmd="${1:-}"
 [[ -n "$cmd" ]] || {
-    echo "usage: native-dispatch <backend-info|input-lock|input-keys|input-type|input-key|input-paste|input-session|niri|clipboard|clipboard-store|mpd|mpd-daemon|mpd-subscribe|mpd-mpris|lyrics|theme|theme-preview|least-busy-region|color-tags|find-regions|thumbgen|cover-colors|gowall|image|vscode-theme|opencode-theme|zed-theme|codex-theme|claude-theme|scan-plugins|telemetry|desktop-icons|desktop-fonts|desktop-kdeconfig|file-dialog|check-updates|audio-spectrum|mic-meter|gamma|idle|screencopy|backlight|calc|translate> [args...]" >&2
+    echo "usage: native-dispatch <backend-info|input-lock|input-keys|input-type|input-key|input-paste|input-session|input-pointer|niri|clipboard|clipboard-store|mpd|mpd-daemon|mpd-subscribe|mpd-mpris|lyrics|theme|theme-preview|least-busy-region|color-tags|find-regions|thumbgen|cover-colors|gowall|image|vscode-theme|opencode-theme|zed-theme|codex-theme|claude-theme|scan-plugins|telemetry|desktop-icons|desktop-fonts|desktop-kdeconfig|file-dialog|check-updates|audio-spectrum|mic-meter|gamma|idle|screencopy|backlight|calc|translate> [args...]" >&2
     exit 64
 }
 shift
@@ -184,7 +184,7 @@ shift
 if [[ "$MODE" == rust && "$STRICT" == 1 ]]; then
     required_binary=""
     case "$cmd" in
-        input-lock|input-keys|input-type|input-key|input-paste|input-session) required_binary=alis-inputd ;;
+        input-lock|input-keys|input-type|input-key|input-paste|input-session|input-pointer) required_binary=alis-inputd ;;
         niri|clipboard|clipboard-store|audio-spectrum|mic-meter|gamma|idle|screencopy|desktop-icons|desktop-fonts|desktop-kdeconfig|file-dialog|check-updates|scan-plugins|telemetry|backlight|calc|translate) required_binary=alis-native ;;
         mpd|mpd-daemon|mpd-subscribe|mpd-mpris|lyrics) required_binary=alis-mpdd ;;
         theme|theme-preview|least-busy-region|color-tags|find-regions|thumbgen|cover-colors|gowall|image|vscode-theme|opencode-theme|zed-theme|codex-theme|claude-theme) required_binary=alis-theme ;;
@@ -585,6 +585,13 @@ case "$cmd" in
         exit 127
         ;;
 
+    input-pointer)
+        if want_rust; then
+            exec_rust_or_fallback alis-inputd --pointer "$@" || true
+        fi
+        exit 127
+        ;;
+
     input-paste)
         if want_rust; then
             exec_rust_or_fallback alis-inputd --paste || true
@@ -604,7 +611,22 @@ case "$cmd" in
         if want_rust; then
             exec_rust_daemon_or_fallback alis-mpdd "--mpris" -- --mpris "$@" || true
         fi
-        command -v mpd-mpris >/dev/null 2>&1 && exec mpd-mpris "$@"
+        if command -v mpd-mpris >/dev/null 2>&1; then
+            mpd_mpris_args=()
+            skip_next=0
+            for arg in "$@"; do
+                if (( skip_next )); then
+                    skip_next=0
+                    continue
+                fi
+                case "$arg" in
+                    --music-root) skip_next=1 ;;
+                    --music-root=*) ;;
+                    *) mpd_mpris_args+=("$arg") ;;
+                esac
+            done
+            exec mpd-mpris "${mpd_mpris_args[@]}"
+        fi
         exit 127
         ;;
 

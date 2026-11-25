@@ -130,17 +130,38 @@ Item {
             if (!root.simulation || width <= 0) return
             root.crestPeak = Wave.projectCrests(root.simulation,Appearance.effectsEnabled && AbyssStyle.quality !== "performance")
             const ctx = getContext("2d")
-            ctx.fillStyle = "#000000"
-            ctx.fillRect(0, 0, width, height)
-            if (root.crestPeak <= 0) return
+            if (root.crestPeak <= 0) {
+                ctx.fillStyle = "#000000"
+                ctx.fillRect(0, 0, width, 1)
+                return
+            }
+            // Run-length batch opaque fillRect spans so flat perimeter segments
+            // collapse into single draw calls while keeping alpha=255 pixels.
             const crests = root.simulation.crests
             const whitewater = root.simulation.whitewater
+            const inv256 = 65535 / 256
+            let runStart = 0
+            let runRgb = -1
             for (let i = 0; i < width; i++) {
-                const value = Math.round(crests[i] / 256 * 65535)
+                const value = Math.round(crests[i] * inv256)
                 const foam = Math.round(whitewater[i] * 255)
-                if (value === 0 && foam === 0) continue
-                ctx.fillStyle = "rgb(" + ((value >> 8) & 255) + "," + (value & 255) + "," + (foam & 255) + ")"
-                ctx.fillRect(i, 0, 1, 1)
+                const rgb = ((value & 65535) << 8) | (foam & 255)
+                if (rgb !== runRgb) {
+                    if (runRgb >= 0) {
+                        ctx.fillStyle = runRgb === 0
+                            ? "#000000"
+                            : "rgb(" + ((runRgb >> 16) & 255) + "," + ((runRgb >> 8) & 255) + "," + (runRgb & 255) + ")"
+                        ctx.fillRect(runStart, 0, i - runStart, 1)
+                    }
+                    runStart = i
+                    runRgb = rgb
+                }
+            }
+            if (runRgb >= 0) {
+                ctx.fillStyle = runRgb === 0
+                    ? "#000000"
+                    : "rgb(" + ((runRgb >> 16) & 255) + "," + ((runRgb >> 8) & 255) + "," + (runRgb & 255) + ")"
+                ctx.fillRect(runStart, 0, width - runStart, 1)
             }
         }
     }
@@ -148,6 +169,9 @@ Item {
         id: textureSource
         // RG16 encodes height / 256; filtered Hermite sampling is monotone.
         readonly property real encodedHeightCeiling: 256
+        // Tight upper bound on active crest height so AbyssField.vert only
+        // shrinks its skipped transparent interior by the real wave height.
+        readonly property real activePeakHeight: root.crestPeak > 0.01 ? Math.min(256, Math.ceil(root.crestPeak) + 2) : 0
         readonly property bool activeProfile: root.crestPeak > .01
         width: samples.width; height: samples.height
         x: -width; y: -height

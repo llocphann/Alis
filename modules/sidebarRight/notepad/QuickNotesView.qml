@@ -25,7 +25,9 @@ Item {
     // Dashboard and corner opt in; Sidebar Left remains Source-first.
     property bool autoMarkdownReading: false
     property bool externalEscapeHandling: false
+    property bool preserveEditingWhileSuspended: false
     readonly property bool markdownReading: notepad.markdownReading
+    readonly property bool editorActiveFocus: notepad.editorActiveFocus
 
     implicitHeight: root.preferredHeight
 
@@ -170,6 +172,7 @@ Item {
             verticalDotNavigation: root.verticalDotNavigation
             autoMarkdownReading: root.autoMarkdownReading
             externalEscapeHandling: root.externalEscapeHandling
+            preserveEditingWhileSuspended: root.preserveEditingWhileSuspended
             surfaceLocalTabSelection: root.surfaceLocalTabSelection
             margin: 0
             onEditorActivated: root.editorActivated()

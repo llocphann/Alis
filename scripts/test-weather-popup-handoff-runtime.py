@@ -99,9 +99,10 @@ ShellRoot {
   function sample(){
    const content=weather.contentItem
    if(!content || !weather.presentationActive || content.height<=0)return
-   const viewport=content.children[0], orbit=viewport.children[0], detail=viewport.children[1]
-   check(content.currentTab===0 && content.tabPosition===0,"hover replayed a Weather tab transition")
-   check(orbit.y===0 && detail.y===viewport.height,"Weather pages overlap during host resize/reveal")
+   const panel=content.verticalLayout!==undefined?content:content.children[0]
+   const viewport=panel.children[0], orbit=viewport.children[0], divider=viewport.children[1], detail=viewport.children[2]
+   check(orbit.width>0 && detail.width>0,"Weather merged panels lost width")
+   check(panel.verticalLayout ? (orbit.y===0 && detail.y>=orbit.height) : (orbit.x===0 && detail.x>=orbit.width),"Weather merged panels overlap during host resize/reveal")
    check(viewport.clip,"Weather pages escaped the common viewport")
    const weatherHost=controller._popupHost(controller._popupSlot(weather))
    const clockHost=controller._popupHost(controller._popupSlot(clock))

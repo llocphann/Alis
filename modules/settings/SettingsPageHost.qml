@@ -18,19 +18,6 @@ Item {
     property bool backgroundWarmup: false
     property int cacheLimit: (Config.options?.performance?.lowPower ?? false) ? 2 : 6
 
-    function _syncAvailablePages(): void {
-        SettingsLayoutManager.availablePages = root.pages ?? []
-        const navIndices = SettingsPageRegistry.navigationPageIndexes(false) ?? []
-        SettingsLayoutManager.availableNavigationPages = navIndices.map(idx => ({
-            index: idx,
-            pageIndex: idx,
-            name: root.pages?.[idx]?.name ?? ("Page " + idx),
-            icon: root.pages?.[idx]?.icon ?? "settings"
-        }))
-    }
-
-    onPagesChanged: root._syncAvailablePages()
-
     signal pageNavigationRequested(int pageIndex)
 
     property int _pendingSectionPageIndex: -1
@@ -41,11 +28,6 @@ Item {
             return
         if (item.hasOwnProperty("_persistedSectionRestored"))
             item._persistedSectionRestored = true
-        if (item.hasOwnProperty("customActiveSubTab")) {
-            const isCustom = sectionValue.startsWith("subtab-")
-                || Boolean(item.effectiveSubTabSpecs && item.effectiveSubTabSpecs.some(s => s && s.key === sectionValue && s.custom))
-            item.customActiveSubTab = isCustom ? sectionValue : ""
-        }
         if (typeof item.activateSettingsSearchSection === "function")
             item.activateSettingsSearchSection(sectionValue)
         else if (item.hasOwnProperty("activeSection"))
@@ -68,11 +50,13 @@ Item {
         const loader = root._loaderFor(targetPageIndex)
         if (loader && loader.item) {
             root._activateSectionOnItem(loader.item, targetSection)
+            root._pendingSectionPageIndex = -1
+            root._pendingSection = ""
         }
     }
 
     function _siblingPagesForIndex(pageIdx: int): var {
-        const cats = SettingsPageRegistry.categories ?? []
+        const cats = SettingsPageRegistry.defaultCategories ?? []
         for (let i = 0; i < cats.length; i++) {
             const cPages = (cats[i]?.pages ?? []).filter(
                 idx => root.pages[idx] && SettingsPageRegistry.isPageApplicable(idx))
@@ -83,24 +67,14 @@ Item {
         return []
     }
 
-    readonly property bool showingCustomTab: SettingsLayoutManager.activeCustomTabId.length > 0
-    readonly property var _donorIndices: SettingsLayoutManager.getDonorPageIndexes(
-        root.showingCustomTab ? -1 : root._currentIndex,
-        SettingsLayoutManager.activeCustomTabId
-    )
-
     readonly property int currentIndex: _currentIndex
-    readonly property bool error: !showingCustomTab && _errorIndex === requestedIndex
+    readonly property bool error: _errorIndex === requestedIndex
     readonly property Item currentItem: {
         void(_statusRevision)
-        if (root.showingCustomTab && customTabLoader.item)
-            return customTabLoader.item
         const loader = _loaderFor(_currentIndex)
         return loader?.item ?? null
     }
     readonly property bool loading: {
-        if (typeof showingCustomTab !== "undefined" && showingCustomTab)
-            return false
         return PageLoadState.shouldShow(
             loadEnabled, requestedIndex, pages.length,
             _sourceFor(requestedIndex) !== "",
@@ -117,56 +91,73 @@ Item {
     property var _pageStatuses: ({})
     property int _statusRevision: 0
     property int _errorIndex: -1
-    // Invalidate deferred page work whenever navigation/reset moves on. A
-    // callback queued by a destroyed Settings generation must never operate on
-    // a newly reopened pending Loader.
     property int _requestGeneration: 0
 
     clip: _transitionRunning
-
-    on_DonorIndicesChanged: Qt.callLater(root._syncResidency)
-    onShowingCustomTabChanged: {
-        if (!root.showingCustomTab && customTabLoader.item && typeof customTabLoader.item._returnAllForeignCardsToOrigin === "function") {
-            customTabLoader.item._returnAllForeignCardsToOrigin()
-        }
-        root._syncResidency()
-    }
 
     function _sourceFor(index) {
         if (index < 0 || index >= pages.length)
             return ""
         const source = pages[index]?.component ?? ""
-        // Settings chrome resolves registry-relative pages through
-        // Quickshell.shellPath(), yielding absolute local paths. Loader URLs on
-        // file:// can reuse Qt's compiled QML disk cache across page eviction
-        // and re-entry instead of recompiling through the shell VFS path.
         if (source.startsWith("/"))
             return "file://" + source
         return source
     }
 
+    // Fixed small pool of reusable Loader slots instead of instantiating ~45
+    // Loaders + Connections upfront on first Settings open. Constant pool size
+    // ensures changing cacheLimit (e.g. toggling lowPower) never destroys the
+    // currently visible slot via Repeater model resizing.
+    readonly property int _slotPoolSize: 8
+
     function _loaderFor(index) {
-        if (index < 0 || index >= pageRepeater.count)
+        if (index < 0 || index >= pages.length)
             return null
-        return pageRepeater.itemAt(index)
+        for (let i = 0; i < pageRepeater.count; i++) {
+            const slot = pageRepeater.itemAt(i)
+            if (slot && slot.pageIndex === index)
+                return slot
+        }
+        return null
     }
 
     function _syncResidency() {
-        if (!root.showingCustomTab && customTabLoader.item && typeof customTabLoader.item._returnAllForeignCardsToOrigin === "function") {
-            customTabLoader.item._returnAllForeignCardsToOrigin()
-        }
-        const donors = root._donorIndices ?? []
-        for (let index = 0; index < pageRepeater.count; index++) {
-            const loader = pageRepeater.itemAt(index)
-            if (!loader)
+        const retained = loadEnabled ? _retainedIndices : []
+        let statusesChanged = false
+        let nextStatuses = null
+        // Release evicted or disabled slots first so they become reusable immediately.
+        for (let i = 0; i < pageRepeater.count; i++) {
+            const slot = pageRepeater.itemAt(i)
+            if (!slot)
                 continue
-            const shouldBeActive = loadEnabled
-                && (_retainedIndices.indexOf(index) >= 0 || donors.indexOf(index) >= 0)
-            if (loader.active !== shouldBeActive) {
-                if (!shouldBeActive && loader.item && typeof loader.item._returnAllForeignCardsToOrigin === "function") {
-                    loader.item._returnAllForeignCardsToOrigin()
+            if (slot.pageIndex >= 0 && retained.indexOf(slot.pageIndex) < 0) {
+                const oldIdx = slot.pageIndex
+                if (!nextStatuses)
+                    nextStatuses = Object.assign({}, _pageStatuses)
+                nextStatuses[oldIdx] = Loader.Null
+                statusesChanged = true
+                slot.pageIndex = -1
+                slot.opacity = 0
+                slot.x = 0
+            }
+        }
+        if (statusesChanged) {
+            _pageStatuses = nextStatuses
+            _statusRevision++
+        }
+        if (!loadEnabled)
+            return
+        // Assign a free pool slot to every retained page index that lacks one.
+        for (let r = 0; r < retained.length; r++) {
+            const targetIdx = retained[r]
+            if (targetIdx < 0 || targetIdx >= pages.length || _loaderFor(targetIdx) !== null)
+                continue
+            for (let i = 0; i < pageRepeater.count; i++) {
+                const slot = pageRepeater.itemAt(i)
+                if (slot && slot.pageIndex < 0) {
+                    slot.pageIndex = targetIdx
+                    break
                 }
-                loader.active = shouldBeActive
             }
         }
     }
@@ -188,8 +179,7 @@ Item {
     }
 
     function _trimCache() {
-        const donors = root._donorIndices ?? []
-        const limit = Math.max(2, cacheLimit) + donors.length
+        const limit = Math.max(2, cacheLimit)
         let retained = _retainedIndices.slice()
         let lru = _lruIndices.slice()
 
@@ -199,8 +189,7 @@ Item {
                 const candidate = lru[i]
                 if (candidate !== _currentIndex
                         && candidate !== _pendingIndex
-                        && candidate !== requestedIndex
-                        && donors.indexOf(candidate) < 0) {
+                        && candidate !== requestedIndex) {
                     evictIndex = candidate
                     lru.splice(i, 1)
                     break
@@ -221,9 +210,6 @@ Item {
         _requestGeneration++
         switchAnimation.stop()
         _transitionRunning = false
-        if (customTabLoader.item && typeof customTabLoader.item._returnAllForeignCardsToOrigin === "function") {
-            customTabLoader.item._returnAllForeignCardsToOrigin()
-        }
         _currentIndex = -1
         _pendingIndex = -1
         _retainedIndices = []
@@ -251,8 +237,6 @@ Item {
 
         if (_transitionRunning) {
             switchAnimation.complete()
-            // complete() may finish the old swap and schedule a newer request.
-            // Do not let this now-stale invocation continue into that request.
             if (generation !== undefined
                     && generation !== root._requestGeneration)
                 return
@@ -261,13 +245,13 @@ Item {
         if (_currentIndex < 0) {
             _currentIndex = requestedIndex
             _errorIndex = -1
+            _retain(_currentIndex)
+            _trimCache()
             const loader = _loaderFor(_currentIndex)
             if (loader) {
                 loader.opacity = 1
                 loader.x = 0
             }
-            _retain(_currentIndex)
-            _trimCache()
             return
         }
 
@@ -293,15 +277,12 @@ Item {
         _pendingIndex = requestedIndex
         _errorIndex = -1
 
+        _retain(_pendingIndex)
         const pendingLoader = _loaderFor(_pendingIndex)
         if (pendingLoader) {
             pendingLoader.opacity = 0
             pendingLoader.x = _direction * Appearance.sizes.spacingMedium * 2
         }
-
-        // Pending pages incubate while the current page stays visible. The LRU
-        // keeps completed revisits cheap without blocking navigation on creation.
-        _retain(_pendingIndex)
 
         const pendingIndex = _pendingIndex
         const pendingGeneration = _requestGeneration
@@ -316,9 +297,11 @@ Item {
     }
 
     function _handleStatus(index, status) {
-        const statuses=Object.assign({},_pageStatuses)
-        statuses[index]=status
-        _pageStatuses=statuses
+        if (index < 0)
+            return
+        const statuses = Object.assign({}, _pageStatuses)
+        statuses[index] = status
+        _pageStatuses = statuses
         _statusRevision++
 
         if (status === Loader.Error && (index === _currentIndex || index === _pendingIndex)) {
@@ -426,11 +409,7 @@ Item {
             root._scheduleRequestPage()
     }
 
-    onRequestedIndexChanged: {
-        if (SettingsLayoutManager.activeCustomTabId.length > 0)
-            SettingsLayoutManager.activeCustomTabId = ""
-        root._scheduleRequestPage()
-    }
+    onRequestedIndexChanged: root._scheduleRequestPage()
     onLoadEnabledChanged: {
         if (loadEnabled)
             root._scheduleRequestPage()
@@ -439,7 +418,6 @@ Item {
     }
     onCacheLimitChanged: _trimCache()
     Component.onCompleted: {
-        root._syncAvailablePages()
         SettingsArrangement.migrateLegacyPageIndices()
         root._scheduleRequestPage()
     }
@@ -451,61 +429,42 @@ Item {
         }
     }
 
-    Loader {
-        id: customTabLoader
-        anchors.fill: parent
-        active: root.loadEnabled && root.showingCustomTab
-        visible: active && root.showingCustomTab
-        z: 5
-        sourceComponent: CustomSettingsTabPage {}
-        onActiveChanged: {
-            root._statusRevision++
-            if (active)
-                root._syncResidency()
-        }
-    }
-
     Repeater {
         id: pageRepeater
-        model: root.pages.length
+        model: root._slotPoolSize
 
         delegate: Loader {
             id: pageLoader
             required property int index
-            readonly property var hostSiblingPages: root._siblingPagesForIndex(index)
+            property int pageIndex: -1
+            readonly property var hostSiblingPages: pageIndex >= 0 ? root._siblingPagesForIndex(pageIndex) : []
 
             anchors.fill: parent
-            // Imperative residency avoids a Loader construction feedback cycle.
-            active: false
-            source: root._sourceFor(index)
-            asynchronous: index !== root._currentIndex || root.backgroundWarmup
+            active: root.loadEnabled && pageIndex >= 0
+            source: pageIndex >= 0 ? root._sourceFor(pageIndex) : ""
+            asynchronous: pageIndex !== root._currentIndex || root.backgroundWarmup
                 || ((Quickshell.env("QT_QUICK_BACKEND") !== "software") && status !== Loader.Ready)
-            visible: active && !root.showingCustomTab && (index === root._currentIndex || index === root._pendingIndex)
-            enabled: !root.showingCustomTab
-                && index === root._currentIndex
+            visible: active && (pageIndex === root._currentIndex || pageIndex === root._pendingIndex)
+            enabled: pageIndex === root._currentIndex
                 && root._pendingIndex < 0
                 && !root._transitionRunning
-            z: index === root._pendingIndex ? 1 : 0
+            z: pageIndex === root._pendingIndex ? 1 : 0
 
-            // Register each real Loader without forcing item creation. Cached
-            // pages remain loaded-hidden; evicted pages become unloaded.
-
-            onStatusChanged: root._handleStatus(index, status)
+            onStatusChanged: root._handleStatus(pageIndex, status)
             onLoaded: {
-                if (item && item.hasOwnProperty("categorySiblingPages")) {
+                if (item && item.hasOwnProperty("categorySiblingPages"))
                     item.categorySiblingPages = Qt.binding(() => pageLoader.hostSiblingPages)
-                }
-                if (pageLoader.index === root._pendingSectionPageIndex && root._pendingSection.length > 0) {
+                if (pageLoader.pageIndex === root._pendingSectionPageIndex && root._pendingSection.length > 0) {
                     root._activateSectionOnItem(item, root._pendingSection)
+                    root._pendingSectionPageIndex = -1
+                    root._pendingSection = ""
                 } else if (item && typeof item._restorePersistedSection === "function") {
                     item._restorePersistedSection()
                 }
-                if (item && typeof item._updateCardTabs === "function" && !item.embedded && !item._initialCardTabsSynced) {
+                if (item && typeof item._updateCardTabs === "function" && !item.embedded && !item._initialCardTabsSynced)
                     item._updateCardTabs()
-                }
-                if (root.currentItem && root.currentItem !== item && typeof root.currentItem._scheduleCardTabsUpdate === "function") {
+                if (root.currentItem && root.currentItem !== item && typeof root.currentItem._scheduleCardTabsUpdate === "function")
                     root.currentItem._scheduleCardTabsUpdate()
-                }
             }
             Connections {
                 target: pageLoader.item && pageLoader.item.hasOwnProperty("categorySiblingPages") ? pageLoader.item : null
@@ -514,12 +473,6 @@ Item {
                     root._pendingFromSubTabIndex = pageLoader.item ? (pageLoader.item._activeSubTabIndex ?? -1) : -1
                     root._pendingSectionPageIndex = -1
                     root._pendingSection = ""
-                    const targetLoader = root._loaderFor(targetPageIndex)
-                    if (targetLoader && targetLoader.item && targetLoader.item.hasOwnProperty("customActiveSubTab") && targetLoader.item.customActiveSubTab.length > 0) {
-                        targetLoader.item.customActiveSubTab = ""
-                        if (typeof targetLoader.item._updateCardTabs === "function" && !targetLoader.item.embedded)
-                            targetLoader.item._updateCardTabs()
-                    }
                     root.pageNavigationRequested(targetPageIndex)
                 }
                 function onPageSectionNavigationRequested(targetPageIndex: int, targetSection: string): void {
@@ -538,9 +491,7 @@ Item {
         }
 
         onItemAdded: (index, item) => {
-            const donors = root._donorIndices ?? []
-            item.active = root.loadEnabled
-                && (root._retainedIndices.indexOf(index) >= 0 || donors.indexOf(index) >= 0)
+            root._syncResidency()
         }
     }
 

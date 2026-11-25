@@ -169,16 +169,12 @@ Singleton {
             icon: "folder",
             label: Translation.tr("File Manager"),
             description: Translation.tr("Used by Super+E, Left Sidebar Files tile, and folder-open actions."),
-            defaultCommand: "nautilus",
-            placeholder: "nautilus",
+            defaultCommand: "alis-files",
+            placeholder: "alis-files",
             supportsXdgSync: true,
             xdgTargetLabel: "inode/directory",
             presets: [
-                { id: "nautilus", label: "Files (Nautilus)", command: "nautilus", desktopId: "org.gnome.Nautilus.desktop" },
-                { id: "dolphin", label: "Dolphin", command: "dolphin", desktopId: "org.kde.dolphin.desktop" },
-                { id: "thunar", label: "Thunar", command: "thunar", desktopId: "thunar.desktop" },
-                { id: "nemo", label: "Nemo", command: "nemo", desktopId: "nemo.desktop" },
-                { id: "pcmanfm-qt", label: "PCManFM-Qt", command: "pcmanfm-qt", desktopId: "pcmanfm-qt.desktop" }
+                { id: "alis-files", label: "Alis Files", command: "alis-files", desktopId: "org.alis.Files.desktop" }
             ]
         },
         {

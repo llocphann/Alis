@@ -79,12 +79,16 @@ Item {
         return cells
     }
 
+    property bool verticalLayout: false
     // Keep both halves symmetric so the separator is the true visual center.
     // The month view remains the sizing floor; Events receives the same width.
     readonly property real paneWidth:
         Math.max(292, monthView.implicitWidth)
-    implicitWidth: root.paneWidth * 2 + 25
-    implicitHeight: monthView.implicitHeight
+    readonly property real verticalEventsHeight: 236
+    implicitWidth: root.verticalLayout ? root.paneWidth : (root.paneWidth * 2 + 25)
+    implicitHeight: root.verticalLayout
+        ? (monthView.implicitHeight + 13 + root.verticalEventsHeight)
+        : monthView.implicitHeight
 
     function sameDay(a, b): bool {
         return a.getFullYear() === b.getFullYear()
@@ -92,15 +96,18 @@ Item {
             && a.getDate() === b.getDate()
     }
 
-    RowLayout {
+    Item {
+        id: calendarLayoutHost
         anchors.fill: parent
-        spacing: 12
 
         EventsWidget {
             id: eventsPane
-            Layout.fillWidth: true
-            Layout.preferredWidth: root.paneWidth
-            Layout.fillHeight: true
+            x: 0
+            y: root.verticalLayout ? (monthViewHost.height + 13) : 0
+            width: root.verticalLayout ? parent.width : root.paneWidth
+            height: root.verticalLayout
+                ? Math.max(160, parent.height - y)
+                : parent.height
             // Calendar popup-specific FAB treatment: smaller and tucked into
             // the popup's bottom-left corner. Other EventsWidget owners keep
             // the shared bottom-right default.
@@ -112,21 +119,32 @@ Item {
         }
 
         Rectangle {
+            id: calendarPaneDivider
             // A shorter centered hairline keeps the two panes visually related
             // without cutting the popup in half. Use the active theme accent
             // instead of a high-contrast white/outline line.
-            Layout.preferredWidth: 1
-            Layout.preferredHeight: Math.max(120, root.height - 64)
-            Layout.maximumHeight: Math.max(120, root.height - 40)
-            Layout.alignment: Qt.AlignVCenter
+            x: root.verticalLayout ? 18 : (root.paneWidth + 12)
+            y: root.verticalLayout
+                ? (monthViewHost.height + 6)
+                : Math.round((parent.height - height) / 2)
+            width: root.verticalLayout ? Math.max(120, parent.width - 36) : 1
+            height: root.verticalLayout
+                ? 1
+                : Math.max(120, Math.min(parent.height - 40, parent.height - 64))
             color: Appearance.colors.colPrimary
             opacity: 0.28
         }
 
         Item {
-            Layout.fillWidth: true
-            Layout.preferredWidth: root.paneWidth
-            Layout.fillHeight: true
+            id: monthViewHost
+            x: root.verticalLayout ? 0 : (root.paneWidth + 25)
+            y: 0
+            width: root.verticalLayout
+                ? parent.width
+                : Math.max(root.paneWidth, parent.width - x)
+            height: root.verticalLayout
+                ? monthView.implicitHeight
+                : parent.height
 
             NexusMonthCalendar {
                 id: monthView

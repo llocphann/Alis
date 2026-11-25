@@ -19,6 +19,7 @@ Item {
     property string rangeMode: "calendar" // "calendar" | "rolling"
     property var localBackend: Events
     property var externalBackend: CalendarSync
+    property var linkedEvents: []
     property int eventsRevision: 0
     property int externalRevision: 0
     property bool showRecurring: true
@@ -118,7 +119,7 @@ Item {
     readonly property var boardData: {
         const _rev = root.eventsRevision + root.externalRevision
         const eventsList = root.localBackend?.list ?? []
-        const extList = root.externalBackend?.events ?? []
+        const extList = (root.externalBackend?.events ?? []).concat(Array.isArray(root.linkedEvents) ? root.linkedEvents : [])
         return YearlyPolicy.projectYearBoard(
             eventsList,
             root.anchorDate,
@@ -395,7 +396,7 @@ Item {
         property color fgColor: activeTint ? activeInk : root.ink
         toggled: activeTint
         implicitHeight: Math.round(26 * Appearance.fontSizeScale)
-        implicitWidth: pillRow.implicitWidth + 16
+        implicitWidth: label.length > 0 ? (pillRow.implicitWidth + 16) : implicitHeight
         buttonRadius: height / 2
         colBackground: idleBg
         colBackgroundHover: idleHoverBg
@@ -531,35 +532,6 @@ Item {
                     }
                 }
 
-                // Next plan quick chip
-                PillButton {
-                    visible: root.boardData.summary.nextPlan !== null
-                    symbol: "event_upcoming"
-                    label: root.boardData.summary.nextPlan
-                        ? (Translation.tr("Next") + ": " + root.boardData.summary.nextPlan.title + " (" + root.formatShortDate(root.boardData.summary.nextPlan.startIso) + ")")
-                        : ""
-                    onClicked: root.openEditorForSpan(root.boardData.summary.nextPlan)
-                }
-
-                // Up next quick chip
-                PillButton {
-                    visible: root.width >= 900 && root.boardData.summary.upNextPlan !== null
-                    label: root.boardData.summary.upNextPlan
-                        ? (Translation.tr("Up next") + ": " + root.boardData.summary.upNextPlan.title + " (" + root.formatShortDate(root.boardData.summary.upNextPlan.startIso) + ")")
-                        : ""
-                    onClicked: root.openEditorForSpan(root.boardData.summary.upNextPlan)
-                }
-
-                // Last plan quick chip
-                PillButton {
-                    visible: root.width >= 1040 && root.boardData.summary.lastPlan !== null
-                    fgColor: root.mutedInk
-                    label: root.boardData.summary.lastPlan
-                        ? (Translation.tr("Last") + ": " + root.boardData.summary.lastPlan.title)
-                        : ""
-                    onClicked: root.openEditorForSpan(root.boardData.summary.lastPlan)
-                }
-
                 // Calendar | Rolling 12 toggle + Recurring daily/weekly dots filter
                 Row {
                     spacing: 3
@@ -650,8 +622,9 @@ Item {
                     objectName: "yearlySearchToggle"
                     visible: !root.searchOpen && !root.searchQuery.length
                     symbol: "search"
-                    label: "/"
+                    Accessible.name: Translation.tr("Search")
                     onClicked: root.focusSearch()
+                    StyledToolTip { text: Translation.tr("Search (/)") }
                 }
 
                 // Add Plan button
@@ -839,6 +812,10 @@ Item {
                                             required property int index
                                             readonly property bool validDay: index < monthRow.modelData.daysInMonth
                                             readonly property var dayObj: validDay ? monthRow.modelData.days[index] : null
+                                            readonly property bool isHolidayDay: Boolean(dayObj?.isHoliday)
+                                            readonly property color holidayAccent: dayCell.isHolidayDay
+                                                ? root.resolveBarColor(dayObj.holidays[0]?.color, dayObj.holidays[0]?.sourceEvent, "external")
+                                                : "#EA4335"
                                             width: root.dayColWidth
                                             height: monthRow.height - 1
                                             color: {
@@ -847,13 +824,32 @@ Item {
                                                 if (dayObj.isToday)
                                                     return Qt.alpha(root.headerAccent, 0.20)
                                                 if (cellHover.containsMouse)
-                                                    return Qt.alpha(root.headerAccent, 0.10)
+                                                    return Qt.alpha(dayCell.isHolidayDay ? dayCell.holidayAccent : root.headerAccent, 0.16)
+                                                if (dayCell.isHolidayDay)
+                                                    return Qt.alpha(dayCell.holidayAccent, dayObj.isPast ? 0.10 : 0.16)
                                                 if (dayObj.isPast)
                                                     return dayObj.isWeekend ? root.colGridMutedCell : root.colGridPastCell
                                                 return dayObj.isWeekend ? root.colGridWeekendCell : "transparent"
                                             }
                                             border.width: dayObj?.isToday ? 1 : 0
                                             border.color: root.headerAccent
+
+                                            // Top-right holiday corner accent dot
+                                            Rectangle {
+                                                objectName: "yearlyDayHolidayDot"
+                                                visible: dayCell.validDay && dayCell.isHolidayDay
+                                                anchors {
+                                                    top: parent.top
+                                                    right: parent.right
+                                                    topMargin: 2
+                                                    rightMargin: 3
+                                                }
+                                                width: 5
+                                                height: 5
+                                                radius: 2.5
+                                                color: dayCell.holidayAccent
+                                                z: 3
+                                            }
 
                                             // Right hairline
                                             Rectangle {
@@ -915,12 +911,19 @@ Item {
                                                 }
 
                                                 StyledToolTip {
-                                                    extraVisibleCondition: (dayCell.dayObj?.recurringItems?.length ?? 0) > 0
+                                                    extraVisibleCondition: (dayCell.dayObj?.holidays?.length ?? 0) > 0
+                                                        || (dayCell.dayObj?.recurringItems?.length ?? 0) > 0
                                                     text: {
+                                                        const hols = dayCell.dayObj?.holidays ?? []
                                                         const items = dayCell.dayObj?.recurringItems ?? []
-                                                        if (!items.length) return ""
-                                                        const lines = items.slice(0, 5).map(it =>
-                                                            "• " + (it.timeLabel ? it.timeLabel + " " : "") + it.title)
+                                                        if (!hols.length && !items.length) return ""
+                                                        const lines = []
+                                                        for (let h = 0; h < Math.min(3, hols.length); ++h)
+                                                            lines.push("★ " + hols[h].title)
+                                                        if (hols.length > 3)
+                                                            lines.push("+" + (hols.length - 3) + " more holidays")
+                                                        for (let i = 0; i < Math.min(5, items.length); ++i)
+                                                            lines.push("• " + (items[i].timeLabel ? items[i].timeLabel + " " : "") + items[i].title)
                                                         if (items.length > 5)
                                                             lines.push("+" + (items.length - 5) + " more")
                                                         return dayCell.dayObj.iso + "\n" + lines.join("\n")
@@ -969,10 +972,12 @@ Item {
                                             }
                                             height: 16
                                             radius: 5
-                                            color: baseCol
+                                            color: planBar.span.isHoliday ? Qt.alpha(baseCol, 0.24) : baseCol
                                             opacity: span.isPast ? 0.65 : (barMouse.containsMouse || (root.editingKey.length > 0 && root.editingKey === span.key) || root.editingEventId === span.rawId ? 1.0 : 0.92)
-                                            border.width: ((root.editingKey.length > 0 && root.editingKey === span.key) || (!planBar.span.readOnly && root.editingEventId === span.rawId)) ? 1.5 : 0
-                                            border.color: root.ink
+                                            border.width: ((root.editingKey.length > 0 && root.editingKey === span.key) || (!planBar.span.readOnly && root.editingEventId === span.rawId))
+                                                ? 1.5 : (planBar.span.isHoliday ? 1 : 0)
+                                            border.color: ((root.editingKey.length > 0 && root.editingKey === span.key) || (!planBar.span.readOnly && root.editingEventId === span.rawId))
+                                                ? root.ink : Qt.alpha(baseCol, 0.72)
 
                                             // Flatten rounded corners cleanly when wrapped across month boundaries
                                             Rectangle {
@@ -998,20 +1003,22 @@ Item {
                                                     text: "‹"
                                                     font.pixelSize: Appearance.font.pixelSize.smallest
                                                     font.weight: Font.Bold
-                                                    color: planBar.fgCol
+                                                    color: planBar.span.isHoliday ? root.ink : planBar.fgCol
                                                 }
 
                                                 MaterialSymbol {
-                                                    visible: planBar.span.kind !== "plan" && planBar.width >= 34
-                                                    text: planBar.span.kind === "trip" ? "flight" : "flag"
+                                                    visible: (planBar.span.isHoliday || planBar.span.kind !== "plan") && planBar.width >= 30
+                                                    text: planBar.span.isHoliday ? "celebration" : (planBar.span.kind === "trip" ? "flight" : "flag")
                                                     iconSize: 11
-                                                    color: planBar.fgCol
+                                                    color: planBar.span.isHoliday ? planBar.baseCol : planBar.fgCol
                                                 }
 
                                                 StyledText {
                                                     Layout.fillWidth: true
                                                     elide: Text.ElideRight
                                                     text: {
+                                                        if (planBar.span.isHoliday && planBar.span.dayCount <= 1)
+                                                            return planBar.span.title
                                                         const base = planBar.span.title + " · " + planBar.span.dayCount + "d"
                                                         return planBar.span.checklistTotal > 0
                                                             ? base + " · " + planBar.span.checklistDone + "/" + planBar.span.checklistTotal
@@ -1019,7 +1026,7 @@ Item {
                                                     }
                                                     font.pixelSize: Math.max(10, Math.round(10.5 * Appearance.fontSizeScale))
                                                     font.weight: Font.DemiBold
-                                                    color: planBar.fgCol
+                                                    color: planBar.span.isHoliday ? root.ink : planBar.fgCol
                                                 }
 
                                                 StyledText {
@@ -1027,7 +1034,7 @@ Item {
                                                     text: "›"
                                                     font.pixelSize: Appearance.font.pixelSize.smallest
                                                     font.weight: Font.Bold
-                                                    color: planBar.fgCol
+                                                    color: planBar.span.isHoliday ? root.ink : planBar.fgCol
                                                 }
                                             }
 

@@ -367,7 +367,7 @@ ShellRoot {
         if (currentPinnedApps.length === legacyPinnedApps.length
                 && currentPinnedApps.every((panel, idx) => panel === legacyPinnedApps[idx])) {
             root._log("[Shell] Migrating dock.pinnedApps default terminal from foot to kitty");
-            Config.setNestedValue("dock.pinnedApps", ["org.gnome.Nautilus", "firefox", "kitty"])
+            Config.setNestedValue("dock.pinnedApps", ["org.alis.Files", "firefox", "kitty"])
         }
 
         if (changed)
@@ -613,10 +613,31 @@ ShellRoot {
     }
 
 
+    // Detect standalone Settings windows so Super+, never spawns a duplicate
+    // Settings overlay while a Settings window is already open.
+    function _closeRunningSettingsWindow(): bool {
+        if (!CompositorService.isNiri)
+            return false
+        const wins = NiriService.windows ?? []
+        for (let i = 0; i < wins.length; ++i) {
+            const win = wins[i]
+            const title = String(win?.title ?? "")
+            if (title === "alis Settings" || title === "Settings — Alis") {
+                if (win?.id !== undefined && win?.id !== null) {
+                    NiriService.closeWindow(win.id)
+                    return true
+                }
+            }
+        }
+        return false
+    }
+
     // IPC for settings - overlay mode or separate window based on config
     IpcHandler {
         target: "settings"
         function open(): void {
+            if (!GlobalStates.settingsOverlayOpen && root._closeRunningSettingsWindow())
+                return
             if (GlobalStates.useSettingsOverlay()) {
                 // inline overlay panel
                 GlobalStates.settingsOverlayTargetOutput = GlobalStates.resolveOutputName("",[])
@@ -626,6 +647,10 @@ ShellRoot {
                 Quickshell.execDetached([Quickshell.shellPath("scripts/alis"),
                     "settings-window"])
             }
+        }
+        function openOverlay(): void {
+            GlobalStates.settingsOverlayTargetOutput = GlobalStates.resolveOutputName("",[])
+            GlobalStates.settingsOverlayOpen = true
         }
         function toggle(): void {
             open()
@@ -956,6 +981,8 @@ ShellRoot {
         GlobalStates.settingsOverlayOpen = false
         if (AlisIntergration.nexus?.isOpen && (AlisIntergration.nexus?.overlayMode ?? true))
             AlisIntergration.nexus.close()
+        if (AlisIntergration.alisFiles?.isOpen && (AlisIntergration.alisFiles?.overlayMode ?? true))
+            AlisIntergration.alisFiles.close()
         GlobalStates.osdVolumeOpen = false
         GlobalStates.osdBrightnessOpen = false
         GlobalStates.osdMicOpen = false

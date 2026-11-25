@@ -125,7 +125,9 @@ SettingsDivider 1.0 SettingsDivider.qml
 SettingsDrillDownRow 1.0 SettingsDrillDownRow.qml
 SettingsGroup 1.0 SettingsGroup.qml
 SettingsLiveSearchResults 1.0 SettingsLiveSearchResults.qml
+SettingsMetricControl 1.0 SettingsMetricControl.qml
 SettingsNote 1.0 SettingsNote.qml
+SettingsPresetRow 1.0 SettingsPresetRow.qml
 SettingsSliderRow 1.0 SettingsSliderRow.qml
 ShellDesaturationEffect 1.0 ShellDesaturationEffect.qml
 singleton SettingsLayoutManager 1.0 SettingsLayoutManager.qml

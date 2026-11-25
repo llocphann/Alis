@@ -24,11 +24,23 @@ Singleton {
     // New edits write todo.nexus.vaultPath and retire the legacy override.
     readonly property string sharedVaultPath: {
         const canonical = String(Config.options?.todo?.nexus?.vaultPath ?? "").trim()
-        return canonical.length > 0
-            ? canonical
-            : String(Config.options?.notes?.zettelkasten?.vaultPath ?? "").trim()
+        if (canonical.length > 0)
+            return canonical
+        const legacy = String(Config.options?.notes?.zettelkasten?.vaultPath ?? "").trim()
+        if (legacy.length > 0)
+            return legacy
+        const obs = String(Config.options?.todo?.obsidian?.vaultPath ?? "").trim()
+        if (obs.length > 0)
+            return obs
+        return String(Config.options?.integrations?.nexus?.configPath ?? "").trim().replace(/\/+\.(obsidian|nexus)\/?$/, "")
     }
+    readonly property bool _autoNexusCandidate: AlisIntergration.nexusEnabled
+        && root.sharedVaultPath.length > 0
+        && (Config.options?.todo?.autoLinkNexus !== false)
+        && root.useMarkdownNote
+        && !root._nexusSetupActive
     readonly property bool useNexus: root.requestedBackend === "nexus"
+        || (root._autoNexusCandidate && dailyNexus.ready)
     readonly property string backend: root.useNexus ? "nexus" : "internal"
     readonly property string nexusSourceMode:
         String(Config.options?.todo?.nexus?.sourceMode ?? "markdown-note")
@@ -103,7 +115,7 @@ Singleton {
 
     DailyNoteTodoBackend {
         id: dailyNexus
-        active: (root.useNexus || root._nexusSetupActive) && root.useMarkdownNote
+        active: (root.useNexus || root._nexusSetupActive || root._autoNexusCandidate) && root.useMarkdownNote
         vaultPath: root.sharedVaultPath
         folder: String(Config.options?.todo?.nexus?.dailyNote?.folder
             ?? "00_Capture/01_Journal")
@@ -163,14 +175,14 @@ Singleton {
     }
 
     function refreshNexusSetup(): bool {
-        if (!root.useNexus && !root._nexusSetupActive)
+        if (!root.useNexus && !root._nexusSetupActive && !root._autoNexusCandidate)
             return false
         root.nexusBackend.reload()
         return true
     }
 
     function initializeSection() {
-        if (!root.useNexus && !root._nexusSetupActive)
+        if (!root.useNexus && !root._nexusSetupActive && !root._autoNexusCandidate)
             return false
         return root.nexusBackend.initializeSection()
     }
@@ -210,6 +222,7 @@ Singleton {
             return false
 
         Config.setNestedValue("todo.backend", "nexus")
+        Config.setNestedValue("todo.autoLinkNexus", true)
         root._activateAfterMigration = false
         root._nexusSetupActive = false
         return true
@@ -220,6 +233,7 @@ Singleton {
             return false
         root._activateAfterMigration = false
         root._nexusSetupActive = false
+        Config.setNestedValue("todo.autoLinkNexus", false)
         Config.setNestedValue("todo.backend", "internal")
         return true
     }

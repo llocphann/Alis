@@ -138,6 +138,10 @@ Singleton {
 		if (!host.startsWith("/")) {
 			args.push("--port", String(root._mpdBridgePort))
 		}
+		const musicRoot = String(LocalMusic.configuredLibraryFolder || LocalMusic.detectedLibraryFolder || "").trim()
+		if (musicRoot.length > 0) {
+			args.push("--music-root", musicRoot)
+		}
 		if (busName) {
 			args.push("--mpris-name", busName)
 		}
@@ -1418,7 +1422,19 @@ Singleton {
 
 		function onTrackArtUrlChanged() {
 			if ((root.activePlayer?.uniqueId ?? 0) === (root.activeTrack?.uniqueId ?? 0)
-				&& (root.activePlayer?.trackArtUrl ?? "") !== (root.activeTrack?.artUrl ?? "")) {
+				&& root.effectiveArtUrl(root.activePlayer) !== (root.activeTrack?.artUrl ?? "")) {
+				const r = root.__reverse;
+				root.updateTrack();
+				root.__reverse = r;
+			}
+		}
+	}
+
+	Connections {
+		target: LocalMusic
+		function onCurrentArtChanged() {
+			if (root.activePlayer === root.mpdPlayer
+				&& root.effectiveArtUrl(root.activePlayer) !== (root.activeTrack?.artUrl ?? "")) {
 				const r = root.__reverse;
 				root.updateTrack();
 				root.__reverse = r;
@@ -1431,7 +1447,7 @@ Singleton {
 	function updateTrack() {
 		this.activeTrack = {
 			uniqueId: this.activePlayer?.uniqueId ?? 0,
-			artUrl: this.activePlayer?.trackArtUrl ?? "",
+			artUrl: root.effectiveArtUrl(this.activePlayer),
 			title: this.activePlayer?.trackTitle || Translation.tr("Unknown Title"),
 			artist: this.activePlayer?.trackArtist || Translation.tr("Unknown Artist"),
 			album: this.activePlayer?.trackAlbum || Translation.tr("Unknown Album"),
@@ -2006,6 +2022,10 @@ Singleton {
 	function effectiveArtUrl(player): string {
 		const direct = player?.trackArtUrl ?? "";
 		if (direct.length > 0) return direct;
+		if (player && player === root.mpdPlayer && LocalMusic.mprisMatchesCurrentTrack()) {
+			const localArt = String(LocalMusic.currentArt ?? "").trim();
+			if (localArt.length > 0) return localArt;
+		}
 		const videoId = root._extractYoutubeVideoId(
 			player?.metadata?.["xesam:url"] ?? "");
 		if (videoId.length > 0)

@@ -39,7 +39,7 @@ Item {
             root.selectedDate = today
     }
     onTodayKeyChanged: root.refreshFollowingToday()
-    onSelectedDateChanged: {clearEventSelection();storeBrowser()}
+    onSelectedDateChanged: {clearEventSelection();storeBrowser();_refreshNexusPlannerRange()}
     onFollowTodayChanged: storeBrowser()
     onSideViewChanged: {
         // Click-created ID selections belong to the inline editor session;
@@ -63,7 +63,12 @@ Item {
         }
         storeBrowser()
     }
-    onPresentationActiveChanged: if (presentationActive) root.refreshFollowingToday()
+    onPresentationActiveChanged: {
+        if (presentationActive) {
+            root.refreshFollowingToday()
+            root._refreshNexusPlannerRange()
+        }
+    }
     property bool expandAllDay: false
     property int activeDragDay: -1
     property var selectedEventKeys: []
@@ -171,6 +176,10 @@ Item {
     function clickPlannerEvent(row,modifiers): void {
         const ctrl=!!(modifiers & Qt.ControlModifier)
         const shift=!!(modifiers & Qt.ShiftModifier)
+        if (!ctrl && !shift && row?.event?.sourceKind==="nexusDailyTask") {
+            AlisIntergration.nexus?.togglePlannerTask(row.event)
+            return
+        }
         if (ctrl || shift) {
             const result=Selection.choose(root.selectableEventRows,
                 root.selectedEventKeys,root.selectionAnchorKey,row,ctrl,shift)
@@ -246,12 +255,54 @@ Item {
     }
     property real hourHeight: 52 * Appearance.fontSizeScale
     property int _eventsRevision: 0
+    property int _linkedRevision: 0
     readonly property int firstDay: Qt.locale().firstDayOfWeek % 7
     property bool _initialAutoScrollPending: true
+    readonly property var linkedExternalEvents: {
+        const _rev = root._eventsRevision + root._linkedRevision
+        const nxTasks = (AlisIntergration.nexusEnabled && Array.isArray(AlisIntergration.nexus?.plannerTasks))
+            ? AlisIntergration.nexus.plannerTasks
+            : []
+        const etFallback = (AlisIntergration.exercisesTrackerEnabled
+                && AlisIntergration.exercisesTracker
+                && typeof AlisIntergration.exercisesTracker.getPlannerFallbackEvents === "function")
+            ? AlisIntergration.exercisesTracker.getPlannerFallbackEvents(root.localBackend?.list ?? [])
+            : []
+        return nxTasks.concat(etFallback)
+    }
+    readonly property var combinedExternalEvents: (root.externalBackend?.events ?? []).concat(root.linkedExternalEvents)
     readonly property var days: {
-        const revision = root._eventsRevision
-        return Planner.project(root.localBackend.list, root.externalBackend.events,
+        const revision = root._eventsRevision + root._linkedRevision
+        return Planner.project(root.localBackend.list, root.combinedExternalEvents,
             root.selectedDate, root.firstDay, FutureSchedule)
+    }
+    function _refreshNexusPlannerRange(): void {
+        if (!root.presentationActive || !AlisIntergration.nexusEnabled)
+            return
+        const nx = AlisIntergration.nexus
+        if (!nx || typeof nx.refreshPlannerRange !== "function")
+            return
+        let startDt
+        let endDt
+        if (root.viewMode === "year") {
+            const base = root.selectedDate instanceof Date && !isNaN(root.selectedDate.getTime())
+                ? root.selectedDate : new Date()
+            if (root.yearRangeMode === "rolling") {
+                startDt = new Date(base.getFullYear(), base.getMonth(), 1, 12, 0, 0, 0)
+                endDt = new Date(base.getFullYear(), base.getMonth() + 12, 0, 12, 0, 0, 0)
+            } else {
+                startDt = new Date(base.getFullYear(), 0, 1, 12, 0, 0, 0)
+                endDt = new Date(base.getFullYear(), 11, 31, 12, 0, 0, 0)
+            }
+        } else {
+            const weekDays = Planner.week(root.selectedDate, root.firstDay)
+            startDt = weekDays[0].date
+            endDt = weekDays[weekDays.length - 1].date
+        }
+        nx.refreshPlannerRange(
+            Qt.formatDate(startDt, "yyyy-MM-dd"),
+            Qt.formatDate(endDt, "yyyy-MM-dd")
+        )
     }
     onDaysChanged: {
         if (root._initialized && root._initialAutoScrollPending
@@ -318,6 +369,25 @@ Item {
         target: root.externalBackend
         function onEventsUpdated() {root._eventsRevision++}
     }
+    Connections {
+        target: AlisIntergration.nexus
+        ignoreUnknownSignals: true
+        function onPlannerTasksRevisionChanged() { root._linkedRevision++ }
+        function onVaultLoadedChanged() { root._refreshNexusPlannerRange() }
+    }
+    Connections {
+        target: AlisIntergration.exercisesTracker
+        ignoreUnknownSignals: true
+        function onRevisionChanged() { root._linkedRevision++ }
+    }
+    Connections {
+        target: Todo
+        ignoreUnknownSignals: true
+        function onListChanged() {
+            root._linkedRevision++
+            root._refreshNexusPlannerRange()
+        }
+    }
     property string viewMode: "week"
     property string yearRangeMode: "calendar"
 
@@ -333,6 +403,7 @@ Item {
             if (root.sideView === "events")
                 root.sideView = ""
         }
+        root._refreshNexusPlannerRange()
         root.storeBrowser()
     }
 
@@ -341,6 +412,7 @@ Item {
         if (root.yearRangeMode === normalized)
             return
         root.yearRangeMode = normalized
+        root._refreshNexusPlannerRange()
         root.storeBrowser()
     }
 
@@ -711,20 +783,6 @@ Item {
                         }
                     }
                     Action {
-                        objectName:"plannerExercisesAction"
-                        visible:AlisIntergration.exercisesTrackerEnabled
-                        symbol:"fitness_center"
-                        Accessible.name:Translation.tr("Exercises Tracker")
-                        onClicked:{
-                            const dk=Qt.formatDate(root.selectedDate,"yyyy-MM-dd")
-                            if (AlisIntergration.exercisesTracker)
-                                AlisIntergration.exercisesTracker.openDashboardTracker(dk)
-                            else
-                                GlobalStates.dashboardPageId="exercisesTracker"
-                        }
-                        StyledToolTip { text: Translation.tr("Open date in Exercises Tracker") }
-                    }
-                    Action {
                         objectName:"plannerTodoAction"
                         symbol:"checklist"
                         Accessible.name:Translation.tr("To Do")
@@ -737,6 +795,14 @@ Item {
                         Accessible.name:Translation.tr("Quick Notes")
                         toggled:root.sideView==="notes"
                         onClicked:root.sideView=root.sideView==="notes"?"":"notes"
+                    }
+                    Action {
+                        objectName:"plannerCalendarSyncAction"
+                        symbol:"sync"
+                        Accessible.name:Translation.tr("Calendar Sync")
+                        toggled:root.sideView==="calendar"
+                        onClicked:root.sideView=root.sideView==="calendar"?"":"calendar"
+                        StyledToolTip { text: Translation.tr("Calendar Sync") }
                     }
                 }
             }
@@ -831,6 +897,19 @@ Item {
                                 color:Qt.alpha(Appearance.colors.colPrimary,.045)
                             }
                             Rectangle {
+                                objectName:"plannerHolidayDayTint"
+                                anchors.fill:parent
+                                visible:!dayColumn.today && (dayColumn.modelData.holidayCount ?? 0) > 0
+                                color:Qt.alpha(dayColumn.modelData.holidays?.[0]?.event?.sourceColor ?? "#EA4335",.08)
+                            }
+                            Rectangle {
+                                objectName:"plannerHolidayHeaderBar"
+                                anchors.top:parent.top;anchors.left:parent.left;anchors.right:parent.right
+                                height:2.5
+                                visible:(dayColumn.modelData.holidayCount ?? 0) > 0
+                                color:Qt.alpha(dayColumn.modelData.holidays?.[0]?.event?.sourceColor ?? "#EA4335",.82)
+                            }
+                            Rectangle {
                                 x:0;y:0;width:1;height:parent.height
                                 color:root.headerDivider
                             }
@@ -866,6 +945,7 @@ Item {
                                 required property var modelData
                                 required property int index
                                 objectName:"plannerAllDayEvent"
+                                readonly property bool isHoliday: modelData.isHoliday === true
                                 readonly property color eventAccent:
                                     root.eventIdentityColor(modelData)
                                 x:4+(dragMoved?dragX
@@ -875,19 +955,49 @@ Item {
                                         ? root.activeGroupGesture.dx : 0)
                                 y:viewport.contentY+68+index*26;width:dayColumn.width-8;height:24;z:11
                                 buttonRadius:6
-                                colBackground:Qt.alpha(allDayButton.eventAccent,
-                                    root.isEventSelected(modelData) || root.isEditorEvent(modelData) ? .44 : .35)
+                                colBackground:allDayButton.isHoliday
+                                    ? Qt.alpha(allDayButton.eventAccent, 0.22)
+                                    : Qt.alpha(allDayButton.eventAccent,
+                                        root.isEventSelected(modelData) || root.isEditorEvent(modelData) ? .44 : .35)
                                 Rectangle {
                                     objectName:"plannerAllDaySelection"
                                     anchors.fill:parent;radius:allDayButton.buttonRadius
                                     color:"transparent"
                                     border.width:root.isEventSelected(allDayButton.modelData)
-                                        || root.isEditorEvent(allDayButton.modelData) ? 2 : 0
-                                    border.color:Appearance.colors.colPrimary
+                                        || root.isEditorEvent(allDayButton.modelData)
+                                            ? 2 : (allDayButton.isHoliday ? 1 : 0)
+                                    border.color:root.isEventSelected(allDayButton.modelData)
+                                        || root.isEditorEvent(allDayButton.modelData)
+                                            ? Appearance.colors.colPrimary
+                                            : Qt.alpha(allDayButton.eventAccent, 0.65)
                                     z:1
                                 }
-                                Accessible.name:modelData.event.title+(modelData.source==="external"?" · Read-only":"")
-                                contentItem:StyledText {text:allDayButton.modelData.event.title;color:root.ink;horizontalAlignment:Text.AlignHCenter;verticalAlignment:Text.AlignVCenter;elide:Text.ElideRight;font.pixelSize:Appearance.font.pixelSize.smallest}
+                                Accessible.name:modelData.event.title+(allDayButton.isHoliday?" · Holiday":(modelData.source==="external"?" · Read-only":""))
+                                contentItem:Item {
+                                    id:allDayContent
+                                    Row {
+                                        anchors.centerIn:parent
+                                        spacing:4
+                                        MaterialSymbol {
+                                            visible:allDayButton.isHoliday
+                                            anchors.verticalCenter:parent.verticalCenter
+                                            text:"celebration"
+                                            iconSize:12
+                                            color:allDayButton.eventAccent
+                                        }
+                                        StyledText {
+                                            anchors.verticalCenter:parent.verticalCenter
+                                            width:Math.min(implicitWidth, Math.max(0, allDayContent.width - 8 - (allDayButton.isHoliday ? 16 : 0)))
+                                            text:allDayButton.modelData.event.title
+                                            color:root.ink
+                                            font.weight:allDayButton.isHoliday ? Font.DemiBold : Font.Normal
+                                            horizontalAlignment:Text.AlignHCenter
+                                            verticalAlignment:Text.AlignVCenter
+                                            elide:Text.ElideRight
+                                            font.pixelSize:Appearance.font.pixelSize.smallest
+                                        }
+                                    }
+                                }
                                 onClicked:root.editOccurrence(modelData)
                                 property bool dragMoved:false
                                 property bool dragArmed:false
@@ -1113,8 +1223,13 @@ Item {
                                     anchors.fill:parent;anchors.margins:5;clip:true
                                     StyledText {
                                         width:parent.width
-                                        text:timedButton.modelData.event.title
-                                        color:root.ink;font.weight:Font.Medium
+                                        readonly property bool isNexusTask: timedButton.modelData.event?.sourceKind==="nexusDailyTask"
+                                        readonly property bool taskDone: isNexusTask && timedButton.modelData.event?.done===true
+                                        text:isNexusTask
+                                            ? ((taskDone ? "✓ " : "○ ") + timedButton.modelData.event.title)
+                                            : timedButton.modelData.event.title
+                                        color:taskDone ? root.mutedInk : root.ink;font.weight:Font.Medium
+                                        font.strikeout:taskDone
                                         font.pixelSize:Appearance.font.pixelSize.smallest
                                         elide:Text.ElideRight
                                     }
@@ -1271,8 +1386,9 @@ Item {
                         rangeMode:root.yearRangeMode
                         localBackend:root.localBackend
                         externalBackend:root.externalBackend
+                        linkedEvents:root.linkedExternalEvents
                         eventsRevision:root._eventsRevision
-                        externalRevision:root._eventsRevision
+                        externalRevision:root._eventsRevision + root._linkedRevision
                         abyssPanel:root.abyssPanel
                         ink:root.ink
                         mutedInk:root.mutedInk
@@ -1290,16 +1406,17 @@ Item {
                 objectName:"plannerSharedSidePanel"
                 Layout.fillHeight:root.width>=760
                 Layout.fillWidth:root.width<760
-                Layout.preferredWidth:root.width<760?root.width:250*Appearance.fontSizeScale
+                Layout.preferredWidth:root.width<760?root.width:(root.sideView==="calendar"?310:250)*Appearance.fontSizeScale
                 Layout.minimumWidth:0
                 Layout.maximumWidth:root.width
                 Layout.preferredHeight:root.width<760?Math.min(230,root.height*.4):-1
                 Layout.minimumHeight:0
                 Layout.maximumHeight:root.width<760?Math.min(230,root.height*.4):Infinity
                 clip:true
-                visible:root.sideView==="todo" || root.sideView==="notes"
+                visible:root.sideView==="todo" || root.sideView==="notes" || root.sideView==="calendar"
                 active:visible
-                sourceComponent:root.sideView==="todo"?todoPanel:notesPanel
+                sourceComponent:root.sideView==="todo" ? todoPanel
+                    : (root.sideView==="notes" ? notesPanel : calendarSyncPanel)
             }
             Loader {
                 id:inlineEventsPanel
@@ -1338,11 +1455,12 @@ Item {
     }
     Component {id:todoPanel;DashTodo {}}
     Component {id:notesPanel;DashNotes {}}
+    Component {id:calendarSyncPanel;PlannerCalendarSyncPanel {onDismiss:root.sideView=""}}
     Component.onCompleted: {
         const saved=GlobalStates.dashboardPlannerBrowser
         if(saved.date)selectedDate=new Date(saved.date)
         followToday=saved.followToday ?? true
-        sideView=["todo","notes"].includes(saved.sideView)?saved.sideView:""
+        sideView=["todo","notes","calendar"].includes(saved.sideView)?saved.sideView:""
         viewMode=saved.viewMode==="year"?"year":"week"
         yearRangeMode=saved.yearRangeMode==="rolling"?"rolling":"calendar"
         _initialized=true
@@ -1350,6 +1468,8 @@ Item {
         storeBrowser()
         if ((root.days || []).some(day => (day?.timed?.length ?? 0) > 0))
             root._initialAutoScrollPending=false
+        if (root.presentationActive)
+            Qt.callLater(root._refreshNexusPlannerRange)
         if (root.viewMode==="week")
             Qt.callLater(root.scrollWorkingHours)
     }

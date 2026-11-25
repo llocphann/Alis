@@ -63,13 +63,21 @@ Scope {
         return idx !== undefined ? idx : -1
     }
 
+    function _normRootPath(rawPath: string): string {
+        const trimmed = FileUtils.trimFileProtocol(String(rawPath ?? "")).trim()
+        if (!trimmed)
+            return ""
+        const clean = trimmed.replace(/\/+$/, "")
+        return clean || "/"
+    }
+
     function _buildRoots(path: string, extraPaths = []): var {
-        const cleanPath = FileUtils.trimFileProtocol(String(path ?? ""))
+        const cleanPath = root._normRootPath(path)
         if (!cleanPath)
             return null
         const roots = [cleanPath]
         for (const rawExtra of (extraPaths ?? [])) {
-            const extra = FileUtils.trimFileProtocol(String(rawExtra ?? ""))
+            const extra = root._normRootPath(rawExtra)
             if (!extra) continue
             const redundant = roots.some(existing => {
                 const existingPrefix = existing.endsWith("/") ? existing : existing + "/"
@@ -96,11 +104,59 @@ Scope {
         ]
     }
 
+    readonly property string _colorTagScheme: String(Config.options?.appearance?.palette?.type ?? "auto")
+    readonly property bool _colorTagInvertHue: Boolean(Config.options?.appearance?.colorInvert ?? false)
+    property bool _colorTagsRequested: false
+    property bool _colorTagsPendingRefresh: false
+    property string _colorTagsEnvSig: ""
+    property string _loadedColorTagsKey: ""
+    readonly property bool colorTagsLoading: colorTagsProcess.running
+    readonly property bool hasColorTagsForCurrentScan: root._loadedColorTagsKey.length > 0
+        && root._loadedColorTagsKey === root._currentColorTagsCacheKey()
+
+    function _currentColorTagEnvSig(): string {
+        return `${root._colorTagScheme}|${root._colorTagInvertHue ? 1 : 0}`
+    }
+
+    function _currentColorTagsCacheKey(): string {
+        return `${root._scanSignature}|${root._currentColorTagEnvSig()}`
+    }
+
+    function _hydrateCachedColorTags(): bool {
+        if (Directories.scriptPath !== Quickshell.shellPath("scripts"))
+            return false
+        const key = root._currentColorTagsCacheKey()
+        if (!key || !root._scanSignature)
+            return false
+        const cached = Wallpapers.getCachedColorTags(key)
+        if (!cached || typeof cached !== "object")
+            return false
+        root.colorTagsByPath = cached
+        root._loadedColorTagsKey = key
+        return true
+    }
+
     function ensureColorTags(): void {
-        if (colorTagsProcess.running || root._lastScanRoots.length === 0)
+        root._colorTagsRequested = true
+        if (root._lastScanRoots.length === 0)
             return
+        if (root._hydrateCachedColorTags() && !colorTagsProcess.running)
+            return
+        if (colorTagsProcess.running) {
+            root._colorTagsPendingRefresh = true
+            return
+        }
         colorTagsTimer.stop()
+        colorTagsEofTimer.stop()
+        root._colorTagsPendingRefresh = false
+        root._colorTagsEnvSig = root._currentColorTagEnvSig()
         colorTagsProcess.revision = root._scanRevision
+        colorTagsProcess.cacheKey = root._currentColorTagsCacheKey()
+        colorTagsProcess.startObserved = false
+        colorTagsProcess.exitedSeen = false
+        colorTagsProcess.exitCodeValue = -1
+        colorTagsProcess.streamDone = false
+        colorTagsProcess.collectedText = ""
         colorTagsProcess.exec([
             "/usr/bin/nice", "-n", "19",
             `${Directories.scriptsPath}/native-dispatch`,
@@ -108,6 +164,15 @@ Scope {
             "--roots",
             ...root._lastScanRoots
         ])
+    }
+
+    on_ColorTagSchemeChanged: {
+        if (root._colorTagsRequested && !root._hydrateCachedColorTags())
+            root.ensureColorTags()
+    }
+    on_ColorTagInvertHueChanged: {
+        if (root._colorTagsRequested && !root._hydrateCachedColorTags())
+            root.ensureColorTags()
     }
 
     function refresh(path: string, extraPaths = [], force = false): void {
@@ -132,17 +197,13 @@ Scope {
                 root._lastRawOutput = cached.rawOutput ?? ""
                 root._lastScanOrder = cached.scanOrder ?? null
                 root._applyPathIndex(cached.staticIndexMap, cached.animatedIndexMap)
-                const clone = entry => ({
-                    path: entry.path,
-                    name: entry.name,
-                    relativePath: entry.relativePath,
-                    kind: entry.kind,
-                    searchKey: entry.searchKey
-                })
-                root.staticEntries = (cached.staticEntries ?? []).map(clone)
-                root.animatedEntries = (cached.animatedEntries ?? []).map(clone)
+                root.staticEntries = (cached.staticEntries ?? []).slice()
+                root.animatedEntries = (cached.animatedEntries ?? []).slice()
                 root.scanning = false
                 Wallpapers.preloadKnownThumbnails()
+                root._hydrateCachedColorTags()
+                if (root._colorTagsRequested && !root.hasColorTagsForCurrentScan && !colorTagsProcess.running)
+                    root.ensureColorTags()
                 root.refreshed()
                 return
             }
@@ -252,8 +313,13 @@ Scope {
         root.scanning = false
         // Observers may synchronously request a newer scan on this transition.
         const pending = root._pendingRefresh
-        if (!root.scanning && pending)
+        if (!root.scanning && pending) {
             root.refresh(pending.path, pending.extraPaths, pending.force)
+            return
+        }
+        root._hydrateCachedColorTags()
+        if (root._colorTagsRequested && !root.hasColorTagsForCurrentScan && !colorTagsProcess.running)
+            root.ensureColorTags()
     }
 
     Process {
@@ -301,21 +367,85 @@ Scope {
         onTriggered: root.ensureColorTags()
     }
 
+    Timer {
+        id: colorTagsEofTimer
+        interval: 50
+        repeat: false
+        onTriggered: {
+            if (colorTagsProcess.exitedSeen && !colorTagsProcess.streamDone) {
+                colorTagsProcess.collectedText = tagOutput.text
+                colorTagsProcess.streamDone = true
+                colorTagsProcess._tryFinalize()
+            }
+        }
+    }
+
     Process {
         id: colorTagsProcess
-        property int revision
-        stdout: StdioCollector { id: tagOutput; waitForEnd: true }
-        onExited: exitCode => {
-            if (revision !== root._scanRevision) {
-                root.ensureColorTags()
+        property int revision: 0
+        property string cacheKey: ""
+        property bool startObserved: false
+        property bool exitedSeen: false
+        property int exitCodeValue: -1
+        property bool streamDone: false
+        property string collectedText: ""
+        environment: ({
+            ALIS_COLOR_TAGS_SCHEME: root._colorTagScheme,
+            ALIS_COLOR_TAGS_INVERT_HUE: root._colorTagInvertHue ? "1" : "0"
+        })
+        stdout: StdioCollector {
+            id: tagOutput
+            waitForEnd: true
+            onStreamFinished: {
+                colorTagsEofTimer.stop()
+                colorTagsProcess.collectedText = tagOutput.text
+                colorTagsProcess.streamDone = true
+                colorTagsProcess._tryFinalize()
+            }
+        }
+        function _tryFinalize(): void {
+            if (!exitedSeen || !streamDone)
+                return
+            const envStale = root._colorTagsEnvSig !== root._currentColorTagEnvSig()
+            if (revision !== root._scanRevision || envStale) {
+                root._colorTagsPendingRefresh = false
+                Qt.callLater(() => root.ensureColorTags())
                 return
             }
-            if (exitCode !== 0) return
-            try {
-                const tags = JSON.parse(tagOutput.text)
-                if (tags && typeof tags === "object" && !Array.isArray(tags))
-                    root.colorTagsByPath = tags
-            } catch (e) {}
+            if (exitCodeValue === 0) {
+                try {
+                    const tags = JSON.parse(collectedText)
+                    if (tags && typeof tags === "object" && !Array.isArray(tags)) {
+                        root.colorTagsByPath = tags
+                        root._loadedColorTagsKey = cacheKey
+                        if (Directories.scriptPath === Quickshell.shellPath("scripts") && cacheKey)
+                            Wallpapers.setCachedColorTags(cacheKey, tags)
+                    }
+                } catch (e) {}
+            }
+            if (root._colorTagsPendingRefresh) {
+                root._colorTagsPendingRefresh = false
+                if (root._colorTagsRequested)
+                    Qt.callLater(() => root.ensureColorTags())
+            }
+        }
+        onStarted: startObserved = true
+        onRunningChanged: {
+            if (!running && !startObserved) {
+                exitedSeen = true
+                exitCodeValue = -1
+                streamDone = true
+                _tryFinalize()
+            }
+        }
+        onExited: exitCode => {
+            exitedSeen = true
+            exitCodeValue = exitCode
+            if (streamDone) {
+                _tryFinalize()
+            } else {
+                colorTagsEofTimer.restart()
+            }
         }
     }
 }

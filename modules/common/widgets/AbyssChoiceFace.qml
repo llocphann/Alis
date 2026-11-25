@@ -13,7 +13,7 @@ Item {
     readonly property real strength: Wave.bodyStrength(Config.options?.abyss?.waves)
     readonly property real amplitude: Math.min(4,height*.12)*Math.min(1,Wave.parameters(Config.options?.abyss?.waves).amplitude/2)*Math.min(1,strength)
     readonly property bool pulseRunning: pulse.running
-    readonly property real corner: Math.min(width/2-1,height/2-2)
+    readonly property real corner: Math.max(0, Math.min(width/2-1,height/2-2))
     readonly property real inset: 2
     function lift(position): real {
         const rest=motionAllowed && strength>0 ? Math.min(.7,amplitude*.3)*Math.sin(position*Math.PI*2) : 0
@@ -27,6 +27,7 @@ Item {
     NumberAnimation { id:pulse;target:root;property:"phase";from:0;to:1;duration:Math.round(520-200*Wave.parameters(Config.options?.abyss?.waves).speed) }
     Shape {
         anchors.fill:parent;preferredRendererType:Shape.CurveRenderer
+        visible: root.width > 4 && root.height > 4
         ShapePath {
             strokeWidth:-1;fillColor:root.fillColor;startX:root.corner;startY:root.inset
             PathCubic { x:root.width-root.corner;y:root.inset;control1X:root.width*.34;control1Y:root.inset+root.lift(.34);control2X:root.width*.66;control2Y:root.inset+root.lift(.66) }

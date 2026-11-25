@@ -94,8 +94,7 @@ Singleton {
         const label = String(section ?? "").toLowerCase()
         const integration = key === "services" && (label.includes("todo")
             || label.includes("to-do") || label.includes("nexus")
-            || label.includes("zettelkasten") || label.includes("quick note")
-            || label.includes("calendar"))
+            || label.includes("zettelkasten") || label.includes("quick note"))
         const optionalPower = key === "system" && (label.includes("tlp") || label.includes("fan")
             || label.includes("cooling") || label.includes("thermal"))
         const defaultApps = (key === "compositor" && (label.includes("application") || label.includes("default app")))
@@ -129,9 +128,6 @@ Singleton {
             ? Object.assign({},page,{key:"abyss",name:"Surface & Waves",icon:"water",
                 desc:"Screen Edge, waves and surface presentation",component:"modules/settings/AbyssConfig.qml"})
             : page
-        const customName = String((root.customPageNames ?? {})[String(index)] ?? "").trim()
-        if (customName.length > 0)
-            return Object.assign({}, base, { name: customName, defaultName: base.name })
         return Object.assign({}, base, { defaultName: base.name })
     })
 
@@ -151,12 +147,12 @@ Singleton {
     readonly property var hiddenPages: SettingsPageRegistryData.hiddenPages.filter(
         index => !root.isHiddenLegacyIndex(index))
 
-    // Keep the complete saved page order for search, shortcuts and navigation
-    // editing. SettingsHierarchy derives the compact parent/child presentation.
+    // Canonical flat page order for shortcuts, Focus mode and search.
+    // Ignores legacy hidden-page overrides now that Edit Navigation is removed.
     function navigationPageIndexes(essentialOnly = false): var {
         const order = []
         const seen = new Set()
-        for (const category of root.categories) {
+        for (const category of root.defaultCategories) {
             for (const index of category.pages) {
                 const page = root.pages[index]
                 if (!page || seen.has(index) || !root.isPageApplicable(index)

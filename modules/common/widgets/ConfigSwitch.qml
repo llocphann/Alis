@@ -21,9 +21,9 @@ RippleButton {
     Layout.minimumWidth: 0
     // Settings rows inherit the enclosing panel fill, like sliders and labels.
     colBackground: "transparent"
-    buttonRadius: SettingsMaterialPreset.waffle ? 6 : (abyssStyle ? Math.min(18,height/2) : Appearance?.rounding?.small ?? 4)
-    colBackgroundHover: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.navHoverColor : (abyssStyle ? Qt.alpha(Appearance.colors.colPrimary,.24) : Appearance.colLayer1Hover)
-    implicitHeight: contentItem.implicitHeight + (SettingsMaterialPreset.waffle ? 8 : 6) * 2
+    buttonRadius: SettingsMaterialPreset.waffle ? 6 : 9
+    colBackgroundHover: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.navHoverColor : SettingsMaterialPreset.controlSurfaceHover
+    implicitHeight: contentItem.implicitHeight + (SettingsMaterialPreset.waffle ? 8 : 7) * 2
     font.pixelSize: Appearance.font.pixelSize.small
     font.family: SettingsMaterialPreset.fontFamily
     Accessible.checkable: true

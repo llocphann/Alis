@@ -33,8 +33,8 @@ depends=(
   nm-connection-editor
   gnome-keyring
 
-  # File manager
-  nautilus
+  # File manager runtime (Alis Files built locally via GTK4-rs)
+  gtk4
 
   # Terminal - kitty is default, configurable in Settings
   kitty

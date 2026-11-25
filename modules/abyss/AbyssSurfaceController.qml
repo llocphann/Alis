@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import "looks/AbyssBodyPlacement.js" as BodyPlacement
+import "looks/AbyssGeometry.js" as Geometry
 import "looks/AbyssVacancyBorrowing.js" as VacancyBorrowing
 
 // One controller per output. Content and input are not inferred from pixels.
@@ -29,6 +30,7 @@ QtObject {
     property int fifoCloseStepMs: 160
     property int fifoWaitCapMs: 850
     property string _fifoLastClosedId: ""
+    property real _fifoLastCloseStartedMs: 0
 
     readonly property Timer _fifoStaggerTimer: Timer {
         interval: Math.max(1, root.fifoCloseStepMs)
@@ -36,7 +38,7 @@ QtObject {
         onTriggered: root._drainFifoCloseQueue()
     }
     readonly property Timer _fifoWaitTimer: Timer {
-        interval: 28
+        interval: 16
         repeat: false
         onTriggered: root._drainFifoCloseQueue()
     }
@@ -170,6 +172,24 @@ QtObject {
             return
         }
 
+        // Wait until the previously closed surface on the same edge has visually
+        // finished sliding closed (progress <= 0.015) so sequential close beats
+        // never overlap or pull away mid-slide.
+        const prevId = root._fifoLastClosedId
+        const candEdge = String(root.participants[candidateKey]?.geometry?.edge ?? "")
+        if (prevId && prevId !== candidateKey && candEdge !== "") {
+            const prevEntry = state[prevId]
+            const prevReopened = Boolean(prevEntry && prevEntry.hovered && !prevEntry.closing)
+            const prevGeom = root.participants[prevId]?.geometry ?? null
+            const prevEdge = String(prevGeom?.edge ?? "")
+            const prevProg = Number(prevGeom?.progress ?? 0)
+            if (!prevReopened && prevEdge === candEdge && prevProg > 0.015
+                    && (now - root._fifoLastCloseStartedMs) < 520) {
+                root._fifoWaitTimer.restart()
+                return
+            }
+        }
+
         root._fifoWaitTimer.stop()
         const fn = candidate.closeFn
         const next = Object.assign({}, state)
@@ -180,6 +200,7 @@ QtObject {
         })
         root._fifoHoverState = next
         root._fifoLastClosedId = candidateKey
+        root._fifoLastCloseStartedMs = now
 
         // Arm stagger before invoking callback if additional queued/unhovered later peers exist.
         const hasLaterWaiter = pendingKeys.length > 1 || Object.keys(next).some(k => {
@@ -214,12 +235,15 @@ QtObject {
             id:key,
             role:String(participants[key]?.vacancyRole ?? "")
         }))
-    readonly property var baseBodyPlacements: BodyPlacement.arrange(
-        placementRequests,outputWidth,outputHeight,edgeInsets)
     property var externalBlockers: []
+    readonly property bool modalBodyActive: Object.keys(participants).some(key =>
+        Boolean(participants[key]?.placementRequest?.open
+            && participants[key]?.placementRequest?.intent === "modal"))
+    readonly property var baseBodyPlacements: BodyPlacement.arrange(
+        placementRequests,outputWidth,outputHeight,edgeInsets,24,externalBlockers,connectionSoftness)
     readonly property var bodyPlacements: VacancyBorrowing.resolve(
         placementRequests,vacancyParticipants,baseBodyPlacements,
-        outputWidth,outputHeight,edgeInsets,24,externalBlockers)
+        outputWidth,outputHeight,edgeInsets,24,externalBlockers,connectionSoftness)
     property real outputWidth: 1920
     property real outputHeight: 1080
     property bool presented: true
@@ -462,6 +486,7 @@ QtObject {
         records: integrationAllowed ? root.records : []
     }
     readonly property int capacity: 40
+    property real connectionSoftness: 24
     readonly property bool surfacesSettled: {
         const keys = Object.keys(participants)
         for (let i = 0; i < keys.length; ++i) {
@@ -487,7 +512,7 @@ QtObject {
                 mapped[kept++] = rec
         }
         mapped.length = kept
-        return mapped
+        return Geometry.trimCoplanarOverlap(mapped, root.connectionSoftness)
     })())
     readonly property var inputBounds: {
         const mapped = Object.keys(participants)

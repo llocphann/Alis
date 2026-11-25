@@ -131,12 +131,16 @@ Item {
         root.syncPresentation()
     }
     onVisibleChanged: {
+        if (!root._anchorInitialized)
+            return
         if (!root.visible) {
             root.suppressUntilHoverExit = root.parentHoverState
             _showDelayTimer.stop()
             root.setContentShown(false)
+            root.syncPresentation()
+            return
         }
-        root.syncPresentation()
+        Qt.callLater(root.syncPresentation)
     }
     property bool _anchorInitialized: false
     Component.onCompleted: {

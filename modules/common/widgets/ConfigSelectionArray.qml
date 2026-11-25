@@ -11,8 +11,10 @@ import qs.modules.common.functions
 Flow {
     id: root
     Layout.fillWidth: true
+    Layout.preferredWidth: root.fillWidthSegments ? 0 : -1
+    Layout.minimumWidth: root.fillWidthSegments ? 0 : -1
     // Default spacing: 2; Planner full-label chips wrap across rows when the option card is narrow.
-    spacing: root.wrapFullLabels ? 5 : 2
+    spacing: root.wrapFullLabels ? 5 : (root.fillWidthSegments && root.useAbyssPillShape ? 4 : 2)
     // Integración con buscador global de Settings
     property bool enableSettingsSearch: true
     property int settingsSearchOptionId: -1
@@ -33,6 +35,51 @@ Flow {
     property bool highContrastSelection: false
     property bool useAbyssPillShape: true
     property bool taskNavigation: false
+    // Opt-in full-width equal-segment distribution so Settings selectors end flush on the right edge.
+    property bool fillWidthSegments: false
+    readonly property int _fillAvailWidth: Math.max(0, Math.floor(root.width))
+    readonly property bool _fillWidthActive: root.fillWidthSegments
+        && root.visible
+        && !root.activeLabelOnly && !root.wrapFullLabels && !root.taskNavigation
+        && root._fillAvailWidth > 0
+        && (!root.parent || (root.parent.width > 0 && root._fillAvailWidth <= Math.ceil(root.parent.width)))
+    readonly property bool _hasAnyOptionIcon: {
+        const opts = root.options ?? []
+        for (let i = 0; i < opts.length; ++i) {
+            if (String(opts[i]?.icon ?? "").length > 0)
+                return true
+        }
+        return false
+    }
+    TextMetrics {
+        id: fillSegmentMetrics
+        font.family: Appearance.font.family.main
+        font.pixelSize: Appearance.font.pixelSize.small
+        font.weight: Font.Medium
+        text: {
+            let longest = ""
+            const opts = root.options ?? []
+            for (let i = 0; i < opts.length; ++i) {
+                const lbl = String(opts[i]?.displayName ?? "")
+                if (lbl.length > longest.length)
+                    longest = lbl
+            }
+            return longest
+        }
+    }
+    readonly property real _minFillSegWidth: Math.max(
+        Math.round(56 * Appearance.fontSizeScale),
+        Math.ceil(fillSegmentMetrics.advanceWidth)
+            + (root._hasAnyOptionIcon ? (Appearance.font.pixelSize.normal + 6) : 0)
+            + 24
+    )
+    readonly property int _fillRowCount: {
+        const count = Math.max(1, root.options.length)
+        if (!root._fillWidthActive)
+            return 1
+        const maxFit = Math.max(1, Math.floor((root._fillAvailWidth + root.spacing) / (root._minFillSegWidth + root.spacing)))
+        return Math.max(1, Math.ceil(count / maxFit))
+    }
     // Legacy optional selected-only labels. Planner Event options use complete
     // icon + text for every choice, with stable widths and multi-row Flow.
     property bool activeLabelOnly: false
@@ -255,10 +302,37 @@ Flow {
                     : root.activeLabelOnly
                         ? Math.max(5,6 * Appearance.fontSizeScale)
                         : (root.taskNavigation ? 14 * Appearance.fontSizeScale : 11))
-            maxTextWidth: root.taskNavigation
+            baseWidth: {
+                if (root._fillWidthActive) {
+                    const count = Math.max(1, root.options.length)
+                    const rows = Math.max(1, root._fillRowCount)
+                    const basePerRow = Math.floor(count / rows)
+                    const extraRows = count % rows
+                    const cutoff = extraRows * (basePerRow + 1)
+                    let itemsInRow = basePerRow
+                    let posInRow = 0
+                    if (index < cutoff) {
+                        itemsInRow = basePerRow + 1
+                        posInRow = index % itemsInRow
+                    } else {
+                        itemsInRow = Math.max(1, basePerRow)
+                        posInRow = (index - cutoff) % itemsInRow
+                    }
+                    const avail = Math.max(itemsInRow, root._fillAvailWidth - root.spacing * (itemsInRow - 1))
+                    const base = Math.floor(avail / itemsInRow)
+                    return posInRow === itemsInRow - 1
+                        ? Math.max(1, avail - base * (itemsInRow - 1))
+                        : Math.max(1, base)
+                }
+                return contentItem.implicitWidth + horizontalPadding * 2
+            }
+            maxTextWidth: root._fillWidthActive
+                ? Math.max(24, baseWidth - horizontalPadding * 2
+                    - (buttonIcon.length > 0 ? Appearance.font.pixelSize.normal + 6 : 0))
+                : root.taskNavigation
                 ? (root.width > 0
                     ? Math.max(0, root.width - horizontalPadding * 2
-                        - (buttonIcon.length > 0 ? Appearance.font.pixelSize.normal + 4 : 0))
+                        - (buttonIcon.length > 0 ? Appearance.font.pixelSize.normal + 8 : 0))
                     : 320)
                 : root.activeLabelOnly
                     ? Math.max(0,root.width - root.options.length
@@ -268,11 +342,11 @@ Flow {
                         ? Math.max(0,root.width - 2 * horizontalPadding
                             - (buttonIcon.length > 0
                                 ? Appearance.font.pixelSize.normal + 4 : 0) - 4)
-                        : 180
-            // Every label is always visible; avoid width bounces that reflow
-            // adjacent chips unexpectedly when selection changes.
-            enableImplicitWidthAnimation: !root.taskNavigation && !root.wrapFullLabels
-            enableImplicitHeightAnimation: !root.taskNavigation && !root.wrapFullLabels
+                        : Math.round(180 * Appearance.fontSizeScale)
+            // Only animate implicit size changes for activeLabelOnly (Planner) chips;
+            // static segmented pills resize immediately on fontScale changes with zero overflow lag.
+            enableImplicitWidthAnimation: root.activeLabelOnly
+            enableImplicitHeightAnimation: root.activeLabelOnly
             Keys.onLeftPressed: event => { event.accepted = root.moveTaskFocus(index, -1) }
             Keys.onRightPressed: event => { event.accepted = root.moveTaskFocus(index, 1) }
             Keys.onPressed: event => {

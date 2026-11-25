@@ -293,51 +293,88 @@ Item {
             anchors.topMargin: sidebarPadding - 4
             spacing: sidebarPadding
 
-            // Tab bar
-            Toolbar {
-                id: toolbarContainer
-                Layout.alignment: Qt.AlignHCenter
-                enableShadow: false
-                padding: 6
-                implicitHeight: tabBar.implicitHeight + padding * 2
-                transparent: false
+            // Tab bar (borderless container; active pill stays highlighted; Arrange button reveals on hover)
+            Item {
+                id: tabHeaderRow
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                implicitHeight: toolbarContainer.implicitHeight
 
-                ToolbarTabBar {
-                    id: tabBar
-                    Layout.alignment: Qt.AlignHCenter
-                    maxWidth: Math.max(0, root.width - (root.sidebarPadding * 2) - 64)
-                    tabButtonList: root.tabButtonList
-                    reorderEnabled: root.tabEditMode
-                    onReorderRequested: (fromIndex, toIndex) => root.persistTabMove(fromIndex, toIndex)
-                    // Don't bind to swipeView - let tabBar be the source of truth
-                    onCurrentIndexChanged: {
-                        if (swipeView.currentIndex !== currentIndex)
-                            swipeView.currentIndex = currentIndex
-                    }
+                HoverHandler {
+                    id: tabHeaderHover
                 }
 
-                ToolbarButton {
-                    id: tabEditButton
-                    Layout.preferredWidth: 38
-                    visible: root.tabButtonList.length > 1
-                    toggled: root.tabEditMode
-                    colBackground: "transparent"
-                    colBackgroundHover: ColorUtils.transparentize(Appearance.colors.colOnSurface, 0.92)
-                    colBackgroundToggled: Appearance.colors.colSecondaryContainer
-                    colBackgroundToggledHover: Appearance.colors.colSecondaryContainerHover
-                    downAction: () => root.tabEditMode = !root.tabEditMode
-                    contentItem: MaterialSymbol {
-                        anchors.centerIn: parent
-                        text: root.tabEditMode ? "done" : "edit"
-                        iconSize: 19
-                        color: tabEditButton.toggled
-                            ? Appearance.colors.colOnSecondaryContainer
-                            : Appearance.colors.colOnLayer2
+                Toolbar {
+                    id: toolbarContainer
+                    anchors.centerIn: parent
+                    enableShadow: false
+                    padding: 6
+                    spacing: 0
+                    implicitHeight: tabBar.implicitHeight + padding * 2
+                    transparent: true
+
+                    ToolbarTabBar {
+                        id: tabBar
+                        Layout.alignment: Qt.AlignHCenter
+                        showBackground: false
+                        maxWidth: Math.max(0, root.width - (root.sidebarPadding * 2) - (tabEditButton.showArrangeButton ? 64 : 20))
+                        tabButtonList: root.tabButtonList
+                        reorderEnabled: root.tabEditMode
+                        onReorderRequested: (fromIndex, toIndex) => root.persistTabMove(fromIndex, toIndex)
+                        // Don't bind to swipeView - let tabBar be the source of truth
+                        onCurrentIndexChanged: {
+                            if (swipeView.currentIndex !== currentIndex)
+                                swipeView.currentIndex = currentIndex
+                        }
                     }
-                    StyledToolTip {
-                        text: root.tabEditMode
-                            ? Translation.tr("Finish arranging tabs")
-                            : Translation.tr("Arrange sidebar tabs")
+
+                    ToolbarButton {
+                        id: tabEditButton
+                        objectName: "sidebarLeftArrangeTabsButton"
+                        readonly property bool showArrangeButton: root.tabButtonList.length > 1
+                            && (root.tabEditMode || tabHeaderHover.hovered || tabEditButton.hovered)
+                        Layout.preferredWidth: showArrangeButton ? 38 : 0
+                        Layout.minimumWidth: 0
+                        Layout.maximumWidth: Layout.preferredWidth
+                        Layout.leftMargin: showArrangeButton ? 4 : 0
+                        leftPadding: 0
+                        rightPadding: 0
+                        implicitWidth: Layout.preferredWidth
+                        clip: true
+                        enabled: showArrangeButton
+                        opacity: showArrangeButton ? 1 : 0
+                        visible: root.tabButtonList.length > 1 && (showArrangeButton || width > 0.5)
+                        toggled: root.tabEditMode
+                        colBackground: "transparent"
+                        colBackgroundHover: ColorUtils.transparentize(Appearance.colors.colOnSurface, 0.92)
+                        colBackgroundToggled: Appearance.colors.colSecondaryContainer
+                        colBackgroundToggledHover: Appearance.colors.colSecondaryContainerHover
+                        downAction: () => root.tabEditMode = !root.tabEditMode
+                        Behavior on Layout.preferredWidth {
+                            enabled: Appearance.animationsEnabled
+                            NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
+                        }
+                        Behavior on Layout.leftMargin {
+                            enabled: Appearance.animationsEnabled
+                            NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
+                        }
+                        Behavior on opacity {
+                            enabled: Appearance.animationsEnabled
+                            NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
+                        }
+                        contentItem: MaterialSymbol {
+                            anchors.centerIn: parent
+                            text: root.tabEditMode ? "done" : "edit"
+                            iconSize: 19
+                            color: tabEditButton.toggled
+                                ? Appearance.colors.colOnSecondaryContainer
+                                : Appearance.colors.colOnLayer2
+                        }
+                        StyledToolTip {
+                            text: root.tabEditMode
+                                ? Translation.tr("Finish arranging tabs")
+                                : Translation.tr("Arrange sidebar tabs")
+                        }
                     }
                 }
             }
@@ -433,6 +470,9 @@ Item {
                                     everLoaded = true
                             }
                             active: everLoaded || shouldActivate
+                            asynchronous: !SwipeView.isCurrentItem && swipeView.currentIndex !== index
+                                && status !== Loader.Ready
+                                && Quickshell.env("QT_QUICK_BACKEND") !== "software"
                             sourceComponent: {
                                 switch (tabLoader.tabId) {
                                     case "ai": return aiChatComp

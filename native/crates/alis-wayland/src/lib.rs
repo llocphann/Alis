@@ -68,6 +68,11 @@ impl WlWriter {
         self
     }
 
+    pub fn fixed(&mut self, value: f64) -> &mut Self {
+        let scaled = (value * 256.0).round().clamp(i32::MIN as f64, i32::MAX as f64) as i32;
+        self.i32(scaled)
+    }
+
     pub fn string(&mut self, value: &str) -> &mut Self {
         let bytes = value.as_bytes();
         let len_with_nul = (bytes.len() + 1) as u32;
@@ -563,6 +568,17 @@ mod tests {
         assert_eq!(r.string().unwrap(), "wl_shm");
         assert_eq!(r.string().unwrap(), "a");
         assert_eq!(r.array().unwrap(), vec![1, 2, 3]);
+    }
+
+    #[test]
+    fn wire_writer_encodes_wl_fixed_24_8() {
+        let mut w = WlWriter::new();
+        w.fixed(1.0).fixed(-15.0).fixed(0.5);
+        let (bytes, _) = w.into_parts();
+        let mut r = WlReader::new(&bytes);
+        assert_eq!(r.i32().unwrap(), 256);
+        assert_eq!(r.i32().unwrap(), -3840);
+        assert_eq!(r.i32().unwrap(), 128);
     }
 
     #[test]

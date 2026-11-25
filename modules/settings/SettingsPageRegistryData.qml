@@ -224,7 +224,7 @@ Singleton {
         null, // Index 35: retired Automation. Keep persisted route compatibility.
                 null,
         {key:"companion",name:Translation.tr("Companion"),icon:"water_drop",desc:Translation.tr("Aqua and Octo appearance, personality and movement"),essential:true,component:"modules/settings/CompanionConfig.qml"}
-        ,{key: "integrations",name:Translation.tr("Integrations"),icon:"extension",desc:Translation.tr("Nexus, calendar and connected applications"),essential:false,component:"modules/settings/IntegrationsConfig.qml"}
+        ,{key: "integrations",name:Translation.tr("Integrations"),icon:"extension",desc:Translation.tr("Modular plugins, helpers and connected workspaces"),essential:false,component:"modules/settings/IntegrationsConfig.qml"}
         ,{key: "default-apps",name:Translation.tr("Applications"),icon:"apps",desc:Translation.tr("Default apps, utilities, portable AppImage/tar.gz and startup apps"),essential:true,component:"modules/settings/DefaultAppsConfig.qml",subTabs:[{value:"primary",name:Translation.tr("Default Apps"),icon:"apps"},{value:"utilities",name:Translation.tr("System Utilities"),icon:"tune"},{value:"autostart",name:Translation.tr("Autostart"),icon:"rocket_launch"}]}
         ,{key: "about",name:Translation.tr("About"),icon:"info",desc:Translation.tr("System, shell version and quick diagnostics"),essential:false,component:"modules/settings/AboutConfig.qml"}
     ]
@@ -291,7 +291,6 @@ Singleton {
                 "quick notes", "quicknotes", "timers", "notifications", "activities",
                 "launcher", "icon", "show", "hide", "mode"]
         },
-        {pageIndex:38,pageName:root.pages[38].name,section:"Calendar Sync",label:"External calendars",description:"ICS/iCal sources",keywords:["calendar","ics","ical","integrations"]},
         {pageIndex:38,pageName:root.pages[38].name,section:"Nexus",label:"Nexus theming",description:"Active theme and vault paths",keywords:["nexus","theme","vault","config","integration"]},
         {pageIndex:37,pageName:root.pages[37].name,section:Translation.tr("Overview"),label:Translation.tr("Enable Companion"),description:Translation.tr("Aqua and Octo appearance, personality and movement"),keywords:["aqua","octo","companion","droplet","pet","mascot","fullscreen","interactive"]},
         {pageIndex:37,pageName:root.pages[37].name,section:Translation.tr("Rendering"),label:Translation.tr("Companion size"),description:Translation.tr("Keep your companion small or give it a little more room."),keywords:["aqua","octo","companion","size","liquid"]},
@@ -1144,6 +1143,13 @@ Singleton {
             label: Translation.tr("Search prefixes"),
             description: Translation.tr("Type shortcuts: / for actions, > for apps, = for math"),
             keywords: ["search", "prefix", "shortcut", "action", "app", "math", "emoji", "clipboard"]
+        },
+        {
+            pageIndex: 7, pageName: root.pages[7].name,
+            section: Translation.tr("Search"),
+            label: Translation.tr("Package actions in Search"),
+            description: Translation.tr("Package, setup and custom quick actions and non-app launcher delay"),
+            keywords: ["search", "package", "setup", "custom", "actions", "delay", "launcher", "nonAppResultDelay"]
         },
         {
             pageIndex: 7, pageName: root.pages[7].name,

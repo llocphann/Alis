@@ -68,8 +68,8 @@ Item {
         id: toolsCloudBackground
         visible: root.abyssMode
         anchors.fill: parent
-        anchors.margins: 4
-        radius: 14
+        anchors.margins: 0
+        radius: Appearance.rounding.normal
         color: root.cloudColor
         border.width: 1
         border.color: root.cloudBorderColor
@@ -78,23 +78,12 @@ Item {
             GradientStop { position: 0.0; color: root.edgeSurfaceColor(1.0) }
             GradientStop { position: 1.0; color: root.edgeSurfaceColor(0.25) }
         }
-
-        Rectangle {
-            anchors.top: parent.top
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.leftMargin: root.edgeRadius * 0.7
-            anchors.rightMargin: root.edgeRadius * 0.7
-            height: 1.5
-            radius: 1
-            color: Qt.alpha(AbyssStyle.accent, 0.45)
-        }
     }
 
     Flickable {
         id: flickable
         anchors.fill: parent
-        anchors.margins: root.abyssMode ? 12 : 8
+        anchors.margins: root.abyssMode ? 10 : 8
         contentHeight: mainColumn.implicitHeight
         clip: true
         boundsBehavior: Flickable.StopAtBounds

@@ -45,99 +45,124 @@ ContentPage {
         SettingsGroup {
             GridLayout {
                 Layout.fillWidth: true
-                columns: width >= 680 * Appearance.fontSizeScale ? 2 : 1
+                columns: width >= 620 * Appearance.fontSizeScale ? 2 : 1
                 uniformCellWidths: columns > 1
-                columnSpacing: 18
+                columnSpacing: 12
                 rowSpacing: 10
 
-                ColumnLayout {
+                Rectangle {
                     Layout.fillWidth: true
+                    Layout.fillHeight: true
                     Layout.minimumWidth: 0
                     Layout.alignment: Qt.AlignTop
-                    spacing: 6
+                    implicitHeight: outputChannelCol.implicitHeight + 20
+                    radius: 10
+                    color: SettingsMaterialPreset.controlSurface
+                    border.width: 1
+                    border.color: SettingsMaterialPreset.controlBorderColor
 
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 10
+                    ColumnLayout {
+                        id: outputChannelCol
+                        anchors {
+                            left: parent.left
+                            right: parent.right
+                            top: parent.top
+                            margins: 10
+                        }
+                        spacing: 8
 
-                        RippleButton {
-                            implicitWidth: 34
-                            implicitHeight: 34
-                            buttonRadius: Appearance.rounding.full
-                            toggled: root._outputMuted
-                            colBackground: Appearance.colors.colLayer2
-                            colBackgroundHover: Appearance.colors.colLayer2Hover
-                            onClicked: Audio.toggleMute()
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 10
 
-                            contentItem: MaterialSymbol {
-                                anchors.centerIn: parent
-                                text: root._outputMuted ? "volume_off" : "volume_up"
-                                iconSize: Appearance.font.pixelSize.normal
-                                color: root._outputMuted ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer1
+                            RippleButton {
+                                Layout.alignment: Qt.AlignVCenter
+                                implicitWidth: 34
+                                implicitHeight: 34
+                                buttonRadius: 10
+                                toggled: root._outputMuted
+                                colBackground: SettingsMaterialPreset.cardColor
+                                colBackgroundHover: SettingsMaterialPreset.controlSurfaceHover
+                                colBackgroundToggled: SettingsMaterialPreset.pillSelectedColor
+                                colBackgroundToggledHover: SettingsMaterialPreset.pillSelectedHoverColor
+                                onClicked: Audio.toggleMute()
+
+                                contentItem: MaterialSymbol {
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                    text: root._outputMuted ? "volume_off" : "volume_up"
+                                    iconSize: Appearance.font.pixelSize.normal
+                                    color: root._outputMuted
+                                        ? SettingsMaterialPreset.pillSelectedTextColor
+                                        : SettingsMaterialPreset.textColor
+                                }
+                            }
+
+                            SettingsSliderRow {
+                                Layout.fillWidth: true
+                                Layout.minimumWidth: 0
+                                compactStacked: true
+                                icon: ""
+                                text: Translation.tr("Output volume")
+                                from: 0
+                                to: (Config.options?.audio?.protection?.enable ?? false)
+                                    ? (Config.options?.audio?.protection?.maxAllowed ?? 100)
+                                    : 150
+                                stepSize: 1
+                                value: root._outputPercent
+                                displayValue: root._outputMuted ? Translation.tr("Muted") : (root._outputPercent + "%")
+                                onMoved: nextVal => Audio.setSinkVolume(nextVal / 100.0)
                             }
                         }
 
-                        SettingsSliderRow {
+                        ColumnLayout {
                             Layout.fillWidth: true
-                            Layout.minimumWidth: 0
-                            icon: ""
-                            text: Translation.tr("Output volume")
-                            from: 0
-                            to: (Config.options?.audio?.protection?.enable ?? false)
-                                ? (Config.options?.audio?.protection?.maxAllowed ?? 100)
-                                : 150
-                            stepSize: 1
-                            value: root._outputPercent
-                            displayValue: root._outputMuted ? Translation.tr("Muted") : (root._outputPercent + "%")
-                            onMoved: nextVal => Audio.setSinkVolume(nextVal / 100.0)
-                        }
-                    }
+                            spacing: 4
+                            visible: Audio.outputDevices.length > 0
 
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 4
-                        visible: Audio.outputDevices.length > 0
+                            Repeater {
+                                model: Audio.outputDevices
 
-                        Repeater {
-                            model: Audio.outputDevices
+                                delegate: RippleButton {
+                                    id: sysSinkRow
+                                    required property var modelData
+                                    readonly property bool isDefault: (Audio.defaultSink?.id ?? -1) === (modelData?.id ?? -2)
+                                        || (Audio.sink?.id ?? -1) === (modelData?.id ?? -2)
 
-                            delegate: RippleButton {
-                                id: sysSinkRow
-                                required property var modelData
-                                readonly property bool isDefault: (Audio.defaultSink?.id ?? -1) === (modelData?.id ?? -2)
-                                    || (Audio.sink?.id ?? -1) === (modelData?.id ?? -2)
+                                    Layout.fillWidth: true
+                                    implicitHeight: 36
+                                    buttonRadius: 8
+                                    colBackground: isDefault
+                                        ? SettingsMaterialPreset.accentTint
+                                        : SettingsMaterialPreset.cardColor
+                                    colBackgroundHover: isDefault
+                                        ? SettingsMaterialPreset.accentTintHover
+                                        : SettingsMaterialPreset.controlSurfaceHover
+                                    onClicked: Audio.setDefaultSink(modelData)
 
-                                Layout.fillWidth: true
-                                implicitHeight: 38
-                                buttonRadius: Appearance.rounding.small
-                                colBackground: isDefault
-                                    ? ColorUtils.transparentize(Appearance.colors.colPrimary, 0.88)
-                                    : Appearance.colors.colLayer2
-                                colBackgroundHover: isDefault
-                                    ? ColorUtils.transparentize(Appearance.colors.colPrimary, 0.82)
-                                    : Appearance.colors.colLayer2Hover
-                                onClicked: Audio.setDefaultSink(modelData)
+                                    contentItem: RowLayout {
+                                        anchors.fill: parent
+                                        anchors.leftMargin: 10
+                                        anchors.rightMargin: 10
+                                        spacing: 8
 
-                                contentItem: RowLayout {
-                                    anchors.fill: parent
-                                    anchors.leftMargin: 10
-                                    anchors.rightMargin: 10
-                                    spacing: 8
+                                        MaterialSymbol {
+                                            Layout.alignment: Qt.AlignVCenter
+                                            text: sysSinkRow.isDefault ? "radio_button_checked" : "speaker"
+                                            iconSize: Appearance.font.pixelSize.normal
+                                            color: sysSinkRow.isDefault ? Appearance.colors.colPrimary : SettingsMaterialPreset.secondaryTextColor
+                                        }
 
-                                    MaterialSymbol {
-                                        text: sysSinkRow.isDefault ? "radio_button_checked" : "speaker"
-                                        iconSize: Appearance.font.pixelSize.normal
-                                        color: sysSinkRow.isDefault ? Appearance.colors.colPrimary : Appearance.colors.colSubtext
-                                    }
-
-                                    StyledText {
-                                        Layout.fillWidth: true
-                                        Layout.minimumWidth: 0
-                                        text: Audio.friendlyDeviceName(sysSinkRow.modelData)
-                                        font.pixelSize: Appearance.font.pixelSize.small
-                                        font.weight: sysSinkRow.isDefault ? Font.DemiBold : Font.Normal
-                                        color: sysSinkRow.isDefault ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer1
-                                        elide: Text.ElideRight
+                                        StyledText {
+                                            Layout.fillWidth: true
+                                            Layout.minimumWidth: 0
+                                            Layout.alignment: Qt.AlignVCenter
+                                            text: Audio.friendlyDeviceName(sysSinkRow.modelData)
+                                            font.pixelSize: Appearance.font.pixelSize.small
+                                            font.weight: sysSinkRow.isDefault ? Font.DemiBold : Font.Normal
+                                            color: sysSinkRow.isDefault ? Appearance.colors.colPrimary : SettingsMaterialPreset.textColor
+                                            elide: Text.ElideRight
+                                        }
                                     }
                                 }
                             }
@@ -145,91 +170,116 @@ ContentPage {
                     }
                 }
 
-                ColumnLayout {
+                Rectangle {
                     Layout.fillWidth: true
+                    Layout.fillHeight: true
                     Layout.minimumWidth: 0
                     Layout.alignment: Qt.AlignTop
-                    spacing: 6
+                    implicitHeight: inputChannelCol.implicitHeight + 20
+                    radius: 10
+                    color: SettingsMaterialPreset.controlSurface
+                    border.width: 1
+                    border.color: SettingsMaterialPreset.controlBorderColor
 
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 10
+                    ColumnLayout {
+                        id: inputChannelCol
+                        anchors {
+                            left: parent.left
+                            right: parent.right
+                            top: parent.top
+                            margins: 10
+                        }
+                        spacing: 8
 
-                        RippleButton {
-                            implicitWidth: 34
-                            implicitHeight: 34
-                            buttonRadius: Appearance.rounding.full
-                            toggled: Audio.micMuted
-                            colBackground: Appearance.colors.colLayer2
-                            colBackgroundHover: Appearance.colors.colLayer2Hover
-                            onClicked: Audio.toggleMicMute()
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 10
 
-                            contentItem: MaterialSymbol {
-                                anchors.centerIn: parent
-                                text: Audio.micMuted ? "mic_off" : "mic"
-                                iconSize: Appearance.font.pixelSize.normal
-                                color: Audio.micMuted ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer1
+                            RippleButton {
+                                Layout.alignment: Qt.AlignVCenter
+                                implicitWidth: 34
+                                implicitHeight: 34
+                                buttonRadius: 10
+                                toggled: Audio.micMuted
+                                colBackground: SettingsMaterialPreset.cardColor
+                                colBackgroundHover: SettingsMaterialPreset.controlSurfaceHover
+                                colBackgroundToggled: SettingsMaterialPreset.pillSelectedColor
+                                colBackgroundToggledHover: SettingsMaterialPreset.pillSelectedHoverColor
+                                onClicked: Audio.toggleMicMute()
+
+                                contentItem: MaterialSymbol {
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                    text: Audio.micMuted ? "mic_off" : "mic"
+                                    iconSize: Appearance.font.pixelSize.normal
+                                    color: Audio.micMuted
+                                        ? SettingsMaterialPreset.pillSelectedTextColor
+                                        : SettingsMaterialPreset.textColor
+                                }
+                            }
+
+                            SettingsSliderRow {
+                                Layout.fillWidth: true
+                                Layout.minimumWidth: 0
+                                compactStacked: true
+                                icon: ""
+                                text: Translation.tr("Input volume")
+                                from: 0
+                                to: 150
+                                stepSize: 1
+                                value: root._inputPercent
+                                displayValue: Audio.micMuted ? Translation.tr("Muted") : (root._inputPercent + "%")
+                                onMoved: nextVal => Audio.setSourceVolume(nextVal / 100.0)
                             }
                         }
 
-                        SettingsSliderRow {
+                        ColumnLayout {
                             Layout.fillWidth: true
-                            Layout.minimumWidth: 0
-                            icon: ""
-                            text: Translation.tr("Input volume")
-                            from: 0
-                            to: 150
-                            stepSize: 1
-                            value: root._inputPercent
-                            displayValue: Audio.micMuted ? Translation.tr("Muted") : (root._inputPercent + "%")
-                            onMoved: nextVal => Audio.setSourceVolume(nextVal / 100.0)
-                        }
-                    }
+                            spacing: 4
+                            visible: Audio.inputDevices.length > 0
 
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 4
-                        visible: Audio.inputDevices.length > 0
+                            Repeater {
+                                model: Audio.inputDevices
 
-                        Repeater {
-                            model: Audio.inputDevices
+                                delegate: RippleButton {
+                                    id: sysSourceRow
+                                    required property var modelData
+                                    readonly property bool isDefault: (Audio.source?.id ?? -1) === (modelData?.id ?? -2)
 
-                            delegate: RippleButton {
-                                id: sysSourceRow
-                                required property var modelData
-                                readonly property bool isDefault: (Audio.source?.id ?? -1) === (modelData?.id ?? -2)
+                                    Layout.fillWidth: true
+                                    implicitHeight: 36
+                                    buttonRadius: 8
+                                    colBackground: isDefault
+                                        ? SettingsMaterialPreset.accentTint
+                                        : SettingsMaterialPreset.cardColor
+                                    colBackgroundHover: isDefault
+                                        ? SettingsMaterialPreset.accentTintHover
+                                        : SettingsMaterialPreset.controlSurfaceHover
+                                    onClicked: Audio.setDefaultSource(modelData)
 
-                                Layout.fillWidth: true
-                                implicitHeight: 38
-                                buttonRadius: Appearance.rounding.small
-                                colBackground: isDefault
-                                    ? ColorUtils.transparentize(Appearance.colors.colPrimary, 0.88)
-                                    : Appearance.colors.colLayer2
-                                colBackgroundHover: isDefault
-                                    ? ColorUtils.transparentize(Appearance.colors.colPrimary, 0.82)
-                                    : Appearance.colors.colLayer2Hover
-                                onClicked: Audio.setDefaultSource(modelData)
+                                    contentItem: RowLayout {
+                                        anchors.fill: parent
+                                        anchors.leftMargin: 10
+                                        anchors.rightMargin: 10
+                                        spacing: 8
 
-                                contentItem: RowLayout {
-                                    anchors.fill: parent
-                                    anchors.leftMargin: 10
-                                    anchors.rightMargin: 10
-                                    spacing: 8
+                                        MaterialSymbol {
+                                            Layout.alignment: Qt.AlignVCenter
+                                            text: sysSourceRow.isDefault ? "radio_button_checked" : "mic"
+                                            iconSize: Appearance.font.pixelSize.normal
+                                            color: sysSourceRow.isDefault ? Appearance.colors.colPrimary : SettingsMaterialPreset.secondaryTextColor
+                                        }
 
-                                    MaterialSymbol {
-                                        text: sysSourceRow.isDefault ? "radio_button_checked" : "mic"
-                                        iconSize: Appearance.font.pixelSize.normal
-                                        color: sysSourceRow.isDefault ? Appearance.colors.colPrimary : Appearance.colors.colSubtext
-                                    }
-
-                                    StyledText {
-                                        Layout.fillWidth: true
-                                        Layout.minimumWidth: 0
-                                        text: Audio.friendlyDeviceName(sysSourceRow.modelData)
-                                        font.pixelSize: Appearance.font.pixelSize.small
-                                        font.weight: sysSourceRow.isDefault ? Font.DemiBold : Font.Normal
-                                        color: sysSourceRow.isDefault ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer1
-                                        elide: Text.ElideRight
+                                        StyledText {
+                                            Layout.fillWidth: true
+                                            Layout.minimumWidth: 0
+                                            Layout.alignment: Qt.AlignVCenter
+                                            text: Audio.friendlyDeviceName(sysSourceRow.modelData)
+                                            font.pixelSize: Appearance.font.pixelSize.small
+                                            font.weight: sysSourceRow.isDefault ? Font.DemiBold : Font.Normal
+                                            color: sysSourceRow.isDefault ? Appearance.colors.colPrimary : SettingsMaterialPreset.textColor
+                                            elide: Text.ElideRight
+                                        }
                                     }
                                 }
                             }
@@ -255,22 +305,28 @@ ContentPage {
                     spacing: 10
 
                     RippleButton {
-                        implicitWidth: 30
-                        implicitHeight: 30
-                        buttonRadius: Appearance.rounding.full
+                        Layout.alignment: Qt.AlignVCenter
+                        implicitWidth: 32
+                        implicitHeight: 32
+                        buttonRadius: 9
                         toggled: sysAppStreamRow.streamMuted
-                        colBackground: Appearance.colors.colLayer2
-                        colBackgroundHover: Appearance.colors.colLayer2Hover
+                        colBackground: SettingsMaterialPreset.controlSurface
+                        colBackgroundHover: SettingsMaterialPreset.controlSurfaceHover
+                        colBackgroundToggled: SettingsMaterialPreset.pillSelectedColor
+                        colBackgroundToggledHover: SettingsMaterialPreset.pillSelectedHoverColor
                         onClicked: {
                             if (sysAppStreamRow.modelData?.audio)
                                 sysAppStreamRow.modelData.audio.muted = !sysAppStreamRow.streamMuted
                         }
 
                         contentItem: MaterialSymbol {
-                            anchors.centerIn: parent
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
                             text: sysAppStreamRow.streamMuted ? "volume_off" : "graphic_eq"
                             iconSize: Appearance.font.pixelSize.small
-                            color: sysAppStreamRow.streamMuted ? Appearance.colors.colOnPrimary : Appearance.colors.colPrimary
+                            color: sysAppStreamRow.streamMuted
+                                ? SettingsMaterialPreset.pillSelectedTextColor
+                                : Appearance.colors.colPrimary
                         }
                     }
 
@@ -359,6 +415,8 @@ ContentPage {
 
                 SettingsSwitch {
                     objectName: "batteryAutomaticSuspendControl"
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
                     buttonIcon: "pause"
                     text: Translation.tr("Auto-suspend on low battery")
                     checked: Config.options?.battery?.automaticSuspend ?? false
@@ -367,6 +425,8 @@ ContentPage {
                 }
                 ConfigSpinBox {
                     objectName: "batterySuspendThresholdControl"
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
                     enabled: Config.options?.battery?.automaticSuspend ?? false
                     text: Translation.tr("at (%)")
                     value: Config.options?.battery?.suspend ?? 5
@@ -461,14 +521,21 @@ ContentPage {
                 }
             }
 
-            SettingsSliderRow {
+            SettingsPresetRow {
                 icon: "notification_sound"
                 text: Translation.tr("System sound volume")
                 from: 0
                 to: 1
                 stepSize: 0.05
                 value: Config.options?.sounds?.volume ?? 0.5
-                displayValue: Math.round((Config.options?.sounds?.volume ?? 0.5) * 100) + "%"
+                displayValue: Math.round(liveValue * 100) + "%"
+                presets: [
+                    { label: "0%", value: 0.0 },
+                    { label: "25%", value: 0.25 },
+                    { label: "50%", value: 0.5 },
+                    { label: "75%", value: 0.75 },
+                    { label: "100%", value: 1.0 }
+                ]
                 settingsSearchLabel: Translation.tr("Sound volume")
                 settingsSearchKeywords: ["sound", "volume", "audio", "event"]
                 onMoved: nextVal => Config.setNestedValue("sounds.volume", nextVal)
@@ -708,6 +775,7 @@ ContentPage {
                     title: Translation.tr("Clock style")
 
                     ConfigSelectionArray {
+                        fillWidthSegments: true
                         currentValue: Config.options?.lock?.clock?.style ?? "default"
                         options: [
                             { displayName: Translation.tr("Default"), value: "default" },
@@ -722,6 +790,7 @@ ContentPage {
                     title: Translation.tr("Clock position")
 
                     ConfigSelectionArray {
+                        fillWidthSegments: true
                         currentValue: Config.options?.lock?.clock?.position ?? "center"
                         options: [
                             { displayName: Translation.tr("Center"), value: "center" },
@@ -850,6 +919,8 @@ ContentPage {
                 }
 
                 ConfigSelectionArray {
+                    Layout.alignment: Qt.AlignVCenter
+                    fillWidthSegments: true
                     currentValue: Config.options?.time?.format ?? "hh:mm"
                     onSelected: newValue => Config.setNestedValue("time.format", newValue)
                     options: [
@@ -894,13 +965,15 @@ ContentPage {
 
             GridLayout {
                 Layout.fillWidth: true
-                columns: !root.abyssTaskStyle || width >= focusDuration.implicitWidth + breakDuration.implicitWidth + columnSpacing ? 2 : 1
-                uniformCellWidths: !root.abyssTaskStyle || width >= 2 * Math.max(focusDuration.implicitWidth, breakDuration.implicitWidth) + columnSpacing
-                columnSpacing: 4
-                rowSpacing: 4
+                columns: width >= 460 * Appearance.fontSizeScale ? 2 : 1
+                uniformCellWidths: columns > 1
+                columnSpacing: 16
+                rowSpacing: 8
 
                 ConfigSpinBox {
                     id: focusDuration
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
                     icon: "av_timer"
                     text: Translation.tr("Pomodoro focus (m)")
                     value: Math.max(5, Math.round((Config.options?.time?.pomodoro?.focus ?? 1500) / 60))
@@ -912,6 +985,8 @@ ContentPage {
 
                 ConfigSpinBox {
                     id: breakDuration
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
                     icon: "free_breakfast"
                     text: Translation.tr("Short break (m)")
                     value: Math.max(1, Math.round((Config.options?.time?.pomodoro?.breakTime ?? 300) / 60))

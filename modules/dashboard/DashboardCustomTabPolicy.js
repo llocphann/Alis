@@ -1,7 +1,99 @@
-// DASH-F01: stable custom-tab identities and inactivity policy.
+// DASH-F01: stable custom-tab identities, customizable tab indicator icons, and inactivity policy.
 // Pure functions: the callers persist only validated, JSON-safe definitions.
 var builtIns = ["dashboard", "music", "weeklyPlanner"];
 var reservedNames = ["dashboard", "music", "weekly planner", "spaced repetition"];
+var defaultTabIcons = {
+    dashboard: "dashboard",
+    music: "library_music",
+    weeklyPlanner: "calendar_month",
+    spacedRepetition: "school",
+    exercisesTracker: "fitness_center"
+};
+var presetTabIcons = [
+    "dashboard", "space_dashboard", "home", "widgets", "apps", "grid_view",
+    "library_music", "music_note", "headphones", "album",
+    "calendar_month", "calendar_view_week", "event", "schedule",
+    "school", "psychology", "auto_awesome", "analytics",
+    "fitness_center", "monitor_heart",
+    "tab", "folder", "terminal", "code", "hub", "layers",
+    "checklist", "task_alt", "edit_note", "sticky_note_2",
+    "bookmark", "star", "favorite", "bolt", "explore", "rocket_launch"
+];
+function defaultIconFor(id) {
+    var key = String(id ?? "");
+    return defaultTabIcons[key] || "tab";
+}
+function sanitizeIconName(raw) {
+    var cleaned = String(raw ?? "").trim().toLowerCase()
+        .replace(/[\s-]+/g, "_")
+        .replace(/[^a-z0-9_]/g, "")
+        .slice(0, 48);
+    return cleaned;
+}
+function tabIcons(raw) {
+    if (!raw || typeof raw === "string") return [];
+    var byId = {}, order = [];
+    if (typeof raw.length === "number") {
+        var list = Array.from(raw);
+        for (var i = 0; i < list.length; i++) {
+            var item = list[i];
+            var id = String(item?.id ?? "").trim().slice(0, 64);
+            var icon = sanitizeIconName(item?.icon);
+            if (!id || !icon) continue;
+            if (!byId[id]) order.push(id);
+            byId[id] = icon;
+        }
+    } else if (typeof raw === "object") {
+        var keys = Object.keys(raw);
+        for (var j = 0; j < keys.length; j++) {
+            var k = String(keys[j] ?? "").trim().slice(0, 64);
+            var v = sanitizeIconName(raw[k]);
+            if (!k || !v) continue;
+            if (!byId[k]) order.push(k);
+            byId[k] = v;
+        }
+    }
+    var result = [];
+    for (var n = 0; n < order.length; n++) {
+        var tabId = order[n];
+        result.push({ id: tabId, icon: byId[tabId] });
+    }
+    return result;
+}
+function iconFor(rawTabIcons, pageId) {
+    var key = String(pageId ?? "");
+    var overrides = tabIcons(rawTabIcons);
+    for (var i = 0; i < overrides.length; i++) {
+        if (overrides[i].id === key)
+            return overrides[i].icon;
+    }
+    return defaultIconFor(key);
+}
+function hasCustomIcon(rawTabIcons, pageId) {
+    var key = String(pageId ?? "");
+    if (!key) return false;
+    var overrides = tabIcons(rawTabIcons);
+    for (var i = 0; i < overrides.length; i++) {
+        if (overrides[i].id === key)
+            return overrides[i].icon !== defaultIconFor(key);
+    }
+    return false;
+}
+function setTabIcon(rawTabIcons, pageId, iconName) {
+    var key = String(pageId ?? "").trim().slice(0, 64);
+    var existing = tabIcons(rawTabIcons);
+    if (!key) return existing;
+    var nextIcon = sanitizeIconName(iconName);
+    var defaultIcon = defaultIconFor(key);
+    var filtered = existing.filter(function(item) { return item.id !== key; });
+    if (!nextIcon || nextIcon === defaultIcon)
+        return filtered;
+    return filtered.concat([{ id: key, icon: nextIcon }]);
+}
+function removeTabIcon(rawTabIcons, pageId) {
+    var key = String(pageId ?? "");
+    return tabIcons(rawTabIcons).filter(function(item) { return item.id !== key; });
+}
 function tabs(raw) {
     // QML JsonAdapter list<var> may be exposed as an array-like object.
     if (!raw || typeof raw === "string" || typeof raw.length !== "number") return [];

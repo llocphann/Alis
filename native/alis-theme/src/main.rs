@@ -1,5 +1,6 @@
 #![recursion_limit = "512"]
 
+mod browser_bridge;
 mod colortags;
 mod cover_colors;
 mod editors;
@@ -238,6 +239,7 @@ fn main() -> Result<()> {
     let raw_args: Vec<String> = std::env::args().collect();
     if let Some(first) = raw_args.get(1).map(String::as_str) {
         match first {
+            "--browser-bridge" => return browser_bridge::run_browser_bridge(&raw_args[2..]),
             "--color-tags" => return colortags::run_color_tags(&raw_args[2..]),
             "--cover-colors" => return cover_colors::run_cover_colors(&raw_args[2..]),
             "--find-regions" => return find_regions::run_find_regions(&raw_args[2..]),

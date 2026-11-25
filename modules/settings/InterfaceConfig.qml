@@ -20,6 +20,7 @@ ContentPage {
     settingsPageName: Translation.tr("Panels")
 
     property bool isIiActive: Config.options?.panelFamily !== "waffle"
+    readonly property bool isAbyss: (Config.options?.panelFamily ?? "abyss") === "abyss"
     property bool showAllIiSections: false
     property real notificationsCardMinHeight: 0
     readonly property real notificationsCardImplicitHeight: notificationsCard.naturalCardImplicitHeight
@@ -61,7 +62,7 @@ ContentPage {
                     Layout.minimumWidth: 0
                     columns: width >= (Config.options?.panelFamily === "abyss" ? 580 * Appearance.fontSizeScale : 360) ? 2 : 1
                     uniformCellWidths: columns === 2
-                    columnSpacing: 10
+                    columnSpacing: 20
                     rowSpacing: 8
 
                     ConfigSpinBox {
@@ -107,9 +108,9 @@ ContentPage {
                 GridLayout {
                     Layout.fillWidth: true
                     Layout.minimumWidth: 0
-                    columns: width >= 360 ? 2 : 1
-                    uniformCellWidths: columns === 2
-                    columnSpacing: 10
+                    columns: width >= 640 * Appearance.fontSizeScale ? 3 : 1
+                    uniformCellWidths: columns > 1
+                    columnSpacing: 14
                     rowSpacing: 8
 
                     ConfigSwitch {
@@ -135,19 +136,6 @@ ContentPage {
                         onCheckedChanged: Config.setNestedValue("notifications.ignoreAppTimeout", checked)
                         StyledToolTip {
                             text: Translation.tr("Always use your timeout settings instead of app-defined ones")
-                        }
-                    }
-
-                    ConfigSwitch {
-                        Layout.fillWidth: true
-                        Layout.preferredWidth: 1
-                        Layout.minimumWidth: 0
-                        buttonIcon: "pinch"
-                        text: Translation.tr("Scale on hover")
-                        checked: Config.options?.notifications?.scaleOnHover ?? false
-                        onCheckedChanged: Config.setNestedValue("notifications.scaleOnHover", checked)
-                        StyledToolTip {
-                            text: Translation.tr("Slightly enlarge notifications when the mouse hovers over them")
                         }
                     }
 
@@ -231,6 +219,7 @@ ContentPage {
                     visible: Config.options?.panelFamily !== "abyss"
 
                     ConfigSelectionArray {
+                        fillWidthSegments: true
                         currentValue: Config.options?.notifications?.position ?? "topRight"
                         onSelected: newValue => Config.setNestedValue("notifications.position", newValue)
                         options: [
@@ -288,7 +277,7 @@ ContentPage {
                     columns: width >= 360 ? 2 : 1
                     uniformCellWidths: columns === 2
                     visible: Config.options?.panelFamily !== "abyss"
-                    columnSpacing: 10
+                    columnSpacing: 20
                     rowSpacing: 8
 
                     ConfigSpinBox {
@@ -346,7 +335,7 @@ ContentPage {
                     columns: width >= 360 ? 2 : 1
                     uniformCellWidths: columns === 2
                     visible: Config.options?.panelFamily !== "abyss"
-                    columnSpacing: 10
+                    columnSpacing: 20
                     rowSpacing: 8
 
                     ConfigSpinBox {
@@ -385,7 +374,7 @@ ContentPage {
                     Layout.minimumWidth: 0
                     columns: width >= (Config.options?.panelFamily === "abyss" ? 580 * Appearance.fontSizeScale : 360) ? 2 : 1
                     uniformCellWidths: columns === 2
-                    columnSpacing: 10
+                    columnSpacing: 20
                     rowSpacing: 8
 
                     ConfigSwitch {
@@ -432,10 +421,10 @@ ContentPage {
                         Layout.fillWidth: true
                         Layout.preferredWidth: 1
                         Layout.minimumWidth: 0
-                        buttonIcon: "unfold_less"
-                        text: Translation.tr("Collapse empty history")
-                        checked: Config.options?.sidebar?.collapseEmptyNotifications ?? false
-                        onCheckedChanged: Config.setNestedValue("sidebar.collapseEmptyNotifications", checked)
+                        buttonIcon: "volume_up"
+                        text: Translation.tr("Notification chime")
+                        checked: Config.options?.sounds?.notifications ?? true
+                        onCheckedChanged: Config.setNestedValue("sounds.notifications", checked)
                     }
                 }
 
@@ -449,13 +438,6 @@ ContentPage {
                     }
                 }
 
-                ConfigSwitch {
-                    buttonIcon: "volume_up"
-                    text: Translation.tr("Notification chime")
-                    checked: Config.options?.sounds?.notifications ?? true
-                    onCheckedChanged: Config.setNestedValue("sounds.notifications", checked)
-                }
-
                 ContentSubsection {
                     visible: Config.options?.panelFamily !== "abyss"
                     title: Translation.tr("On-screen display (OSD)")
@@ -464,7 +446,7 @@ ContentPage {
                         Layout.fillWidth: true
                         columns: width >= 360 ? 2 : 1
                         uniformCellWidths: columns === 2
-                        columnSpacing: 10
+                        columnSpacing: 20
                         rowSpacing: 8
 
                         ConfigSwitch {
@@ -519,7 +501,17 @@ ContentPage {
         title: Translation.tr("Alt-Tab Behavior & Animation")
 
             SettingsGroup {
+                StyledText {
+                    visible: root.isAbyss
+                    Layout.fillWidth: true
+                    text: Translation.tr("Abyss cycles windows directly without a visual overlay.")
+                    color: Appearance.colors.colSubtext
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    wrapMode: Text.WordWrap
+                }
+
                 SettingsSwitch {
+                    visible: !root.isAbyss
                     enabled: (Config.options?.altSwitcher?.preset ?? "default") !== "skew"
                     buttonIcon: "visibility_off"
                     text: Translation.tr("No visual UI (cycle windows only)")
@@ -537,6 +529,7 @@ ContentPage {
                 }
 
                 SettingsSwitch {
+                    visible: !root.isAbyss
                     buttonIcon: "overview_key"
                     text: Translation.tr("Show Niri overview while switching")
                     checked: Config.options?.altSwitcher?.showOverviewWhileSwitching ?? false
@@ -544,30 +537,36 @@ ContentPage {
                 }
 
                 SettingsSwitch {
+                    visible: !root.isAbyss
                     buttonIcon: "movie"
                     text: Translation.tr("Enable slide animation")
                     checked: Config.options?.altSwitcher?.enableAnimation ?? true
                     onCheckedChanged: Config.setNestedValue("altSwitcher.enableAnimation", checked)
                 }
 
-                ConfigSpinBox {
-                    icon: "speed"
-                    text: Translation.tr("Animation duration (ms)")
-                    value: Config.options?.altSwitcher?.animationDurationMs ?? 200
-                    from: 0
-                    to: 1000
-                    stepSize: 25
-                    onValueChanged: Config.setNestedValue("altSwitcher.animationDurationMs", value)
-                }
+                ConfigRow {
+                    visible: !root.isAbyss
+                    uniform: true
 
-                ConfigSpinBox {
-                    icon: "hourglass_top"
-                    text: Translation.tr("Auto-hide delay (ms)")
-                    value: Config.options?.altSwitcher?.autoHideDelayMs ?? 500
-                    from: 50
-                    to: 2000
-                    stepSize: 50
-                    onValueChanged: Config.setNestedValue("altSwitcher.autoHideDelayMs", value)
+                    ConfigSpinBox {
+                        icon: "speed"
+                        text: Translation.tr("Animation duration (ms)")
+                        value: Config.options?.altSwitcher?.animationDurationMs ?? 200
+                        from: 0
+                        to: 1000
+                        stepSize: 25
+                        onValueChanged: Config.setNestedValue("altSwitcher.animationDurationMs", value)
+                    }
+
+                    ConfigSpinBox {
+                        icon: "hourglass_top"
+                        text: Translation.tr("Auto-hide delay (ms)")
+                        value: Config.options?.altSwitcher?.autoHideDelayMs ?? 500
+                        from: 50
+                        to: 2000
+                        stepSize: 50
+                        onValueChanged: Config.setNestedValue("altSwitcher.autoHideDelayMs", value)
+                    }
                 }
             }
         }
@@ -575,13 +574,14 @@ ContentPage {
     SettingsCardSection {
         settingsTaskSection: "tools"
         Layout.fillWidth: true
-        visible: root.isIiActive && root.activeSection === "tools"
+        visible: root.isIiActive && !root.isAbyss && root.activeSection === "tools"
         expanded: true
         icon: "styler"
         title: Translation.tr("Alt-Tab Appearance & Layout")
 
             SettingsGroup {
                 ConfigSelectionArray {
+                    fillWidthSegments: true
                     options: [
                         { displayName: Translation.tr("Default (sidebar)"), icon: "side_navigation", value: "default" },
                         { displayName: Translation.tr("List (centered)"), icon: "list", value: "list" },
@@ -601,24 +601,28 @@ ContentPage {
                     onCheckedChanged: Config.setNestedValue("altSwitcher.monochromeIcons", checked)
                 }
 
-                ConfigSpinBox {
-                    icon: "opacity"
-                    text: Translation.tr("Background opacity (%)")
-                    value: Math.round((Config.options?.altSwitcher?.backgroundOpacity ?? 0.9) * 100)
-                    from: 10
-                    to: 100
-                    stepSize: 5
-                    onValueChanged: Config.setNestedValue("altSwitcher.backgroundOpacity", value / 100)
-                }
+                ConfigRow {
+                    uniform: true
 
-                ConfigSpinBox {
-                    icon: "blur_on"
-                    text: Translation.tr("Blur amount (%)")
-                    value: Math.round((Config.options?.altSwitcher?.blurAmount ?? 0.4) * 100)
-                    from: 0
-                    to: 100
-                    stepSize: 5
-                    onValueChanged: Config.setNestedValue("altSwitcher.blurAmount", value / 100)
+                    ConfigSpinBox {
+                        icon: "opacity"
+                        text: Translation.tr("Background opacity (%)")
+                        value: Math.round((Config.options?.altSwitcher?.backgroundOpacity ?? 0.9) * 100)
+                        from: 10
+                        to: 100
+                        stepSize: 5
+                        onValueChanged: Config.setNestedValue("altSwitcher.backgroundOpacity", value / 100)
+                    }
+
+                    ConfigSpinBox {
+                        icon: "blur_on"
+                        text: Translation.tr("Blur amount (%)")
+                        value: Math.round((Config.options?.altSwitcher?.blurAmount ?? 0.4) * 100)
+                        from: 0
+                        to: 100
+                        stepSize: 5
+                        onValueChanged: Config.setNestedValue("altSwitcher.blurAmount", value / 100)
+                    }
                 }
 
                 ContentSubsection {
@@ -634,6 +638,7 @@ ContentPage {
                     }
 
                     ConfigSelectionArray {
+                        fillWidthSegments: true
                         enabled: !(Config.options?.altSwitcher?.compactStyle ?? false)
                             && (Config.options?.altSwitcher?.preset ?? "default") !== "list"
                             && (Config.options?.altSwitcher?.preset ?? "default") !== "skew"

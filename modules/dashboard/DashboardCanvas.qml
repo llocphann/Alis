@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import Quickshell
 import qs
 import qs.services
 import qs.modules.common
@@ -2175,7 +2176,9 @@ Item {
                         x: (cardViewport.width - width * fittingScale) / 2
                         y: (cardViewport.height - height * fittingScale) / 2
                         sourceComponent: root._widgetMap[String(cardWrap.modelData)] ?? null
-                        asynchronous: !root.presentationActive
+                        asynchronous: (Quickshell.env("QT_QUICK_BACKEND") !== "software")
+                            && status !== Loader.Ready
+                            && !root.editMode
                         active: cardWrap.visible || root.warmContent
                             && root.visibleIds.includes(String(cardWrap.modelData))
                         enabled: !root.editMode

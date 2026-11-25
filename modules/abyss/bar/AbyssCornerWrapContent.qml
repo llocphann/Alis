@@ -42,9 +42,11 @@ Item {
 
     readonly property bool mirrorX: wrapCorner === "topRight" || wrapCorner === "bottomRight"
     readonly property bool mirrorY: wrapCorner === "bottomLeft" || wrapCorner === "bottomRight"
-    readonly property real halfT: Math.max(12, wrapThickness * 0.5)
-    readonly property real safeRadius: Math.max(10, Math.min(wrapArcRadius, Math.min(width, height) - halfT - 6))
-    readonly property real endPad: Math.max(8, halfT * 0.55)
+    readonly property real halfT: root.kind === "cava"
+        ? Math.max(4, Math.max(10, Math.min(30, Number(Config.options?.bar?.cava?.height ?? 22))) * root.contentScale * 0.5 + 1.5)
+        : Math.max(4, wrapThickness * 0.5)
+    readonly property real safeRadius: Math.max(6, Math.min(wrapArcRadius, Math.min(width, height) - halfT - 6))
+    readonly property real endPad: Math.max(4, halfT * 0.55)
     readonly property real segH: Math.max(0, (width - endPad) - (halfT + safeRadius))
     readonly property real segArc: Math.PI * 0.5 * safeRadius
     readonly property real segV: Math.max(0, (height - endPad) - (halfT + safeRadius))
@@ -170,7 +172,7 @@ Item {
                 const gapTotal = Math.max(0, count - 1) * barSpacing * Math.min(1.2, root.contentScale)
                 return Math.max(1.5, Math.min(10, (pathSpan - gapTotal) / count))
             }
-            readonly property real maxBarHeight: Math.max(8, Math.min(root.wrapThickness * 0.86, configuredHeight * root.contentScale))
+            readonly property real maxBarHeight: Math.max(6, Math.min(root.wrapThickness * 0.88, configuredHeight * root.contentScale))
             readonly property bool audioActive: MprisController.anyAudioPlaying || Audio.hasActivePlayback
             readonly property var paletteColors: {
                 const pal = CavaTheme.visualizerColors
@@ -332,8 +334,8 @@ Item {
                         y: cavaWrap.mirrorBars
                             ? (-barNode.barH * 0.5)
                             : cavaWrap.invertBars
-                                ? (-cavaWrap.maxBarHeight * 0.44)
-                                : (cavaWrap.maxBarHeight * 0.44 - barNode.barH)
+                                ? (-cavaWrap.maxBarHeight * 0.5)
+                                : (cavaWrap.maxBarHeight * 0.5 - barNode.barH)
                         width: cavaWrap.barWidth
                         height: barNode.barH
                         radius: Math.min(cavaWrap.barWidth * 0.5, cavaWrap.barRadius * root.contentScale)

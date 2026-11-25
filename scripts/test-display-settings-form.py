@@ -103,6 +103,9 @@ def main():
     assert abs(a[1]-b[1])<3 and b[0]>=a[0]+a[2], 'wide window rules remain stacked'
     assert k[1]>=n[1]+n[3]-1, 'narrow window rules overlap'
     assert x[2]>=270 and y[2]>=270 and m['mouse'][2]>=270, 'desktop tracks too short'
-    assert m['map1'][0][3]<m['map2'][0][3] and m['map1'][1][0]>=m['map1'][0][0]+m['map1'][0][2], 'display summary is not adaptive'
+    assert m['map1'][0][3] < m['map2'][0][3], 'multi-output arrangement canvas should grow taller'
+    assert m['map1'][0][2] >= 600, f"arrangement canvas should span full card width, got {m['map1'][0][2]}"
+    assert m['map1'][1][1] >= m['map1'][0][1] + m['map1'][0][3] - 1, 'primary monitor row should sit cleanly below arrangement canvas'
+    assert abs((m['map1'][1][0] + m['map1'][1][2]) - (m['map1'][0][0] + m['map1'][0][2])) <= 4, 'primary monitor row right edge must align flush with arrangement canvas'
     print('PASS: window rules resize, mouse settings, single/multi-output arrangement and native zoom/reset')
 if __name__ == '__main__': main()

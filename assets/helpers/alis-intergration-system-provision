@@ -1,9 +1,12 @@
 #!/usr/bin/python3
-"""Alis-owned Polkit provisioner for one audited Alis-Intergration helper payload.
+"""Alis-owned Polkit provisioner for audited Alis-Intergration helper payloads.
 
 This executable must be installed by a trusted *Alis system package* as a
 root-owned executable. It never runs files from the user package. Every copied
 byte is checked against hashes pinned in the trusted Alis release.
+
+Supports installing, inspecting, and removing helper payloads independently per
+integration scope ('tlp', 'thinkfan', or 'all').
 """
 import hashlib
 import json
@@ -13,24 +16,47 @@ import sys
 import tempfile
 
 TRUSTED = {
-    "assets/helpers/alis-battery-charge-limit": (
+    "plugins/tlp/assets/helpers/alis-battery-charge-limit": (
         "/usr/libexec/alis-battery-charge-limit",
         "8d90045a524c24bb89086d9c07d21abf349a0a5994cb72096d54722422677255", 0o755),
-    "assets/helpers/alis-thinkfan": (
-        "/usr/libexec/alis-thinkfan",
-        "dfab10c593032322d89b2e06b796fbdaf6a36cbc55fba272acac85500166f06a", 0o755),
-    "assets/polkit/org.alis.battery-charge-limit.policy": (
+    "plugins/tlp/assets/polkit/org.alis.battery-charge-limit.policy": (
         "/usr/share/polkit-1/actions/org.alis.battery-charge-limit.policy",
         "a1e82cdf472a6df24fe0539e47012acd70f6e90aaadc328406787eb6917597b0", 0o644),
-    "assets/polkit/org.alis.thinkfan.policy": (
-        "/usr/share/polkit-1/actions/org.alis.thinkfan.policy",
-        "b50ddbdd2619496e22322a3f02dd7a94522b627e2b9bff08818fd9cfae2fa17d", 0o644),
-    "assets/tlp/tlp-settings-schema.json": (
+    "plugins/tlp/assets/tlp/tlp-settings-schema.json": (
         "/usr/share/alis/tlp-settings-schema.json",
         "b23cdaa8b3bb4fd3f8bd36e1bb1c8b61fcce0018eaa5175656353af42d309adb", 0o644),
+    "plugins/thinkfan/assets/helpers/alis-thinkfan": (
+        "/usr/libexec/alis-thinkfan",
+        "b8b2c9cf721aff50b31ea1a0cae6d4f91d18d266d479f185deb86217830f1d67", 0o755),
+    "plugins/thinkfan/assets/polkit/org.alis.thinkfan.policy": (
+        "/usr/share/polkit-1/actions/org.alis.thinkfan.policy",
+        "b50ddbdd2619496e22322a3f02dd7a94522b627e2b9bff08818fd9cfae2fa17d", 0o644),
 }
+
+PLUGIN_SCOPES = {
+    "tlp": (
+        "plugins/tlp/assets/helpers/alis-battery-charge-limit",
+        "plugins/tlp/assets/polkit/org.alis.battery-charge-limit.policy",
+        "plugins/tlp/assets/tlp/tlp-settings-schema.json",
+    ),
+    "thinkfan": (
+        "plugins/thinkfan/assets/helpers/alis-thinkfan",
+        "plugins/thinkfan/assets/polkit/org.alis.thinkfan.policy",
+    ),
+}
+
+LEGACY_KEY_MAP = {
+    "plugins/tlp/assets/helpers/alis-battery-charge-limit": "assets/helpers/alis-battery-charge-limit",
+    "plugins/tlp/assets/polkit/org.alis.battery-charge-limit.policy": "assets/polkit/org.alis.battery-charge-limit.policy",
+    "plugins/tlp/assets/tlp/tlp-settings-schema.json": "assets/tlp/tlp-settings-schema.json",
+    "plugins/thinkfan/assets/helpers/alis-thinkfan": "assets/helpers/alis-thinkfan",
+    "plugins/thinkfan/assets/polkit/org.alis.thinkfan.policy": "assets/polkit/org.alis.thinkfan.policy",
+}
+REVERSE_LEGACY_MAP = {v: k for k, v in LEGACY_KEY_MAP.items()}
+
 STATE = "/usr/share/alis/alis-intergration-managed-helpers.json"
 MAX_BYTES = 128 * 1024
+VALID_SCOPES = ("all", "tlp", "thinkfan")
 
 
 def digest(data):
@@ -58,18 +84,79 @@ def destination(root, name):
     return root / name.lstrip("/")
 
 
-def validated_payload(package):
-    manifest = json.loads(read_file(package / "manifest.json"))
-    if not isinstance(manifest, dict) or manifest.get("id") != "alis-intergration" or (
-            type(manifest.get("hostApi")) is not int or manifest["hostApi"] != 1):
-        raise ValueError("Invalid Alis-Intergration source manifest")
+def _keys_for_scope(scope):
+    if scope not in VALID_SCOPES:
+        raise ValueError("Unsupported system helper scope: " + str(scope))
+    if scope == "all":
+        return list(TRUSTED.keys())
+    keys = [k for k in PLUGIN_SCOPES[scope] if k in TRUSTED]
+    return keys or list(TRUSTED.keys())
+
+
+def _canonical_key(key):
+    if key in TRUSTED:
+        return key
+    mapped = REVERSE_LEGACY_MAP.get(key)
+    if mapped and mapped in TRUSTED:
+        return mapped
+    return key
+
+
+def _manifest_for_source(package):
+    for candidate in (package / "manifest.json", package / "current" / "manifest.json"):
+        if candidate.is_file() or candidate.is_symlink():
+            manifest = json.loads(read_file(candidate))
+            if not isinstance(manifest, dict) or manifest.get("id") != "alis-intergration" or (
+                    type(manifest.get("hostApi")) is not int or manifest["hostApi"] != 1):
+                raise ValueError("Invalid Alis-Intergration source manifest")
+            return manifest
+    raise ValueError("Invalid Alis-Intergration source manifest")
+
+
+def _expected_hash_in_source(package, base_hashes, key):
+    # Split v2 per-plugin store puts files under <data_root>/plugins/<id>/ with plugin-manifest.json.
+    if key.startswith("plugins/"):
+        parts = Path(key).parts
+        if len(parts) >= 3:
+            plugin_id = parts[1]
+            subpath = Path(*parts[2:]).as_posix()
+            pmanifest = package / "plugins" / plugin_id / "plugin-manifest.json"
+            if pmanifest.is_file() or pmanifest.is_symlink():
+                pdoc = json.loads(read_file(pmanifest))
+                if isinstance(pdoc, dict) and pdoc.get("id") == plugin_id and isinstance(pdoc.get("files"), dict):
+                    return pdoc["files"].get(subpath)
+    if isinstance(base_hashes, dict):
+        if key in base_hashes:
+            return base_hashes.get(key)
+        legacy = LEGACY_KEY_MAP.get(key)
+        if legacy and legacy in base_hashes:
+            return base_hashes.get(legacy)
+    return None
+
+
+def _source_bytes(package, key):
+    primary = package / key
+    if primary.exists() or primary.is_symlink():
+        return read_file(primary)
+    legacy = LEGACY_KEY_MAP.get(key)
+    if legacy:
+        alt = package / legacy
+        if alt.exists() or alt.is_symlink():
+            return read_file(alt)
+    return read_file(primary)
+
+
+def validated_payload(package, scope="all"):
+    manifest = _manifest_for_source(package)
     hashes = manifest.get("files")
     if not isinstance(hashes, dict):
         raise ValueError("Source package lacks integrity metadata")
     content = {}
-    for path, (_, expected, _) in TRUSTED.items():
-        data = read_file(package / path)
-        if digest(data) != expected or hashes.get(path) != expected:
+    for path in _keys_for_scope(scope):
+        _, expected, _ = TRUSTED[path]
+        data = _source_bytes(package, path)
+        recorded = _expected_hash_in_source(package, hashes, path)
+        if digest(data) != expected or recorded != expected:
             raise ValueError("Untrusted Alis-Intergration system helper payload: " + path)
         content[path] = data
     return content
@@ -82,20 +169,73 @@ def read_state(root):
     data = json.loads(read_file(marker))
     if not isinstance(data, dict) or data.get("schema") != 1:
         raise ValueError("Unsupported system helper ownership record")
-    if data.get("hashes") != {p: spec[1] for p, spec in TRUSTED.items()}:
-        raise ValueError("Different system helper version owns these files")
-    return data
+    raw_hashes = data.get("hashes")
+    if not isinstance(raw_hashes, dict):
+        raise ValueError("Unsupported system helper ownership record")
+    normalized = {}
+    for raw_key, digest_val in raw_hashes.items():
+        key = _canonical_key(raw_key)
+        if key not in TRUSTED or TRUSTED[key][1] != digest_val:
+            raise ValueError("Different system helper version owns these files")
+        normalized[key] = digest_val
+    return {"schema": 1, "hashes": normalized}
 
 
-def state(root):
+def _file_matches(root, key):
+    dst, expected, _ = TRUSTED[key]
+    target = destination(root, dst)
+    return target.is_file() and digest(read_file(target)) == expected
+
+
+def state(root, scope="all"):
+    if scope not in VALID_SCOPES:
+        return {"ok": False, "managed": False, "installed": False,
+                "diagnostic": "invalid-system-helper-state"}
     try:
-        owned = read_state(root) is not None
-        matches = all(destination(root, spec[0]).is_file() and
-                      digest(read_file(destination(root, spec[0]))) == spec[1]
-                      for spec in TRUSTED.values())
-        return {"ok": True, "managed": owned, "installed": owned and matches,
-                "diagnostic": "ready" if owned and matches
-                    else "modified" if owned else "not-installed"}
+        record = read_state(root)
+        owned_hashes = record["hashes"] if record is not None else {}
+        per_plugin = {}
+        for pid, pkeys in PLUGIN_SCOPES.items():
+            active_keys = [k for k in pkeys if k in TRUSTED]
+            if not active_keys:
+                continue
+            g_owned = all(k in owned_hashes for k in active_keys)
+            g_any = any(k in owned_hashes for k in active_keys)
+            g_matches = all(_file_matches(root, k) for k in active_keys)
+            g_installed = g_owned and g_matches
+            g_tampered = any(not _file_matches(root, k) for k in active_keys if k in owned_hashes)
+            per_plugin[pid] = {
+                "managed": g_any,
+                "installed": g_installed,
+                "diagnostic": "ready" if g_installed
+                    else ("modified" if g_tampered
+                          else ("partial" if g_any else "not-installed")),
+            }
+
+        selected_keys = _keys_for_scope(scope)
+        owned_scope = bool(selected_keys) and all(k in owned_hashes for k in selected_keys)
+        matches_scope = bool(selected_keys) and all(_file_matches(root, k) for k in selected_keys)
+        tampered_scope = any(not _file_matches(root, k) for k in selected_keys if k in owned_hashes)
+        any_owned = bool(owned_hashes) if scope == "all" else any(k in owned_hashes for k in selected_keys)
+        installed_scope = owned_scope and matches_scope
+        managed_scope = any_owned if scope == "all" else owned_scope
+        if installed_scope:
+            diag = "ready"
+        elif tampered_scope:
+            diag = "modified"
+        elif any_owned:
+            diag = "partial"
+        else:
+            diag = "not-installed"
+        return {
+            "ok": True,
+            "scope": scope,
+            "managed": managed_scope,
+            "installed": installed_scope,
+            "partial": bool(any_owned and not installed_scope and not tampered_scope),
+            "diagnostic": diag,
+            "plugins": per_plugin,
+        }
     except (OSError, ValueError, TypeError):
         return {"ok": False, "managed": False, "installed": False,
                 "diagnostic": "invalid-system-helper-state"}
@@ -118,55 +258,84 @@ def publish(path, data, mode):
             pass
 
 
-def install(package, root=Path("/")):
-    if read_state(root) is not None:
-        current = state(root)
-        if not current["installed"]:
+def install(package, root=Path("/"), scope="all"):
+    selected_keys = _keys_for_scope(scope)
+    existing_record = read_state(root)
+    existing_hashes = dict(existing_record["hashes"]) if existing_record is not None else {}
+    if any(k in existing_hashes for k in selected_keys):
+        current = state(root, scope=scope)
+        if any(not _file_matches(root, k) for k in selected_keys if k in existing_hashes):
             raise ValueError("Previously managed system helper files were modified")
-    data = validated_payload(package)
+        if not current["installed"] and all(k in existing_hashes for k in selected_keys):
+            raise ValueError("Previously managed system helper files were modified")
+    data = validated_payload(package, scope=scope)
     # Do not silently overwrite separately installed or manually edited
     # system files. Every existing target must already contain approved bytes.
-    for key, (dst, expected, _) in TRUSTED.items():
+    for key in selected_keys:
+        dst, expected, _ = TRUSTED[key]
         target = destination(root, dst)
         if target.is_symlink():
             raise ValueError("Refusing symlinked system helper destination: " + dst)
         if target.exists() and digest(read_file(target)) != expected:
             raise ValueError("Preserving existing different system file: " + dst)
-    for key, (dst, _, mode) in TRUSTED.items():
+    for key in selected_keys:
+        dst, expected, mode = TRUSTED[key]
         publish(destination(root, dst), data[key], mode)
-    marker = json.dumps({"schema": 1, "hashes":
-                         {p: spec[1] for p, spec in TRUSTED.items()}}).encode() + b"\n"
+        existing_hashes[key] = expected
+    marker = json.dumps({"schema": 1, "hashes": existing_hashes}).encode() + b"\n"
     publish(destination(root, STATE), marker, 0o644)
-    return state(root)
+    return state(root, scope=scope)
 
 
-def remove(root=Path("/")):
+def remove(root=Path("/"), scope="all"):
+    selected_keys = _keys_for_scope(scope)
     record = read_state(root)
     if record is None:
-        return state(root)
+        return state(root, scope=scope)
+    existing_hashes = dict(record["hashes"])
+    keys_to_remove = [k for k in selected_keys if k in existing_hashes]
+    if not keys_to_remove:
+        return state(root, scope=scope)
     # Preserve any externally modified files and report a refusal.
-    if not state(root)["installed"]:
+    if any(not _file_matches(root, k) for k in keys_to_remove):
         raise ValueError("Managed system helper files changed; no files removed")
-    for target, _, _ in TRUSTED.values():
-        destination(root, target).unlink()
-    destination(root, STATE).unlink()
-    return state(root)
+    for key in keys_to_remove:
+        dst, _, _ = TRUSTED[key]
+        destination(root, dst).unlink()
+        existing_hashes.pop(key, None)
+    if existing_hashes:
+        marker = json.dumps({"schema": 1, "hashes": existing_hashes}).encode() + b"\n"
+        publish(destination(root, STATE), marker, 0o644)
+    else:
+        destination(root, STATE).unlink()
+    return state(root, scope=scope)
 
 
 def main():
-    if len(sys.argv) not in (2, 3) or sys.argv[1] not in ("status", "install", "remove"):
-        raise ValueError("Usage: alis-intergration-system-provision status | install <package> | remove")
+    if len(sys.argv) < 2 or sys.argv[1] not in ("status", "install", "remove"):
+        raise ValueError("Usage: alis-intergration-system-provision status [scope] | install <package> [scope] | remove [scope]")
     op = sys.argv[1]
-    if (op == "install") != (len(sys.argv) == 3):
-        raise ValueError("Invalid package argument")
+    scope = "all"
+    if op == "install":
+        if len(sys.argv) not in (3, 4):
+            raise ValueError("Invalid package argument")
+        if len(sys.argv) == 4:
+            scope = sys.argv[3]
+    else:
+        if len(sys.argv) not in (2, 3):
+            raise ValueError("Invalid package argument")
+        if len(sys.argv) == 3:
+            scope = sys.argv[2]
+    if scope not in VALID_SCOPES:
+        raise ValueError("Unsupported helper scope: " + scope)
     if op != "status" and os.geteuid() != 0:
         raise PermissionError("Authenticated administrator access required")
     if op == "status":
-        result = state(Path("/"))
+        result = state(Path("/"), scope=scope)
     elif op == "install":
-        result = install(Path(sys.argv[2]), Path("/"))
+        result = install(Path(sys.argv[2]), Path("/"), scope=scope)
     else:
-        result = remove(Path("/"))
+        result = remove(Path("/"), scope=scope)
     print(json.dumps(result))
 
 

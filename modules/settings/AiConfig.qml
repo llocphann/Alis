@@ -220,6 +220,7 @@ ContentPage {
 
                 ConfigSelectionArray {
                     enableSettingsSearch: false
+                    fillWidthSegments: true
                     currentValue: Config.options?.ai?.tool ?? "search"
                     onSelected: newValue => {
                         Config.setNestedValue("ai.tool", newValue);
@@ -1539,6 +1540,7 @@ ContentPage {
 
                         ConfigSelectionArray {
                             enableSettingsSearch: false
+                            fillWidthSegments: true
                             options: [
                                 {
                                     displayName: "OpenAI",

@@ -90,54 +90,87 @@ Window {
    const primary=JSON.stringify(Array.from(Config.options.dashboard.canvas.widgets))
    const dialog=findChild(dashboard,"dashboardCustomTabDialog")
    check(!!dialog,"delete confirmation dialog not mounted")
-   const createButton=findChild(dashboard,"dashboardCreateCustomTab")
-   const defaultButton=findChild(dashboard,"dashboardSetDefaultTab")
    const reorderHandle=findChild(dashboard,"dashboardTabReorderHandle")
-   const actions=findChild(dashboard,"dashboardCustomTabActions")
    const pageDots=findChild(dashboard,"dashboardPageDots")
-   check(!!createButton && !!defaultButton && !!reorderHandle && !!actions && !!pageDots,
-    "custom tab action controls missing")
-   check(!createButton.visible && !defaultButton.visible && !defaultButton.enabled,
-    "custom/default tab actions must be hidden outside Edit")
+   const editButton=findChild(dashboard,"dashboardEditLayoutButton")
+   check(findChild(dashboard,"dashboardCreateCustomTab")===null
+    && findChild(dashboard,"dashboardSetDefaultTab")===null
+    && findChild(dashboard,"dashboardDeleteCustomTab")===null
+    && findChild(dashboard,"dashboardRenameCustomTab")===null
+    && findChild(dashboard,"dashboardCustomTabActions")===null,
+    "inline Add/Rename/SetDefault/Delete header buttons must be removed in favor of external dock")
+   check(!!reorderHandle && !!pageDots && !!editButton,
+    "tab header reorder/edit controls missing")
+   check(!reorderHandle.visible,
+    "edit-only tab header actions must be hidden outside Edit")
    check(Math.abs(pageDots.mapToItem(dashboard,pageDots.width/2,0).x
     -dashboard.width/2)<4,"tab controls are not centered as one group")
-   dashboard.canvasController.beginEditMode()
-   tryVerify(()=>createButton.visible && createButton.enabled,1500)
-   check(defaultButton.visible && defaultButton.enabled,
-    "set-default button missing in Edit Dashboard Layout")
-   // Edit mode order: Set Default, six-dot grip, page dots, Create.
+   // Entering Edit Dashboard Layout must work from any non-canvas tab (e.g. weeklyPlanner).
+   dashboard.selectPage("weeklyPlanner")
+   check(dashboard.currentPageId==="weeklyPlanner","failed to switch to weeklyPlanner before Edit")
+   check(editButton.enabled,"Edit Dashboard Layout button must be enabled on weeklyPlanner")
+   editButton.clicked()
+   tryVerify(()=>dashboard.editMode && dashboard.currentPageId==="dashboard"
+    && reorderHandle.visible && tabToolbar.visible,1500)
+   const toolbarCreateButton=findChild(tabToolbar,"dashboardToolbarActionCreateTab")
+   check(!!toolbarCreateButton && toolbarCreateButton.visible && toolbarCreateButton.enabled,
+    "external Edit dock Create button missing in Edit Dashboard Layout")
+   // Edit mode order: six-dot grip, tab indicator icons.
    const handleLeft=reorderHandle.mapToItem(dashboard,0,0).x
-   const homeLeft=defaultButton.mapToItem(dashboard,0,0).x
    const firstDot=findChild(dashboard,"dashboardPage0")
-   const lastDot=findChild(dashboard,"dashboardPage"+(dashboard.pageIds.length-1))
    const dotsLeft=firstDot.mapToItem(dashboard,0,0).x
-   const lastDotRight=lastDot.mapToItem(dashboard,lastDot.width,0).x
-   const createLeft=createButton.mapToItem(dashboard,0,0).x
-   check(reorderHandle.visible && homeLeft+defaultButton.width<=handleLeft+1
-      && handleLeft+reorderHandle.width<=dotsLeft+1
-      && lastDotRight<=createLeft+1,
-      "Edit control order must be Set Default, six-dot grip, tab indicators, Create")
+   check(reorderHandle.visible && handleLeft+reorderHandle.width<=dotsLeft+1,
+      "Edit control order must be six-dot grip followed by tab indicators")
+   mousePress(firstDot,firstDot.width/2,firstDot.height/2)
+   mouseRelease(firstDot,firstDot.width/2,firstDot.height/2)
+   check(!firstDot.visualFocus && firstDot.background.border.width===0,
+      "pressing tab icon in Edit mode must not draw a focus border")
    let defaultControlPainted=false
-   check(dashboard.grabToImage(image=>defaultControlPainted=true),"default-tab frame request refused")
+   check(dashboard.grabToImage(image=>defaultControlPainted=true),"header frame request refused")
    tryVerify(()=>defaultControlPainted,2000)
-   check(defaultControlPainted,"default-tab controls did not render after entering Edit")
+   check(defaultControlPainted,"header controls did not render after entering Edit")
    const inactivity=Config.options.dashboard.inactiveMinutes
-   mouseClick(defaultButton)
-   check(Config.options.dashboard.defaultTabId==="dashboard",
-    "default-tab action did not save active page in Edit mode")
+   tabToolbar.activeDockTab="tabs"
+   const defaultButton=findChild(tabToolbar,"dashboardToolbarActionDefaultTab")
+   const tabIconButton=findChild(tabToolbar,"dashboardToolbarActionTabIcon")
+   check(!!defaultButton && !!tabIconButton,"external Default Tab and Tab Icon dock cards missing")
+   tryVerify(()=>defaultButton.visible && tabIconButton.visible,1500)
+   defaultButton.clicked()
+   tryVerify(()=>Config.options.dashboard.defaultTabId==="dashboard" && defaultButton.toggled,1500)
    check(Config.options.dashboard.inactiveMinutes===inactivity,
     "set-default action silently changed inactivity duration")
-   check(defaultButton.colBackground.a===1 && defaultButton.colBackgroundToggled.a===1
-    && defaultButton.colBackground.toString()!==defaultButton.colBackgroundToggled.toString(),
-    "default-tab selected/unselected states need distinct opaque backgrounds")
-   check(defaultButton.contentItem.color.toString()!==defaultButton.colBackgroundToggled.toString(),
-    "default-tab icon has no contrast against selected background")
+   tabIconButton.clicked()
+   const bottomPicker=findChild(tabToolbar,"dashboardBottomTabIconPicker")
+   tryVerify(()=>!!bottomPicker && bottomPicker.visible,2000)
+   const plannerChip=findChild(bottomPicker,"dashboardToolbarIconTab_weeklyPlanner")
+   const headphonesPreset=findChild(bottomPicker,"dashboardToolbarTabIconPreset_headphones")
+   const plannerHeaderIcon=findChild(dashboard,"dashboardPageIcon1")
+   const backBtn=findChild(bottomPicker,"dashboardToolbarTabIconBack")
+   check(!!plannerChip && !!headphonesPreset && !!plannerHeaderIcon && !!backBtn,
+    "non-split Tab Icon picker controls missing")
+   plannerChip.clicked()
+   headphonesPreset.clicked()
+   tryVerify(()=>plannerHeaderIcon.text==="headphones",2000)
+   const resetIconBtn=findChild(bottomPicker,"dashboardToolbarTabIconReset")
+   tryVerify(()=>!!resetIconBtn && resetIconBtn.visible,1500)
+   resetIconBtn.clicked()
+   tryVerify(()=>plannerHeaderIcon.text==="calendar_month",2000)
+   backBtn.clicked()
+   tryVerify(()=>!bottomPicker.visible,1500)
+   const bottomPlannerCard=findChild(tabToolbar,"dashboardBottomPageCard_weeklyPlanner")
+   const bottomDashCard=findChild(tabToolbar,"dashboardBottomPageCard_dashboard")
+   check(!!bottomPlannerCard && !!bottomDashCard,"bottom Pages dock switcher cards missing")
+   bottomPlannerCard.clicked()
+   tryVerify(()=>dashboard.currentPageId==="weeklyPlanner" && dashboard.editMode && tabToolbar.visible,1500)
+   bottomDashCard.clicked()
+   tryVerify(()=>dashboard.currentPageId==="dashboard" && dashboard.editMode && tabToolbar.visible,1500)
+   tabToolbar.activeDockTab="modules"
    check(waitForPolish(root,2000),"Create control layout did not settle")
    const editNaturalWidth=tabToolbar.implicitWidth
    const editNaturalHeight=tabToolbar.implicitHeight
    const editActualWidth=tabToolbar.width
    const editActualHeight=tabToolbar.height
-   mouseClick(createButton)
+   mouseClick(toolbarCreateButton)
    tryVerify(()=>tabToolbar.visible && dashboard.tabNamingActive,2000)
    check(waitForPolish(tabToolbar,2000),"Create toolbar did not settle")
    check(Math.abs(tabToolbar.implicitWidth-editNaturalWidth)<1
@@ -226,6 +259,20 @@ Window {
     "duplicate name not rejected")
    dashboard.cancelCustomTabDialog()
    dashboard.canvasController.cancelEditMode()
+   const dot0After=findChild(dashboard,"dashboardPage0")
+   const dot1After=findChild(dashboard,"dashboardPage1")
+   const dotCAfter=findChild(dashboard,"dashboardPage"+dashboard.pageIds.indexOf("custom-1"))
+   check(!dot0After.activeFocus && !dot0After.visualFocus && dot0After.background.border.width===0
+      && !dotCAfter.activeFocus && !dotCAfter.visualFocus && dotCAfter.background.border.width===0,
+      "exiting Edit mode left sticky focus or border on tab icons")
+   mouseClick(dot1After)
+   tryVerify(()=>dashboard.currentPageId==="weeklyPlanner",1500)
+   check(!dot1After.activeFocus && !dot1After.visualFocus && dot1After.background.border.width===0,
+      "mouse-clicking tab icon outside Edit mode drew a focus border")
+   mouseClick(dotCAfter)
+   tryVerify(()=>dashboard.currentPageId==="custom-1",1500)
+   check(!dotCAfter.activeFocus && !dotCAfter.visualFocus && dotCAfter.background.border.width===0,
+      "mouse-clicking custom tab icon drew a focus border")
    Config.setNestedValues({
      "dashboard.defaultTabId":"dashboard",
      "dashboard.inactiveMinutes":5

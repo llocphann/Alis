@@ -72,7 +72,6 @@ let
     ++ optionalTop "kitty"
     ++ optionalTop "mission-center"
     ++ optionalTop "mpv"
-    ++ optionalTop "nautilus"
     ++ optionalTop "networkmanager"
     ++ optionalTop "networkmanagerapplet"
     ++ optionalTop "pavucontrol"

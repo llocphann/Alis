@@ -31,17 +31,18 @@ for name, source in (("rail", native), ("focus", focus)):
     bindings[name] = (binding, focus_binding.group(1))
 
 assert 'authorizationPending = ["helpers-ensure"' in service
-assert '["install","remove","rollback","helpers-install","helpers-remove","helpers-ensure"]' in service
+assert '"helpers-install","helpers-remove","helpers-ensure"' in service
 assert 'GlobalStates.settingsOverlayOpen = false' in service
 assert 'GlobalStates.settingsOverlayOpen = true' in service
 assert "root.authorizationPending = false" in service
 assert 'privilegedAction(' not in ui
 assert 'AlisIntergration.manage("helpers-' not in ui and 'AlisIntergration.manage("gateway-' not in ui
+assert 'AlisIntergration.managePlugin("helpers-' not in ui
 assert './setup integrations' in ui
 assert '"helpers-ensure"' in manager
 assert 'gateway_call("gateway-status")' in manager
 assert 'gateway_call("gateway-install")' in manager
-assert 'system_call("helpers-install", package_dir)' in manager
+assert '_invoke_system_call(system_call, "helpers-install", package_dir, scope)' in manager
 
 print("ALIS_INTERGRATION_POLKIT_ELEVATION_PASS rail/focus yield to native/external authentication; embedded surface hides and restores")
 

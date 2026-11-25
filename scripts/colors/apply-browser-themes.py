@@ -971,13 +971,19 @@ def publish_and_notify_live_bridge(
     if disable:
         return
 
+    repo_root = Path(__file__).resolve().parents[2]
+    native_bridge = repo_root / "native" / "bin" / "alis-theme"
     bridge_script = Path(__file__).resolve().parent / "alis-browser-theme-bridge.py"
-    if not bridge_script.is_file():
+    if native_bridge.is_file() and os.access(native_bridge, os.X_OK):
+        bridge_cmd = [str(native_bridge), "--browser-bridge", "--state-dir", str(state_dir), "--port", str(bridge_port)]
+    elif bridge_script.is_file():
+        bridge_cmd = [sys.executable, str(bridge_script), "--state-dir", str(state_dir), "--port", str(bridge_port)]
+    else:
         return
 
     try:
         subprocess.Popen(
-            [sys.executable, str(bridge_script), "--state-dir", str(state_dir), "--port", str(bridge_port)],
+            bridge_cmd,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             stdin=subprocess.DEVNULL,

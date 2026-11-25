@@ -131,7 +131,7 @@ ContentPage {
         ];
         if (Config.options?.dashboard?.music?.enable ?? true)
             choices.splice(1, 0, { displayName: Translation.tr("Music"), icon: "library_music", value: "music" });
-        if (Config.options?.dashboard?.spacedRepetition?.enable ?? true)
+        if (AlisIntergration.spacedRepetitionEnabled && (Config.options?.dashboard?.spacedRepetition?.enable ?? true))
             choices.push({ displayName: Translation.tr("Spaced Repetition"), icon: "school", value: "spacedRepetition" }); // contract: value:"spacedRepetition"
         if (AlisIntergration.exercisesTrackerEnabled)
             choices.push({ displayName: Translation.tr("Exercises Tracker"), icon: "fitness_center", value: "exercisesTracker" }); // contract: value:"exercisesTracker"
@@ -177,6 +177,18 @@ ContentPage {
         title: Translation.tr("Dock & Indicators")
 
         SettingsGroup {
+            SettingsSwitch {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                buttonIcon: "check"
+                text: Translation.tr("Enable")
+                checked: Config.options.dock.enable
+                onCheckedChanged: Config.setNestedValue("dock.enable", checked)
+                StyledToolTip { text: Translation.tr("Show the application dock") }
+            }
+
+            SettingsDivider {}
+
             GridLayout {
                 id: dockPrimaryToggles
                 Layout.fillWidth: true
@@ -185,17 +197,6 @@ ContentPage {
                 uniformCellWidths: columns === 2
                 columnSpacing: Appearance.sizes.spacingSmall
                 rowSpacing: Appearance.sizes.spacingSmall
-
-                SettingsSwitch {
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    Layout.preferredWidth: 1
-                    buttonIcon: "check"
-                    text: Translation.tr("Enable")
-                    checked: Config.options.dock.enable
-                    onCheckedChanged: Config.setNestedValue("dock.enable", checked)
-                    StyledToolTip { text: Translation.tr("Show the application dock") }
-                }
 
                 SettingsSwitch {
                     Layout.fillWidth: true
@@ -270,198 +271,138 @@ ContentPage {
                 }
             }
 
-            SettingsDivider {}
-
-            GridLayout {
-                id: dockSecondaryToggles
+            SettingsSwitch {
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
-                columns: width >= 340 ? 2 : 1
-                uniformCellWidths: columns === 2
-                columnSpacing: Appearance.sizes.spacingSmall
-                rowSpacing: Appearance.sizes.spacingSmall
-
-                SettingsSwitch {
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    Layout.preferredWidth: 1
-                    buttonIcon: "minimize"
-                    text: Translation.tr("Click focused to minimize")
-                    checked: Config.options?.dock?.minimizeUnfocused ?? false
-                    onCheckedChanged: Config.setNestedValue("dock.minimizeUnfocused", checked)
-                }
-
-                SettingsSwitch {
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    Layout.preferredWidth: 1
-                    buttonIcon: "crop_square"
-                    text: Translation.tr("Card dock frame")
-                    checked: Config.options?.dock?.cardStyle ?? false
-                    onCheckedChanged: Config.setNestedValue("dock.cardStyle", checked)
-                }
-
-                SettingsSwitch {
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    Layout.preferredWidth: 1
-                    buttonIcon: "widgets"
-                    visible: Config.options?.panelFamily !== "abyss"
-                    text: Translation.tr("Show dock background")
-                    checked: Config.options.dock.showBackground
-                    onCheckedChanged: Config.setNestedValue("dock.showBackground", checked)
-                    StyledToolTip {
-                        text: Translation.tr("Show a background behind the dock")
-                    }
-                }
-
-                SettingsSwitch {
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    Layout.preferredWidth: 1
-                    buttonIcon: "blur_on"
-                    visible: Config.options?.panelFamily !== "abyss"
-                    text: Translation.tr("Blur dock glass")
-                    checked: Config.options?.dock?.enableBlurGlass ?? true
-                    onCheckedChanged: Config.setNestedValue("dock.enableBlurGlass", checked)
+                buttonIcon: "widgets"
+                visible: Config.options?.panelFamily !== "abyss"
+                text: Translation.tr("Show dock background")
+                checked: Config.options.dock.showBackground
+                onCheckedChanged: Config.setNestedValue("dock.showBackground", checked)
+                StyledToolTip {
+                    text: Translation.tr("Show a background behind the dock")
                 }
             }
 
             SettingsDivider {}
 
-            GridLayout {
+            ContentSubsection {
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
-                columns: width >= 720 * Appearance.fontSizeScale ? 2 : 1
-                uniformCellWidths: columns > 1
-                columnSpacing: 18
-                rowSpacing: 12
+                title: Translation.tr("Dock position")
 
-                ContentSubsection {
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    Layout.alignment: Qt.AlignTop
-                    title: Translation.tr("Dock position")
+                ConfigSelectionArray {
+                    fillWidthSegments: true
+                    currentValue: Config.options?.dock?.position ?? "bottom"
+                    onSelected: newValue => Config.setNestedValue("dock.position", newValue)
+                    options: [
+                        { displayName: Translation.tr("Left"), icon: "arrow_back", value: "left" },
+                        { displayName: Translation.tr("Top"), icon: "arrow_upward", value: "top" },
+                        { displayName: Translation.tr("Bottom"), icon: "arrow_downward", value: "bottom" },
+                        { displayName: Translation.tr("Right"), icon: "arrow_forward", value: "right" }
+                    ]
+                }
 
-                    ConfigSelectionArray {
-                        currentValue: Config.options?.dock?.position ?? "bottom"
-                        onSelected: newValue => Config.setNestedValue("dock.position", newValue)
-                        options: [
-                            { displayName: Translation.tr("Left"), icon: "arrow_back", value: "left" },
-                            { displayName: Translation.tr("Top"), icon: "arrow_upward", value: "top" },
-                            { displayName: Translation.tr("Bottom"), icon: "arrow_downward", value: "bottom" },
-                            { displayName: Translation.tr("Right"), icon: "arrow_forward", value: "right" }
-                        ]
-                    }
+                ConfigRow {
+                    uniform: true
 
-                    GridLayout {
+                    ConfigSpinBox {
                         Layout.fillWidth: true
                         Layout.minimumWidth: 0
-                        columns: width >= 560 * Appearance.fontSizeScale ? 2 : 1
-                        uniformCellWidths: columns > 1
-                        columnSpacing: 12
-                        rowSpacing: 8
+                        icon: "height"
+                        text: Translation.tr("Dock height (px)")
+                        value: Config.options.dock.height ?? 60
+                        from: 40
+                        to: 100
+                        stepSize: 5
+                        onValueChanged: Config.setNestedValue("dock.height", value)
+                    }
 
-                        ConfigSpinBox {
-                            Layout.fillWidth: true
-                            Layout.minimumWidth: 0
-                            icon: "height"
-                            text: Translation.tr("Dock height (px)")
-                            value: Config.options.dock.height ?? 60
-                            from: 40
-                            to: 100
-                            stepSize: 5
-                            onValueChanged: Config.setNestedValue("dock.height", value)
+                    ConfigSpinBox {
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        icon: "aspect_ratio"
+                        text: Translation.tr("Icon size (px)")
+                        value: Config.options.dock.iconSize ?? 35
+                        from: 20
+                        to: 60
+                        stepSize: 5
+                        onValueChanged: Config.setNestedValue("dock.iconSize", value)
+                    }
+                }
+            }
+
+            SettingsDivider {}
+
+            ContentSubsection {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                title: Translation.tr("Reveal behavior")
+                tooltip: Translation.tr("Hover reveals the Dock at the edge; Empty workspace shows it on an empty desktop.")
+
+                ConfigSelectionArray {
+                    fillWidthSegments: true
+                    currentValue: Config.options?.dock?.hoverToReveal ?? true
+                    onSelected: newValue => Config.setNestedValue("dock.hoverToReveal", newValue)
+                    options: [
+                        { displayName: Translation.tr("Hover"), icon: "highlight_mouse_cursor", value: true },
+                        { displayName: Translation.tr("Empty workspace"), icon: "desktop_windows", value: false }
+                    ]
+                }
+
+                ConfigRow {
+                    id: revealModeToggles
+                    uniform: true
+
+                    SettingsSwitch {
+                        buttonIcon: "desktop_windows"
+                        text: Translation.tr("Show on desktop")
+                        enabled: !(Config.options?.dock?.hoverToReveal ?? true)
+                        checked: Config.options?.dock?.showOnDesktop ?? true
+                        onCheckedChanged: Config.setNestedValue("dock.showOnDesktop", checked)
+                        StyledToolTip {
+                            text: Translation.tr("Show dock when no window is focused (Empty workspace mode only)")
                         }
+                    }
 
-                        ConfigSpinBox {
-                            Layout.fillWidth: true
-                            Layout.minimumWidth: 0
-                            icon: "aspect_ratio"
-                            text: Translation.tr("Icon size (px)")
-                            value: Config.options.dock.iconSize ?? 35
-                            from: 20
-                            to: 60
-                            stepSize: 5
-                            onValueChanged: Config.setNestedValue("dock.iconSize", value)
+                    SettingsSwitch {
+                        buttonIcon: "keep"
+                        text: Translation.tr("Pinned on startup")
+                        enabled: !(Config.options?.dock?.hoverToReveal ?? true)
+                        checked: Config.options.dock.pinnedOnStartup
+                        onCheckedChanged: Config.setNestedValue("dock.pinnedOnStartup", checked)
+                        StyledToolTip {
+                            text: Translation.tr("Keep dock visible at all times (Empty workspace mode only)")
                         }
                     }
                 }
 
-                ContentSubsection {
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    Layout.alignment: Qt.AlignTop
-                    title: Translation.tr("Reveal behavior")
-                    tooltip: Translation.tr("Hover reveals the Dock at the edge; Empty workspace shows it on an empty desktop.")
+                ConfigRow {
+                    uniform: (Config.options?.panelFamily ?? "abyss") !== "abyss"
 
-                    ConfigSelectionArray {
-                        currentValue: Config.options?.dock?.hoverToReveal ?? true
-                        onSelected: newValue => Config.setNestedValue("dock.hoverToReveal", newValue)
-                        options: [
-                            { displayName: Translation.tr("Hover"), icon: "highlight_mouse_cursor", value: true },
-                            { displayName: Translation.tr("Empty workspace"), icon: "desktop_windows", value: false }
-                        ]
-                    }
-
-                    ConfigRow {
-                        id: revealModeToggles
-                        uniform: true
-
-                        SettingsSwitch {
-                            buttonIcon: "desktop_windows"
-                            text: Translation.tr("Show on desktop")
-                            enabled: !(Config.options?.dock?.hoverToReveal ?? true)
-                            checked: Config.options?.dock?.showOnDesktop ?? true
-                            onCheckedChanged: Config.setNestedValue("dock.showOnDesktop", checked)
-                            StyledToolTip {
-                                text: Translation.tr("Show dock when no window is focused (Empty workspace mode only)")
-                            }
-                        }
-
-                        SettingsSwitch {
-                            buttonIcon: "keep"
-                            text: Translation.tr("Pinned on startup")
-                            enabled: !(Config.options?.dock?.hoverToReveal ?? true)
-                            checked: Config.options.dock.pinnedOnStartup
-                            onCheckedChanged: Config.setNestedValue("dock.pinnedOnStartup", checked)
-                            StyledToolTip {
-                                text: Translation.tr("Keep dock visible at all times (Empty workspace mode only)")
-                            }
-                        }
-                    }
-
-                    GridLayout {
+                    ConfigSpinBox {
+                        visible: (Config.options?.panelFamily ?? "abyss") !== "abyss"
                         Layout.fillWidth: true
                         Layout.minimumWidth: 0
-                        columns: width >= 560 * Appearance.fontSizeScale ? 2 : 1
-                        uniformCellWidths: columns > 1
-                        columnSpacing: 12
-                        rowSpacing: 8
+                        icon: "vertical_align_bottom"
+                        text: Translation.tr("Reveal edge (px)")
+                        value: Config.options?.dock?.hoverRegionHeight ?? 2
+                        from: 1
+                        to: 16
+                        stepSize: 1
+                        onValueChanged: Config.setNestedValue("dock.hoverRegionHeight", value)
+                    }
 
-                        ConfigSpinBox {
-                            Layout.fillWidth: true
-                            Layout.minimumWidth: 0
-                            icon: "vertical_align_bottom"
-                            text: Translation.tr("Reveal edge (px)")
-                            value: Config.options?.dock?.hoverRegionHeight ?? 2
-                            from: 1
-                            to: 16
-                            stepSize: 1
-                            onValueChanged: Config.setNestedValue("dock.hoverRegionHeight", value)
-                        }
-
-                        ConfigSpinBox {
-                            Layout.fillWidth: true
-                            Layout.minimumWidth: 0
-                            icon: "filter_5"
-                            text: Translation.tr("Max window dots")
-                            value: Config.options?.dock?.maxIndicatorDots ?? 5
-                            from: 1
-                            to: 10
-                            stepSize: 1
-                            onValueChanged: Config.setNestedValue("dock.maxIndicatorDots", value)
-                        }
+                    ConfigSpinBox {
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        icon: "filter_5"
+                        text: Translation.tr("Max window dots")
+                        value: Config.options?.dock?.maxIndicatorDots ?? 5
+                        from: 1
+                        to: 10
+                        stepSize: 1
+                        onValueChanged: Config.setNestedValue("dock.maxIndicatorDots", value)
                     }
                 }
             }
@@ -879,6 +820,7 @@ ContentPage {
             ContentSubsection {
                 title: Translation.tr("Default tab after inactivity")
                 ConfigSelectionArray {
+                    fillWidthSegments: true
                     currentValue: root.tabChoices.some(item =>
                         item.value === (Config.options?.dashboard?.defaultTabId ?? "dashboard"))
                         ? (Config.options?.dashboard?.defaultTabId || "dashboard") : "dashboard"
@@ -984,8 +926,12 @@ ContentPage {
             SettingsDivider {}
 
             GridLayout {
+                id: dashboardSwitchGrid
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
+                readonly property int visibleToggleCount: 2
+                    + (AlisIntergration.spacedRepetitionEnabled ? 1 : 0)
+                    + (AlisIntergration.isPluginInstalled("exercises_tracker") ? 1 : 0)
                 columns: width >= 340 ? 2 : 1
                 uniformCellWidths: columns === 2
                 columnSpacing: Appearance.sizes.spacingSmall
@@ -1012,32 +958,11 @@ ContentPage {
                 }
 
                 SettingsSwitch {
+                    Layout.columnSpan: (dashboardSwitchGrid.columns === 2 && !AlisIntergration.isPluginInstalled("exercises_tracker") && (dashboardSwitchGrid.visibleToggleCount % 2 === 1)) ? 2 : 1
                     Layout.fillWidth: true
                     Layout.minimumWidth: 0
                     Layout.preferredWidth: 1
-                    buttonIcon: "title"
-                    text: Translation.tr("Show card titles")
-                    checked: Config.options?.dashboard?.appearance?.showCardTitles ?? true
-                    onCheckedChanged: Config.setNestedValue("dashboard.appearance.showCardTitles", checked)
-                }
-
-                SettingsSwitch {
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    Layout.preferredWidth: 1
-                    buttonIcon: "bolt"
-                    text: Translation.tr("Keep loaded")
-                    checked: Config.options?.dashboard?.keepLoaded ?? true
-                    onCheckedChanged: Config.setNestedValue("dashboard.keepLoaded", checked)
-                    StyledToolTip {
-                        text: Translation.tr("Keep Dashboard ready in memory for instant opening")
-                    }
-                }
-
-                SettingsSwitch {
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    Layout.preferredWidth: 1
+                    visible: AlisIntergration.spacedRepetitionEnabled
                     buttonIcon: "school"
                     text: Translation.tr("Spaced Repetition tab")
                     checked: Config.options?.dashboard?.spacedRepetition?.enable ?? true
@@ -1046,73 +971,19 @@ ContentPage {
 
                 SettingsSwitch {
                     objectName: "dockExercisesTrackerTabSwitch"
+                    Layout.columnSpan: (dashboardSwitchGrid.columns === 2 && (dashboardSwitchGrid.visibleToggleCount % 2 === 1)) ? 2 : 1
                     Layout.fillWidth: true
                     Layout.minimumWidth: 0
                     Layout.preferredWidth: 1
+                    visible: AlisIntergration.isPluginInstalled("exercises_tracker")
                     buttonIcon: "fitness_center"
                     text: Translation.tr("Exercises Tracker tab")
-                    enabled: AlisIntergration.available
+                    enabled: AlisIntergration.isPluginInstalled("exercises_tracker")
                     checked: AlisIntergration.exercisesTrackerEnabled
                     onToggledByUser: nextChecked => {
                         AlisIntergration.setExercisesTrackerEnabled(nextChecked)
                         checked = Qt.binding(() => AlisIntergration.exercisesTrackerEnabled)
                     }
-                }
-
-                SettingsSwitch {
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    Layout.preferredWidth: 1
-                    buttonIcon: "compress"
-                    text: Translation.tr("Compact card density")
-                    checked: (Config.options?.dashboard?.appearance?.density ?? "comfortable") === "compact"
-                    onCheckedChanged: Config.setNestedValue("dashboard.appearance.density", checked ? "compact" : "comfortable")
-                }
-
-                SettingsSwitch {
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    Layout.preferredWidth: 1
-                    buttonIcon: "event_available"
-                    text: Translation.tr("Weekend reviews")
-                    checked: Config.options?.dashboard?.spacedRepetition?.weekendsEnabled ?? true
-                    onCheckedChanged: Config.setNestedValue("dashboard.spacedRepetition.weekendsEnabled", checked)
-                }
-
-                SettingsSwitch {
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    Layout.preferredWidth: 1
-                    buttonIcon: "auto_fix_high"
-                    text: Translation.tr("Auto-generate cloze")
-                    checked: Config.options?.dashboard?.spacedRepetition?.autoCloze ?? true
-                    onCheckedChanged: Config.setNestedValue("dashboard.spacedRepetition.autoCloze", checked)
-                }
-            }
-
-            SettingsDivider {}
-
-            ConfigRow {
-                uniform: true
-
-                ConfigSpinBox {
-                    icon: "add_task"
-                    text: Translation.tr("Daily new cards")
-                    value: Config.options?.dashboard?.spacedRepetition?.dailyNewLimit ?? 20
-                    from: 1
-                    to: 200
-                    stepSize: 5
-                    onValueChanged: Config.setNestedValue("dashboard.spacedRepetition.dailyNewLimit", value)
-                }
-
-                ConfigSpinBox {
-                    icon: "fact_check"
-                    text: Translation.tr("Daily review cap")
-                    value: Config.options?.dashboard?.spacedRepetition?.dailyReviewLimit ?? 100
-                    from: 10
-                    to: 500
-                    stepSize: 10
-                    onValueChanged: Config.setNestedValue("dashboard.spacedRepetition.dailyReviewLimit", value)
                 }
             }
         }
@@ -1132,21 +1003,6 @@ ContentPage {
         }
 
         SettingsGroup {
-            ContentSubsection {
-                title: Translation.tr("MPD host")
-                MaterialTextField {
-                    Layout.fillWidth: true
-                    placeholderText: "127.0.0.1"
-                    text: Config.options?.sidebar?.music?.mpdHost ?? "127.0.0.1"
-                    onEditingFinished: {
-                        const nextHost = text.trim() || "127.0.0.1";
-                        Config.setNestedValue("sidebar.music.mpdHost", nextHost);
-                    }
-                }
-            }
-
-            SettingsDivider {}
-
             GridLayout {
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
@@ -1169,16 +1025,6 @@ ContentPage {
                     Layout.fillWidth: true
                     Layout.minimumWidth: 0
                     Layout.preferredWidth: 1
-                    buttonIcon: "queue_music"
-                    text: Translation.tr("Sidebar MPD player")
-                    checked: Config.options?.sidebar?.music?.enable ?? false
-                    onCheckedChanged: Config.setNestedValue("sidebar.music.enable", checked)
-                }
-
-                SettingsSwitch {
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    Layout.preferredWidth: 1
                     buttonIcon: "swap_vert"
                     text: Translation.tr("Music scrollbars")
                     checked: Config.options?.dashboard?.music?.showScrollbars ?? false
@@ -1193,16 +1039,6 @@ ContentPage {
                     text: Translation.tr("Filter duplicate players")
                     checked: Config.options?.media?.filterDuplicatePlayers ?? true
                     onCheckedChanged: Config.setNestedValue("media.filterDuplicatePlayers", checked)
-                }
-
-                SettingsSwitch {
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    Layout.preferredWidth: 1
-                    buttonIcon: "album"
-                    text: Translation.tr("Sidebar media card")
-                    checked: Config.options?.sidebar?.widgets?.media ?? true
-                    onCheckedChanged: Config.setNestedValue("sidebar.widgets.media", checked)
                 }
 
                 SettingsSwitch {
@@ -1242,6 +1078,7 @@ ContentPage {
                     Layout.alignment: Qt.AlignTop
                     title: Translation.tr("Canvas grid style")
                     ConfigSelectionArray {
+                        fillWidthSegments: true
                         currentValue: Config.options?.dashboard?.canvas?.gridStyle ?? "dots"
                         onSelected: val => Config.setNestedValue("dashboard.canvas.gridStyle", val)
                         options: [
@@ -1258,6 +1095,7 @@ ContentPage {
                     Layout.alignment: Qt.AlignTop
                     title: Translation.tr("Media popup placement")
                     ConfigSelectionArray {
+                        fillWidthSegments: true
                         currentValue: Config.options?.media?.popupMode ?? "dock"
                         onSelected: val => Config.setNestedValue("media.popupMode", val)
                         options: [

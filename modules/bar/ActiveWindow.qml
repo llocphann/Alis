@@ -2,7 +2,9 @@ import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
 import QtQuick
+import QtQuick.Layouts
 import Quickshell
+import Quickshell.Widgets
 import Quickshell.Wayland
 import Quickshell.Hyprland
 
@@ -105,11 +107,24 @@ Item {
     clip: true
     property real contentRotation: 0
     readonly property bool verticalContent: Math.abs(root.contentRotation) === 90
-    readonly property string verticalAppString: Array.from(root.displayAppName).join("\n")
+    readonly property string rawActiveAppIdentity: {
+        if (CompositorService.isNiri) {
+            const w = niriFocusedWindow
+            return w ? String(w.app_id || w.appId || "") : ""
+        }
+        if (root.focusingThisMonitor && root.activeWindow?.activated && root.biggestWindow) {
+            return String(root.activeWindow?.appId || "")
+        }
+        return String(root.biggestWindow?.class ?? "")
+    }
+    readonly property bool hasActiveWindow: rawActiveAppIdentity.trim().length > 0
+    readonly property string activeAppIconSource: hasActiveWindow
+        ? AppSearch.getIconSource(rawActiveAppIdentity, "application-x-executable")
+        : ""
     // Natural content width, exposed so a content-sized host (e.g. a centre
     // pill, which gives no fill slack) can grant a sensible, clamped width.
     readonly property real contentImplicitWidth: root.verticalContent
-        ? verticalAppText.implicitHeight + 12 * Appearance.sizes.barModuleScale
+        ? Math.round(28 * Appearance.sizes.barModuleScale) + 6 * Appearance.sizes.barModuleScale
         : Math.max(
             appNameText.implicitWidth,
             titleText.visible ? titleText.implicitWidth : 0
@@ -172,20 +187,76 @@ Item {
         text: root.stableDisplayTitle
     }
 
-    StyledText {
-        id: verticalAppText
+    MouseArea {
+        id: verticalHoverArea
+        anchors.fill: parent
         visible: root.verticalContent
-        anchors.centerIn: parent
-        width: root.height
-        height: root.width
-        rotation: -root.contentRotation
-        horizontalAlignment: Text.AlignHCenter
-        verticalAlignment: Text.AlignVCenter
-        font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * Appearance.sizes.barModuleScale)
-        lineHeight: 0.82
-        elide: Text.ElideRight
-        color: root.titleColor
-        text: root.verticalAppString
+        enabled: root.verticalContent
+        hoverEnabled: root.verticalContent
+        acceptedButtons: Qt.NoButton
+
+        Item {
+            id: verticalAppIconBox
+            anchors.centerIn: parent
+            width: Math.round(22 * Appearance.sizes.barModuleScale)
+            height: width
+            rotation: -root.contentRotation
+
+            IconImage {
+                anchors.fill: parent
+                visible: root.hasActiveWindow && String(root.activeAppIconSource).length > 0
+                source: root.activeAppIconSource
+                implicitSize: parent.width
+            }
+
+            MaterialSymbol {
+                anchors.centerIn: parent
+                visible: !root.hasActiveWindow || String(root.activeAppIconSource).length === 0
+                text: "desktop_windows"
+                iconSize: Math.round(18 * Appearance.sizes.barModuleScale)
+                color: root.titleColor
+            }
+        }
+
+        StyledPopup {
+            hoverTarget: verticalHoverArea
+            hoverActivates: true
+            popupBackgroundMargin: 0
+
+            Item {
+                implicitWidth: Math.min(280, Math.max(110, hoverInfoCol.implicitWidth + 20))
+                implicitHeight: hoverInfoCol.implicitHeight + 14
+
+                ColumnLayout {
+                    id: hoverInfoCol
+                    anchors.centerIn: parent
+                    width: parent.width - 20
+                    spacing: 2
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        maximumLineCount: 1
+                        elide: Text.ElideRight
+                        font.pixelSize: Appearance.font.pixelSize.smaller
+                        font.weight: Font.Medium
+                        color: Appearance.colors.colSubtext
+                        text: root.displayAppName
+                    }
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        visible: root.showTitle && root.stableDisplayTitle.length > 0
+                            && root.stableDisplayTitle !== root.displayAppName
+                        maximumLineCount: 2
+                        wrapMode: Text.Wrap
+                        elide: Text.ElideRight
+                        font.pixelSize: Appearance.font.pixelSize.small
+                        color: Appearance.colors.colOnLayer0
+                        text: root.stableDisplayTitle
+                    }
+                }
+            }
+        }
     }
 
 }

@@ -45,6 +45,7 @@ ContentPage {
     readonly property var quickSystemActions: [
         { label: Translation.tr("App Launcher (Spotlight)"), icon: "apps", action: 'spawn "qs" "-c" "alis" "ipc" "call" "search" "toggle"' },
         { label: Translation.tr("Alis Nexus"), icon: "hub", action: 'spawn "alis" "nexus" "toggle"' },
+        { label: Translation.tr("Alis Nexus (Window)"), icon: "open_in_new", action: 'spawn "alis" "nexus" "openWindow"' },
         { label: Translation.tr("Open Settings"), icon: "settings", action: 'spawn "qs" "-c" "alis" "ipc" "call" "settings" "open"' },
         { label: Translation.tr("Region Screenshot"), icon: "screenshot_region", action: 'spawn "qs" "-c" "alis" "ipc" "call" "region" "screenshot"' },
         { label: Translation.tr("Full Screen Screenshot"), icon: "photo_camera", action: "screenshot-screen" },

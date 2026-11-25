@@ -75,6 +75,14 @@ GroupButton {
     colBackgroundActive: root.abyssTaskNavigation ? SettingsMaterialPreset.taskTabPressedColor : root.useAbyssPillShape && Config.options?.panelFamily === "abyss"
         ? Qt.alpha(Appearance.colors.colPrimary,.26) : Appearance.colors.colSecondaryContainerActive
 
+    readonly property color _unselectedInk: (root.useAbyssPillShape && Config.options?.panelFamily === "abyss")
+        ? ColorUtils.ensureReadable(
+            Appearance.colors.colOnLayer1,
+            ColorUtils.mix(Appearance.colors.colPrimary, Appearance.colors.colLayer1Base, 0.14),
+            5.0
+        )
+        : Appearance.colors.colOnSecondaryContainer
+
     contentItem: Item {
         implicitWidth: innerRow.implicitWidth
         implicitHeight: innerRow.implicitHeight
@@ -124,7 +132,7 @@ GroupButton {
                         : root.toggled
                         ? (root.highContrastSelection ? Appearance.colors.colOnPrimaryContainer
                             : Appearance.colors.colOnPrimary)
-                        : Appearance.colors.colOnSecondaryContainer
+                        : root._unselectedInk
                 }
             }
 
@@ -132,21 +140,27 @@ GroupButton {
                 Layout.alignment: Qt.AlignVCenter
                 Layout.minimumWidth: 0
                 implicitWidth: root.buttonText?.length > 0 && root.labelExpanded
-                    ? Math.min(textItem.implicitWidth, root.maxTextWidth) : 0
-                implicitHeight: textMetrics.height // Force height to that of regular text
+                    ? Math.min(Math.ceil(naturalTextMetrics.implicitWidth) + 2, root.maxTextWidth) : 0
+                implicitHeight: Math.ceil(naturalTextMetrics.implicitHeight)
                 // Do not unmount or fade a label during selection changes: fading
                 // and visible:opacity>0 could drop the text on rapid toggles.
                 visible: root.buttonText?.length > 0
                 clip: true
 
                 Behavior on implicitWidth {
-                    enabled: Appearance.animationsEnabled && root.enableImplicitWidthAnimation
+                    enabled: Appearance.animationsEnabled && root.revealActiveLabelOnly && root.enableImplicitWidthAnimation
                     NumberAnimation { duration: 190; easing.type: Easing.InOutCubic }
                 }
-                TextMetrics {
-                    id: textMetrics
-                    font.family: Appearance.font.family.main
-                    text: "Abc"
+                Text {
+                    id: naturalTextMetrics
+                    visible: false
+                    renderType: textItem.renderType
+                    font.family: textItem.font.family
+                    font.pixelSize: textItem.font.pixelSize
+                    font.weight: textItem.font.weight
+                    font.variableAxes: textItem.font.variableAxes
+                    font.letterSpacing: textItem.font.letterSpacing
+                    text: root.buttonText || "Abc"
                 }
 
                 StyledText {
@@ -170,7 +184,7 @@ GroupButton {
                         : root.toggled
                         ? (root.highContrastSelection ? Appearance.colors.colOnPrimaryContainer
                             : Appearance.colors.colOnPrimary)
-                        : Appearance.colors.colOnSecondaryContainer
+                        : root._unselectedInk
                     font.weight: root.highContrastSelection && root.toggled
                         ? Font.DemiBold : Font.Normal
                     text: root.buttonText

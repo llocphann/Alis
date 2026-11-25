@@ -264,9 +264,10 @@ binds {
     // Applications (uses configured terminal from Settings)
     Mod+T { spawn "bash" "-c" "$HOME/.config/quickshell/alis/scripts/launch-terminal.sh"; }
     Mod+Return { spawn "bash" "-c" "$HOME/.config/quickshell/alis/scripts/launch-terminal.sh"; }
-    Super+E { spawn "nautilus"; }
+    Super+E { spawn "alis" "files"; }
     Super+W { spawn "bash" "-c" "xdg-open https://"; }
     Super+O { spawn "qs" "-c" "alis" "ipc" "call" "nexus" "toggle"; }
+    Super+Shift+O { spawn "qs" "-c" "alis" "ipc" "call" "nexus" "openWindow"; }
 
     // Window management
     Mod+Q repeat=false { spawn "bash" "-c" "$HOME/.config/quickshell/alis/scripts/close-window.sh"; }

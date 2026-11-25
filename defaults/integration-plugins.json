@@ -4,11 +4,35 @@
     "thinkfan",
     "nexus",
     "spaced_repetition",
+    "exercises_tracker",
+    "alis_files"
+  ],
+  "builtinPlugins": [
+    "alis_files",
+    "nexus",
+    "spaced_repetition",
     "exercises_tracker"
   ],
   "dependencies": {
+    "alis_files": {
+      "userSpace": true,
+      "builtIn": true,
+      "requiresSystemHelpers": false,
+      "packages": [
+        "gtk4",
+        "rust"
+      ],
+      "binaries": [
+        "python3"
+      ],
+      "helpers": [],
+      "setupCommand": "",
+      "helpersCommand": "",
+      "note": "Built-in user-space GTK4 file manager (compiled locally on install/update; no root helpers needed)."
+    },
     "nexus": {
       "userSpace": true,
+      "builtIn": true,
       "requiresSystemHelpers": false,
       "packages": [
         "python3"
@@ -18,19 +42,12 @@
       ],
       "helpers": [],
       "setupCommand": "",
+      "helpersCommand": "",
       "note": "User-space plugin (requires Python 3; no root helpers needed)."
     },
     "spaced_repetition": {
       "userSpace": true,
-      "requiresSystemHelpers": false,
-      "packages": [],
-      "binaries": [],
-      "helpers": [],
-      "setupCommand": "",
-      "note": "User-space plugin (no system dependencies or root helpers needed)."
-    },
-    "exercises_tracker": {
-      "userSpace": true,
+      "builtIn": true,
       "requiresSystemHelpers": false,
       "packages": [
         "python3"
@@ -40,11 +57,28 @@
       ],
       "helpers": [],
       "setupCommand": "",
+      "helpersCommand": "",
+      "note": "User-space plugin (requires Python 3 for word lookup; no root helpers needed)."
+    },
+    "exercises_tracker": {
+      "userSpace": true,
+      "builtIn": true,
+      "requiresSystemHelpers": false,
+      "packages": [
+        "python3"
+      ],
+      "binaries": [
+        "python3"
+      ],
+      "helpers": [],
+      "setupCommand": "",
+      "helpersCommand": "",
       "note": "User-space plugin (requires Python 3 for safe photo import; no root helpers needed)."
     },
     "tlp": {
       "userSpace": false,
       "requiresSystemHelpers": true,
+      "helpersScope": "tlp",
       "packages": [
         "tlp",
         "alis-deps"
@@ -57,11 +91,14 @@
         "/usr/libexec/alis-intergration-system-provision"
       ],
       "setupCommand": "./setup install-deps",
-      "note": "Requires tlp (via ./setup install-deps / alis-deps) and TLP battery helpers (./setup integrations)."
+      "helpersCommand": "./setup integrations install tlp",
+      "removeHelpersCommand": "./setup integrations remove tlp",
+      "note": "Requires tlp (via ./setup install-deps / alis-deps) and TLP battery helpers (./setup integrations install tlp)."
     },
     "thinkfan": {
       "userSpace": false,
       "requiresSystemHelpers": true,
+      "helpersScope": "thinkfan",
       "packages": [
         "thinkfan",
         "alis-deps"
@@ -74,25 +111,43 @@
         "/usr/libexec/alis-intergration-system-provision"
       ],
       "setupCommand": "./setup install-deps",
-      "note": "Requires thinkfan (via ./setup install-deps / alis-deps) and Thinkfan helpers (./setup integrations)."
+      "helpersCommand": "./setup integrations install thinkfan",
+      "removeHelpersCommand": "./setup integrations remove thinkfan",
+      "note": "Requires thinkfan (via ./setup install-deps / alis-deps) and Thinkfan helpers (./setup integrations install thinkfan)."
     }
   },
   "settings": {
-    "tlp": "modules/settings/TlpPowerSettings.qml",
-    "nexus": "modules/settings/NexusThemeSettings.qml",
-    "nexusTodo": "modules/settings/NexusTodoSettings.qml",
-    "tlpRow": "modules/settings/TlpSettingRow.qml",
-    "tlpWaffle": "modules/waffle/settings/WTlpPowerSettings.qml",
-    "tlpWaffleRow": "modules/waffle/settings/WTlpSettingRow.qml",
-    "thinkfan": "modules/settings/ThinkfanSettings.qml",
-    "spacedRepetition": "modules/settings/DashboardSpacedRepetitionSettings.qml",
-    "exercisesTracker": "modules/settings/DashboardExercisesTrackerSettings.qml"
+    "tlp": "plugins/tlp/modules/settings/TlpPowerSettings.qml",
+    "nexus": "plugins/nexus/modules/settings/NexusThemeSettings.qml",
+    "nexusTodo": "plugins/nexus/modules/settings/NexusTodoSettings.qml",
+    "tlpRow": "plugins/tlp/modules/settings/TlpSettingRow.qml",
+    "tlpWaffle": "plugins/tlp/modules/waffle/settings/WTlpPowerSettings.qml",
+    "tlpWaffleRow": "plugins/tlp/modules/waffle/settings/WTlpSettingRow.qml",
+    "thinkfan": "plugins/thinkfan/modules/settings/ThinkfanSettings.qml",
+    "spacedRepetition": "plugins/spaced_repetition/modules/settings/DashboardSpacedRepetitionSettings.qml",
+    "exercisesTracker": "plugins/exercises_tracker/modules/settings/DashboardExercisesTrackerSettings.qml",
+    "alisFiles": "plugins/alis_files/modules/settings/AlisFilesSettings.qml"
+  },
+  "views": {
+    "nexusWorkspace": "plugins/nexus/modules/nexus/NexusWorkspace.qml",
+    "spacedRepetitionDashboard": "plugins/spaced_repetition/modules/dashboard/DashboardSpacedRepetition.qml",
+    "exercisesTrackerDashboard": "plugins/exercises_tracker/modules/dashboard/DashboardExercisesTracker.qml"
+  },
+  "backends": {
+    "managedTodo": "plugins/nexus/services/NexusTodoBackend.qml",
+    "dailyTodo": "plugins/nexus/services/DailyNoteTodoBackend.qml"
+  },
+  "scripts": {
+    "spacedRepetitionLookup": "plugins/spaced_repetition/scripts/integrations/lookup_word_level.py",
+    "exercisesTrackerHelper": "plugins/exercises_tracker/scripts/integrations/exercises_tracker.py",
+    "alisFilesInstaller": "plugins/alis_files/scripts/install_alis_files.py"
   },
   "plugins": [
     {
       "id": "tlp",
       "name": "TLP",
       "icon": "battery_saver",
+      "helpersScope": "tlp",
       "capabilities": [
         {
           "id": "power",
@@ -106,6 +161,7 @@
       "id": "thinkfan",
       "name": "Thinkfan",
       "icon": "mode_fan",
+      "helpersScope": "thinkfan",
       "capabilities": [
         {
           "id": "cooling",
@@ -120,21 +176,9 @@
       "icon": "hub",
       "capabilities": [
         {
-          "id": "theming",
-          "name": "Theming",
+          "id": "workspace",
+          "name": "Nexus & Vault",
           "settings": "nexus"
-        },
-        {
-          "id": "quicknotes",
-          "name": "Quicknotes",
-          "settings": "nexusTodo",
-          "view": "quicknotes"
-        },
-        {
-          "id": "todo",
-          "name": "Todo",
-          "settings": "nexusTodo",
-          "view": "todo"
         }
       ]
     },
@@ -159,6 +203,18 @@
           "id": "workouts",
           "name": "Workouts & Body Tracker",
           "settings": "exercisesTracker"
+        }
+      ]
+    },
+    {
+      "id": "alis_files",
+      "name": "Alis Files",
+      "icon": "folder_open",
+      "capabilities": [
+        {
+          "id": "files",
+          "name": "File Manager",
+          "settings": "alisFiles"
         }
       ]
     }

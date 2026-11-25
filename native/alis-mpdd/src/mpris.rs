@@ -6,7 +6,10 @@ use alis_dbus::{DBusConnection, DBusMessage, DBusValue, MSG_METHOD_CALL};
 use anyhow::Result;
 use serde_json::Value;
 
-use crate::{MpdManager, expand_home, file_url, home_dir, status_payload_mode_with_art};
+use crate::{
+    MpdManager, expand_home, file_url, home_dir, resolve_current_mpd_art,
+    status_payload_mode_with_art,
+};
 
 const MPRIS_PATH: &str = "/org/mpris/MediaPlayer2";
 const IFACE_ROOT: &str = "org.mpris.MediaPlayer2";
@@ -133,7 +136,7 @@ impl Default for MprisState {
     }
 }
 
-fn resolve_xdg_music_dir() -> Option<PathBuf> {
+pub(crate) fn resolve_xdg_music_dir() -> Option<PathBuf> {
     if let Ok(val) = std::env::var("XDG_MUSIC_DIR") {
         let trimmed = val.trim();
         if !trimmed.is_empty() {
@@ -254,12 +257,22 @@ pub(crate) fn state_from_payload_with_root(
         && !raw_path.is_empty()
         && split_valid_uri_scheme(raw_path).is_none()
         && !expand_home(raw_path).is_absolute();
-    let xdg_music = if needs_xdg {
-        resolve_xdg_music_dir()
+    let matched_dir = if needs_xdg {
+        let has_parent_dir = Path::new(raw_path)
+            .components()
+            .any(|c| matches!(c, Component::ParentDir));
+        if has_parent_dir {
+            None
+        } else {
+            [crate::configured_mpd_music_dir(), resolve_xdg_music_dir()]
+                .into_iter()
+                .flatten()
+                .find(|dir| dir.is_absolute() && dir.join(raw_path).exists())
+        }
     } else {
         None
     };
-    state_from_payload_with_dirs(payload, music_root, xdg_music.as_deref())
+    state_from_payload_with_dirs(payload, music_root, matched_dir.as_deref())
 }
 
 pub(crate) fn state_from_payload_with_dirs(
@@ -535,7 +548,10 @@ fn player_props(state: &MprisState, fetched_at: Instant) -> Vec<(DBusValue, DBus
 fn fetch_state(manager: &MpdManager) -> Option<MprisState> {
     manager
         .with_client(|client, root, art| {
-            let payload = status_payload_mode_with_art(client, root, false, art)?;
+            let mut payload = status_payload_mode_with_art(client, root, false, art)?;
+            if let Some(current) = payload.get_mut("current") {
+                resolve_current_mpd_art(client, current, art);
+            }
             Ok((payload, root.to_string()))
         })
         .ok()
@@ -1018,5 +1034,85 @@ mod tests {
         );
         drop(mgr_with_root);
         server.join().expect("join fake mpd server");
+    }
+
+    #[test]
+    fn fetch_state_over_tcp_mpd_fetches_albumart_without_music_root() {
+        use std::io::{BufRead, BufReader, Write};
+        use std::net::TcpListener;
+        use std::sync::Arc;
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        use std::thread;
+
+        let listener = TcpListener::bind("127.0.0.1:0").expect("bind fake albumart mpd");
+        let port = listener.local_addr().unwrap().port();
+        let albumart_calls = Arc::new(AtomicUsize::new(0));
+        let calls_ref = albumart_calls.clone();
+
+        let server = thread::spawn(move || {
+            let (mut stream, _) = listener.accept().expect("accept");
+            stream.write_all(b"OK MPD 0.24.0\n").unwrap();
+            let mut reader = BufReader::new(stream.try_clone().unwrap());
+            let mut line = String::new();
+            while reader.read_line(&mut line).unwrap_or(0) > 0 {
+                let cmd = line.trim();
+                if cmd == "config" {
+                    stream
+                        .write_all(b"ACK [4@0] {config} Command only permitted to local clients\n")
+                        .unwrap();
+                } else if cmd == "status" {
+                    stream
+                        .write_all(b"state: play\nvolume: 80\nsongid: 19\nelapsed: 5.0\nduration: 180.0\nOK\n")
+                        .unwrap();
+                } else if cmd == "currentsong" {
+                    stream
+                        .write_all(b"file: __alis_nonexistent_albumart__/track.flac\nArtist: ArtTestArtist\nAlbum: ArtTestAlbum\nTitle: ArtTestTitle\nId: 19\nOK\n")
+                        .unwrap();
+                } else if cmd.starts_with("albumart ") {
+                    calls_ref.fetch_add(1, Ordering::SeqCst);
+                    let jpeg_bytes: &[u8] = b"\xFF\xD8\xFF\xE0\x00\x10JFIF";
+                    stream
+                        .write_all(
+                            format!("size: {}\ntype: image/jpeg\nbinary: {}\n", jpeg_bytes.len(), jpeg_bytes.len())
+                                .as_bytes(),
+                        )
+                        .unwrap();
+                    stream.write_all(jpeg_bytes).unwrap();
+                    stream.write_all(b"\nOK\n").unwrap();
+                } else {
+                    stream.write_all(b"OK\n").unwrap();
+                }
+                stream.flush().unwrap();
+                line.clear();
+            }
+        });
+
+        let tmp_cache =
+            std::env::temp_dir().join(format!("alis-mpris-art-cache-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&tmp_cache);
+        std::fs::create_dir_all(&tmp_cache).unwrap();
+
+        let mgr = crate::MpdManager::new("127.0.0.1".into(), port, String::new());
+        mgr.art_lookup.lock().unwrap().cache = tmp_cache.clone();
+
+        let st1 = super::fetch_state(&mgr).expect("first fetch_state");
+        assert!(st1.art_url.starts_with("file:///"), "expected file:/// artUrl, got {}", st1.art_url);
+        let art_path_str = st1.art_url.strip_prefix("file://").unwrap();
+        let art_path = std::path::Path::new(art_path_str);
+        assert!(art_path.starts_with(&tmp_cache));
+        assert_eq!(std::fs::metadata(art_path).unwrap().len(), 10);
+        assert_eq!(albumart_calls.load(Ordering::SeqCst), 1);
+
+        let st2 = super::fetch_state(&mgr).expect("second fetch_state");
+        assert_eq!(st2.art_url, st1.art_url);
+        assert_eq!(
+            albumart_calls.load(Ordering::SeqCst),
+            1,
+            "second fetch_state must reuse cached cover art without re-fetching from MPD"
+        );
+
+        drop(mgr);
+        let _ = std::fs::remove_dir_all(&tmp_cache);
+        server.join().expect("join fake albumart mpd server");
     }
 }

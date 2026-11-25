@@ -144,6 +144,17 @@ Item {
     // a floating inner-tier panel.
     property bool placementCanStackInward: identity !== "dock"
     property bool placementCanResize: identity !== "dock"
+    property bool placementCanShiftLaterally:
+        identity !== "dock" && identity !== "edgeEditor" && identity !== "editorPreview"
+    property bool placementCanShiftPerpendicular: false
+    property real maxLateralShift: placementCanShiftLaterally
+        ? Math.min(240, Math.max(120, span * 0.6)) : 0
+    property bool cooperativeShrink: false
+    property bool cooperativePeer: false
+    property string placementIntent: "hover"
+    readonly property int intentWeight: placementIntent === "modal" || placementIntent === "overlay" ? 2
+        : placementIntent === "explicit" ? 1
+        : placementIntent === "passive" ? -1 : 0
     property real minimumSpan: Math.min(span, placementCanResize
         ? (largeSurface ? 520 : 220) : span)
     property real minimumDepth: Math.min(depth, placementCanResize
@@ -176,7 +187,7 @@ Item {
     property bool preserveAspect: false
     readonly property bool contentFocused: contentFrame.activeFocus
     property int placementPriority: identity === "dialog" ? 4
-        : ["dashboard","utility","edgeEditor","settings","nexus"].includes(identity) ? 3
+        : ["dashboard","utility","edgeEditor","settings","nexus","files","controls","clipboard","wallpaper"].includes(identity) ? 3
         : ["leftPanel","rightPanel"].includes(identity) ? 2
         : identity === "dock" ? -1 : 0
     readonly property var placementMemo: ({})
@@ -189,17 +200,65 @@ Item {
     // geometry, keeps its loaded feature/draft, and can reopen in place when
     // space returns.
     property var retainedPlacement: null
-    readonly property var layoutPlacement: hasVisiblePlacement
-        ? placement
-        : ((placement !== null || progress > 0.001)
-            ? (retainedPlacement ?? placement) : placement)
-    readonly property var effectivePlacement: hasVisiblePlacement
-        ? placement : (progress > 0.001 ? retainedPlacement : placement)
+    readonly property bool _hoverExitFreeze: {
+        const entry = root.controller?._fifoHoverState?.[root.identity]
+        return Boolean(entry && entry.autoClosable
+            && (!entry.hovered || entry.pendingClose || entry.closing))
+    }
+    readonly property bool _closingFreezeDesired: !root.semanticOpen && root.progress > 0.001
+    readonly property bool _hoverFreezeDesired: root.semanticOpen && root._hoverExitFreeze
+    property var _frozenPlacementSnapshot: null
+    readonly property bool placementFrozenForExit: _frozenPlacementSnapshot !== null
+    function _syncFreezeSnapshot(): void {
+        if (_closingFreezeDesired) {
+            if (_frozenPlacementSnapshot === null && retainedPlacement !== null)
+                _frozenPlacementSnapshot = retainedPlacement
+            return
+        }
+        if (_hoverFreezeDesired) {
+            if (_frozenPlacementSnapshot === null && retainedPlacement !== null
+                    && retainedPlacement.vacancyBorrowed === true)
+                _frozenPlacementSnapshot = retainedPlacement
+            return
+        }
+        if (_frozenPlacementSnapshot !== null)
+            _frozenPlacementSnapshot = null
+        if (placement && placement.visible !== false)
+            retainedPlacement = placement
+        else if (!placement && progress <= 0.001)
+            retainedPlacement = null
+    }
+    onRetainedPlacementChanged: {
+        if (retainedPlacement === null && _frozenPlacementSnapshot !== null)
+            _frozenPlacementSnapshot = null
+    }
+    on_ClosingFreezeDesiredChanged: root._syncFreezeSnapshot()
+    on_HoverFreezeDesiredChanged: root._syncFreezeSnapshot()
+    readonly property var layoutPlacement: placementFrozenForExit
+        ? _frozenPlacementSnapshot
+        : (hasVisiblePlacement
+            ? placement
+            : ((placement !== null || progress > 0.001)
+                ? (retainedPlacement ?? placement) : placement))
+    readonly property var effectivePlacement: placementFrozenForExit
+        ? _frozenPlacementSnapshot
+        : (hasVisiblePlacement
+            ? placement : (progress > 0.001 ? retainedPlacement : placement))
     readonly property var pyramidCoordinator:
         root.controller?.pyramidCoordinator ?? null
+    // When a non-pyramid sidebar/panel is pushed inward behind an outer
+    // edgebar (effectivePlacement.inward > 0.5), collapse it cleanly into its
+    // outer peer's boundary instead of jumping behind it to the screen edge.
+    // Reads effectivePlacement (never coordinatedPlacement/stackedInward) to
+    // keep pyramidMotionEnabled acyclic.
+    readonly property bool _sidebarStackedInward:
+        root.pyramidAnchor
+        && (root.effectivePlacement?.inward ?? 0) > 0.5
     readonly property bool pyramidMotionEnabled:
-        root.stackPolicy === "pyramid"
-        && root.externalProgress >= 0
+        ((root.stackPolicy === "pyramid" && root.externalProgress >= 0)
+            || root._sidebarStackedInward
+            || root.pyramidClosing
+            || root.pyramidReopening)
         && root.pyramidCoordinator !== null
     property bool pyramidClosing: false
     property bool pyramidReopening: false
@@ -310,12 +369,43 @@ Item {
                 visualPlacement ? null
                     : (!controller || root.visualResident ? obstacles : null),
                 largeSurface,visualPlacement)
-    readonly property string effectiveJoinedEdge: joinedEdge.length > 0
-        ? joinedEdge
-        : (root.visualPlacement?.vacancyBorrowed === true
-            ? String(root.visualPlacement?.vacancyDirection ?? "") : "")
-    readonly property var record: Geometry.joinCorner(
-        rawPresentationRecord,joinedEdge || effectiveJoinedEdge,width,height,_stableEdgeInsets)
+    readonly property var effectiveJoinedEdges: {
+        if (joinedEdge.length > 0)
+            return [joinedEdge]
+        if (root.visualPlacement?.vacancyBorrowed !== true)
+            return []
+        const dir = String(root.visualPlacement?.vacancyDirection ?? "")
+        const h = Geometry.horizontal(root.edge)
+        const dirs = dir === "both"
+            ? (h ? ["left", "right"] : ["top", "bottom"])
+            : (["top", "bottom", "left", "right"].includes(dir)
+                && Geometry.horizontal(dir) !== h ? [dir] : [])
+        if (dirs.length === 0)
+            return []
+        const surf = root.rawPresentationRecord?.surface
+        if (!surf || surf.width <= 0 || surf.height <= 0)
+            return []
+        const insets = root._stableEdgeInsets
+        const out = []
+        for (let i = 0; i < dirs.length; ++i) {
+            const d = dirs[i]
+            const gap = d === "left" ? surf.x - (insets?.left ?? 0)
+                : d === "right" ? root.width - (insets?.right ?? 0) - surf.x - surf.width
+                : d === "top" ? surf.y - (insets?.top ?? 0)
+                : root.height - (insets?.bottom ?? 0) - surf.y - surf.height
+            if (gap <= root.padding + 12)
+                out.push(d)
+        }
+        return out
+    }
+    readonly property string effectiveJoinedEdge: effectiveJoinedEdges.length > 0 ? effectiveJoinedEdges[0] : ""
+    readonly property var record: {
+        const edges = joinedEdge.length > 0 ? [joinedEdge] : effectiveJoinedEdges
+        let rec = rawPresentationRecord
+        for (let i = 0; i < edges.length; ++i)
+            rec = Geometry.joinCorner(rec, edges[i], width, height, _stableEdgeInsets)
+        return rec
+    }
     // A requested join can be rejected when the popup is too far away.
     // Input follows only the weld actually present in the painted record.
     readonly property string appliedJoinedEdge: record.joinedEdge ?? ""
@@ -390,10 +480,16 @@ Item {
             AbyssStyle.connectionDepth,AbyssStyle.neckRadius,
             root.controller?.roundZeroCorners,root.controller?.cornerWidthInsets)
         if (!joined) return primary
-        return primary.concat(Geometry.popupShouldersSnapshot(root.width,root.height,
-            root.connectionInsets,root.appliedJoinedEdge,shape,AbyssStyle.perimeterRadius,
-            AbyssStyle.connectionDepth,AbyssStyle.neckRadius,
-            root.controller?.roundZeroCorners,root.controller?.cornerWidthInsets))
+        let out = primary
+        const welded = joinedEdge.length > 0 ? [root.appliedJoinedEdge] : root.effectiveJoinedEdges
+        for (let i = 0; i < welded.length; ++i) {
+            if (!welded[i]) continue
+            out = out.concat(Geometry.popupShouldersSnapshot(root.width,root.height,
+                root.connectionInsets,welded[i],shape,AbyssStyle.perimeterRadius,
+                AbyssStyle.connectionDepth,AbyssStyle.neckRadius,
+                root.controller?.roundZeroCorners,root.controller?.cornerWidthInsets))
+        }
+        return out
     }
     property var connectionRegions: []
     // Instantiator creates/removes a synchronous cohort. Publish its complete
@@ -466,15 +562,22 @@ Item {
         placementRequest: root.semanticOpen
             && (!root.controller?.nextPresentationOrder || root.activationOrder > 0)
             ? ({id:root.identity,open:root.semanticOpen,order:root.activationOrder,
-                priority:root.placementPriority,padding:root.padding,
+                priority:root.placementPriority,intentWeight:root.intentWeight,padding:root.padding,
                 minSpan:root.minimumSpan,minDepth:root.minimumDepth,
                 allowInward:root.placementCanStackInward,
+                allowLateralShift:root.placementCanShiftLaterally,
+                allowPerpendicularShift:root.placementCanShiftPerpendicular,
+                maxLateralShift:root.maxLateralShift,
+                cooperativeShrink:root.cooperativeShrink,
+                cooperativePeer:root.cooperativePeer,
+                intent:root.placementIntent,
                 minimumInward:root.minimumInward,
                 oppositeClearance:root.oppositeClearance,
                 stackPolicy:root.stackPolicy,
                 pyramidAnchor:root.pyramidAnchor,
                 stackProximity:root.stackProximity,
                 preserveAspect:root.preserveAspect,
+                edgeInsets:root._stableEdgeInsets,
                 record:root.requestedRecord})
             : null
         inputBounds: root.inputBounds
@@ -533,6 +636,7 @@ Item {
         // Stable hosts may be reused by a different semantic popup owner.
         // Clear the previous allocator snapshot while the old owner is hidden so
         // the next owner snaps to its own tangent anchor before reveal starts.
+        root._frozenPlacementSnapshot=null
         root.retainedPlacement=null
         root.resetPyramidMotion()
     }
@@ -621,10 +725,13 @@ Item {
         root.capturePyramidRestingState()
     }
     onPlacementChanged: {
-        if (placement && placement.visible !== false)
-            retainedPlacement = placement
-        else if (!placement && progress <= 0.001)
-            retainedPlacement = null
+        if (!placementFrozenForExit) {
+            if (placement && placement.visible !== false)
+                retainedPlacement = placement
+            else if (!placement && progress <= 0.001)
+                retainedPlacement = null
+            root._syncFreezeSnapshot()
+        }
         if (initialized && semanticOpen && pyramidMotionEnabled
                 && !pyramidClosing && !pyramidReopening) {
             root.capturePyramidRestingState()
@@ -636,6 +743,16 @@ Item {
         root.syncPyramidEntryOrigin()
     onPyramidRestingRecordChanged: if (initialized)
         root.capturePyramidRestingState()
+    onPyramidMotionEnabledChanged: if (initialized) {
+        if (!pyramidMotionEnabled) {
+            root.resetPyramidMotion()
+            return
+        }
+        if (semanticOpen && !pyramidClosing && !pyramidReopening) {
+            root.capturePyramidRestingState()
+            root.syncPyramidEntryOrigin()
+        }
+    }
     onVisualPlacementChanged: if (initialized)
         root.capturePyramidRestingState()
     onSemanticOpenChanged: if (initialized) {
@@ -649,6 +766,7 @@ Item {
     onSourceBridgeChanged: if (includeEdgeConnection) nativeInputRegion.changed()
     onConnectionRegionsChanged: if (includeEdgeConnection) nativeInputRegion.changed()
     onProgressChanged: {
+        root._syncFreezeSnapshot()
         if (!placement && progress <= 0.001 && retainedPlacement !== null)
             retainedPlacement = null
         root.finishPyramidCloseIfDone()
@@ -710,6 +828,7 @@ Item {
     }
     Behavior on visualPlacementAlong {
         enabled: root.animatePlacementChanges && root.placementMotionReady
+            && !root.placementFrozenForExit
             && (!root.animatePresentation || root.progress > 0.001)
             && AbyssStyle.motionEnabled
         NumberAnimation {
@@ -720,6 +839,7 @@ Item {
     }
     Behavior on visualPlacementSpan {
         enabled: root.animatePlacementChanges && root.placementMotionReady
+            && !root.placementFrozenForExit
             && (!root.animatePresentation || root.progress > 0.001)
             && AbyssStyle.motionEnabled
         NumberAnimation {
@@ -730,6 +850,7 @@ Item {
     }
     Behavior on visualPlacementDepth {
         enabled: root.animatePlacementChanges && root.placementMotionReady
+            && !root.placementFrozenForExit
             && (!root.animatePresentation || root.progress > 0.001)
             && AbyssStyle.motionEnabled
         NumberAnimation {
@@ -740,6 +861,7 @@ Item {
     }
     Behavior on visualPlacementInward {
         enabled: root.animatePlacementChanges && root.placementMotionReady
+            && !root.placementFrozenForExit
             && (!root.animatePresentation || root.progress > 0.001)
             && AbyssStyle.motionEnabled
         NumberAnimation {
@@ -766,14 +888,14 @@ Item {
                 // last pixel and then stops abruptly. Only short notification
                 // banners get a zero-velocity exit; every other body keeps
                 // its existing easing and duration.
-                easing.type: root.monotonicNotificationReveal && !root.presented
+                easing.type: root.monotonicNotificationReveal && availabilityMotion.targetValue <= 0
                     ? Easing.InOutSine
-                    : (root.presented ? Easing.OutCubic : Easing.InCubic)
+                    : (availabilityMotion.targetValue > 0 ? Easing.OutCubic : Easing.InCubic)
             }
             NumberAnimation {
                 to: availabilityMotion.targetValue
                 duration: !root.monotonicNotificationReveal
-                    && root.presented && AbyssStyle.motionOvershoot > 0
+                    && availabilityMotion.targetValue > 0 && AbyssStyle.motionOvershoot > 0
                     ? Math.round(AbyssStyle.motionSettle
                         *(1+Math.min(0.5,Math.sqrt(root.mass)*0.1))) : 0
                 easing.type: Easing.OutCubic
@@ -841,9 +963,10 @@ Item {
         // content remains full-size behind a moving clip; it never fades/shrinks.
         // Transient notifications slide under the Edge clip without the
         // separate end-loaded fade (previously ~70ms at default settings).
+        readonly property bool blockedByModal: Boolean(root.controller?.modalBodyActive) && root.placementIntent !== "modal"
         opacity: root.pyramidPresentationActive || root.monotonicNotificationReveal || root.largeSurface
             ? 1 : Math.min(1,root.progress*1.5)
-        enabled: root.acceptsInput
+        enabled: root.acceptsInput && !contentFrame.blockedByModal
 
         // Actual rendered-body hover; source anchors/physical edges never grant
         // vacancy ownership.
@@ -858,10 +981,12 @@ Item {
             id: contentCanvas
             readonly property var fullRect:
                 root.pyramidFullRecord?.content ?? root.targetRecord.content
-            x: root.pyramidPresentationActive
-                ? fullRect.x-root.record.content.x : 0
-            y: root.pyramidPresentationActive
-                ? fullRect.y-root.record.content.y : 0
+            // Slide content rigidly like a solid drawer instead of a
+            // stationary curtain-clip slice when left/top frames retract.
+            x: root.edge === "left"
+                ? (contentFrame.width - contentCanvas.width) : 0
+            y: root.edge === "top"
+                ? (contentFrame.height - contentCanvas.height) : 0
             // Reparented dialogs use this canvas directly instead of the
             // Loader. Both paths must keep their final dimensions behind the
             // reveal clip; otherwise the dialog form reflows on every frame.
@@ -874,9 +999,11 @@ Item {
             opacity: root.loadingPresentationActive ? 0 : 1
             Behavior on opacity {
                 enabled: root.showLoadingSurface && Appearance.animationsEnabled
-                NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
+                NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
             }
             layer.enabled: root.largeSurface
+                && !root.loadingPresentationActive
+                && root.ready
                 && (Quickshell.env("QT_QUICK_BACKEND") !== "software")
                 && GraphicsInfo.api !== GraphicsInfo.Software
                 && root.progress > 0.001 && root.progress < 0.999
@@ -900,6 +1027,18 @@ Item {
             }
         }
     }
+    // On a cold showLoadingSurface open, wait until the opening slide settles
+    // before activating heavy QML incubation so main-thread compilation never
+    // drops frames during the Abyss reveal animation.
+    readonly property bool _coldOpenSlideReady: !root.showLoadingSurface
+        || !root.animatePresentation
+        || !AbyssStyle.motionEnabled
+        || root.progress >= 0.96
+        || content.status === Loader.Ready
+        || root.backgroundPreload
+        || root.openedOnce
+        || root.warmHeld
+        || Quickshell.env("QT_QUICK_BACKEND") === "software"
     Loader {
         id: content
         parent: contentCanvas
@@ -917,7 +1056,8 @@ Item {
         // A space-constrained body retains drafts/focus state while hidden. It
         // unloads only after a semantic close and completion of the reveal.
         active: !root.embeddedItem
-            && (root.residentContent || root.visualResident
+            && (root.residentContent
+                || (root.visualResident && root._coldOpenSlideReady)
                 || (!root._idleEvicted && (root.warmHeld || root.backgroundPreload
                     || (root.retainAfterFirstOpen === true && root.openedOnce === true))))
             && GlobalStates.deferredPanelsReady

@@ -17,6 +17,7 @@ Item {
     property bool presentationEnabled: true
     property bool blocked: false
     property real attachmentThickness: 16
+    property var edgeInsets: ({top: 16, right: 16, bottom: 16, left: 16})
     property string quickNotesEditorOutput: ""
     signal quickNotesEditorLeaseChanged(string outputName, bool focused)
     property alias notesAnchor: notesAnchor
@@ -50,17 +51,23 @@ Item {
         ModuleLayout.edgebarOwnsCornerHover(
             Config.options?.abyss?.modules,
             Config.options?.panelFamily ?? "ii","notificationActivity")
+    readonly property var notesPlacement: ModuleLayout.edgebarAnchorPlacement(
+        Config.options?.abyss?.modules, root.outputName, "notesTimers",
+        root.width, root.height, Config.options?.quickNotes?.cornerSize ?? 14)
+    readonly property var centerPlacement: ModuleLayout.edgebarAnchorPlacement(
+        Config.options?.abyss?.modules, root.outputName, "notificationActivity",
+        root.width, root.height, Config.options?.notificationCenter?.cornerSize ?? 14)
     readonly property bool notesAvailable: presentationEnabled && !blocked
         && notesEdgebarMode
         && (quickNotesEditorOutput.length === 0
             || quickNotesEditorOutput === outputName)
-        && !root.niriOverviewOwnsCorner("bottomLeft")
+        && (notesPlacement.niriCorner === "" || !root.niriOverviewOwnsCorner(notesPlacement.niriCorner))
     readonly property bool centerAvailable: presentationEnabled && !blocked
         && centerEdgebarMode
         // Quick Notes may own the keyboard while Notification Center remains a
         // pointer-only surface. Do not hide the whole popup just because the
         // notes editor has focus; keyboard arbitration is handled below.
-        && !root.niriOverviewOwnsCorner("bottomRight")
+        && (centerPlacement.niriCorner === "" || !root.niriOverviewOwnsCorner(centerPlacement.niriCorner))
     function targets(list): bool {
         return !list.length || list.includes(outputName)
             || !Quickshell.screens.some(screen=>list.includes(screen.name))
@@ -68,21 +75,22 @@ Item {
     component Anchor: Item {
         id: hit
         required property string kind
+        required property var placementInfo
         property bool allowed: true
         property int dwell: 220
         property bool dwellReady: false
         readonly property bool pointerHovered: allowed && mouse.containsMouse
         property bool containsMouse: allowed && dwellReady && mouse.containsMouse
         readonly property var liquidController: root.controller
-        readonly property string popupAttachmentEdge: "bottom"
+        readonly property bool edgebarCornerAnchor: true
+        readonly property string popupAttachmentEdge: String(placementInfo?.edge ?? "bottom")
+        readonly property string popupTangentEdge: String(placementInfo?.tangentEdge ?? "")
         readonly property string moduleKind: kind === "quickNotes" ? "notesTimers" : "notificationActivity"
-        readonly property string popupJoinedEdge: {
-            const list = ModuleLayout.resolve(Config.options?.abyss?.modules, root.outputName, [])
-            const entry = list.find(p => p && p.kind === hit.moduleKind)
-            return entry?.joinCorner ? (kind === "quickNotes" ? "left" : "right") : ""
-        }
-        width: Math.max(8,Math.min(48,kind === "quickNotes" ? Config.options?.quickNotes?.cornerSize ?? 14 : Config.options?.notificationCenter?.cornerSize ?? 14))
-        height: width
+        readonly property string popupJoinedEdge: String(placementInfo?.joinEdge ?? "")
+        x: Math.round(placementInfo?.x ?? 0)
+        y: Math.round(placementInfo?.y ?? 0)
+        width: Math.max(8, Math.round(placementInfo?.width ?? 14))
+        height: Math.max(8, Math.round(placementInfo?.height ?? 14))
         visible: allowed
         onAllowedChanged: if (!allowed) { gate.stop();dwellReady=false }
         MouseArea {
@@ -93,30 +101,49 @@ Item {
         }
         Timer { id:gate;interval:hit.dwell;onTriggered:if(mouse.containsMouse) hit.dwellReady=true }
     }
+    readonly property bool sameCornerOverlap: root.notesAvailable
+        && root.centerAvailable
+        && String(root.notesPlacement?.corner ?? "") !== ""
+        && root.notesPlacement?.corner === root.centerPlacement?.corner
+    readonly property var effectiveCenterPlacement: {
+        var base = root.centerPlacement
+        if (!root.sameCornerOverlap || !base) return base
+        var step = Math.round((root.notesPlacement?.width ?? 14) + 4)
+        var onRight = String(base.edge ?? "") === "right"
+            || String(base.corner ?? "").endsWith("Right")
+        var xPos = onRight
+            ? Math.max(0, Math.round(base.x) - step)
+            : Math.min(Math.max(0, root.width - Math.round(base.width ?? 14)), Math.round(base.x) + step)
+        return Object.assign({}, base, { x: xPos })
+    }
     Anchor {
         id: notesAnchor
-        kind:"quickNotes";allowed:root.notesAvailable
-        anchors.left:parent.left;anchors.bottom:parent.bottom
+        kind:"quickNotes";allowed:root.notesAvailable;placementInfo:root.notesPlacement
         dwell:Config.options?.quickNotes?.hoverDelayMs ?? 220
     }
     QuickNotesPopup {
         id: notesPopup
         anchorItem:notesAnchor
-        cornerAttachmentThickness:root.attachmentThickness
+        cornerAttachmentEdge:notesAnchor.popupAttachmentEdge
+        cornerTangentEdge:notesAnchor.popupTangentEdge
+        cornerAttachmentThickness:Math.max(1, Number(root.edgeInsets?.[notesAnchor.popupAttachmentEdge] ?? root.attachmentThickness))
+        hoverAllowed:root.notesAvailable
         hoverActivates:root.notesAvailable
+        externallyBlocked:root.blocked
         onEditorFocusedChanged:
             root.quickNotesEditorLeaseChanged(root.outputName,editorFocused)
     }
     Anchor {
         id: centerAnchor
-        kind:"notificationCenter";allowed:root.centerAvailable
-        anchors.right:parent.right;anchors.bottom:parent.bottom
+        kind:"notificationCenter";allowed:root.centerAvailable;placementInfo:root.effectiveCenterPlacement
         dwell:Config.options?.notificationCenter?.hoverDelayMs ?? 220
     }
     NotificationCenterPopup {
         id: centerPopup
         anchorItem:centerAnchor;outputName:root.outputName
-        cornerAttachmentThickness:root.attachmentThickness
+        cornerAttachmentEdge:centerAnchor.popupAttachmentEdge
+        cornerTangentEdge:centerAnchor.popupTangentEdge
+        cornerAttachmentThickness:Math.max(1, Number(root.edgeInsets?.[centerAnchor.popupAttachmentEdge] ?? root.attachmentThickness))
         hoverAllowed:root.centerAvailable
         keyboardAllowed:root.quickNotesEditorOutput.length === 0
     }
@@ -125,6 +152,7 @@ Item {
     readonly property bool notesDirectInteracting: Boolean(notesAnchor.pointerHovered
         || notesPopup._anchorHover?.hovered
         || notesPopup._bodyHovered
+        || notesPopup.entryBridgeHeld
         || notesPopup.popupPinned
         || notesPopup.editorFocused)
     readonly property bool centerDirectInteracting: Boolean(centerAnchor.pointerHovered
@@ -132,18 +160,39 @@ Item {
         || centerPopup._bodyHovered
         || centerPopup.entryBridgeHeld
         || centerPopup.exitGraceHeld)
+    readonly property bool notesOwnerRevoked: !presentationEnabled
+        || !notesEdgebarMode
+        || (quickNotesEditorOutput.length > 0
+            && quickNotesEditorOutput !== outputName)
+        || (notesPlacement.niriCorner !== "" && root.niriOverviewOwnsCorner(notesPlacement.niriCorner))
+    onNotesOwnerRevokedChanged: {
+        if (notesOwnerRevoked) {
+            notesPopup.clearSuspendedSession()
+            notesPopup.popupPinned = false
+            if (notesPopup.presentationActive)
+                notesPopup.dismissPresentation()
+        }
+    }
     onNotesAvailableChanged: {
         if (!notesAvailable && notesPopup.presentationActive) {
-            // A blocked/evicted surface is an explicit ownership loss, not a
-            // hover leave. Drop its local pin so _liquidDismissed cannot leave
-            // this output permanently hidden behind a still-true pin request.
-            notesPopup.popupPinned = false
-            notesPopup.dismissPresentation()
+            if (root.blocked && !root.notesOwnerRevoked
+                    && (notesPopup.popupPinned || notesPopup.editorFocused || notesPopup.todoDialogOpen)) {
+                // Temporarily blocked by a heavy overlay/modal: suspend active
+                // editing, To-do input, or pinned QuickNotes so they auto-restore cleanly.
+                notesPopup.suspendForBlock()
+            } else {
+                // Hover-only close or ownership loss: drop any local pin and dismiss cleanly.
+                notesPopup.clearSuspendedSession()
+                notesPopup.popupPinned = false
+                notesPopup.dismissPresentation()
+            }
         }
     }
     onCenterAvailableChanged: {
-        if (!centerAvailable && centerPopup.presentationActive)
-            centerPopup.dismissPresentation()
+        if (!centerAvailable && centerPopup.presentationActive) {
+            if (!centerPopup.explicitForThisOutput && !centerPopup.keyboardInteraction)
+                centerPopup.dismissPresentation()
+        }
     }
     // The same public cornerOpen controls as the mature shell. Notes and the
     // notification center retain priority at the bottom corners.
@@ -160,7 +209,8 @@ Item {
             && (Config.options?.enabledPanels ?? []).includes(leftSide ? "abyssSidebarLeft" : "abyssSidebarRight")
             && root.targets(Config.options?.sidebar?.screenList ?? [])
             && !root.niriOverviewOwnsCorner(corner.cornerName)
-            && !(atBottom && (leftSide ? root.notesAvailable : root.centerAvailable))
+            && !(root.notesAvailable && root.notesPlacement.niriCorner === corner.cornerName)
+            && !(root.centerAvailable && root.centerPlacement.niriCorner === corner.cornerName)
         readonly property Region inputRegion: Region { x:corner.x;y:corner.y;width:corner.available ? corner.width : 0;height:corner.height }
         width: Math.max(2,Math.min(root.width/2,options.cornerRegionWidth ?? 250))
         height: Math.max(1,Math.min(100,options.cornerRegionHeight ?? 5))

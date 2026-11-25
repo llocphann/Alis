@@ -11,7 +11,7 @@ SLOT_FALLBACKS = {
     "terminal": ["kitty", "foot", "ghostty", "alacritty", "wezterm", "konsole", "xterm"],
     "browser": ["firefox", "zen-browser", "librewolf", "chromium", "google-chrome-stable", "brave-browser", "xdg-open"],
     "editor": ["code", "codium", "zeditor", "zed", "kate", "gnome-text-editor", "gedit", "mousepad", "nvim"],
-    "fileManager": ["nautilus", "dolphin", "thunar", "nemo", "pcmanfm-qt", "pcmanfm", "caja", "xdg-open"],
+    "fileManager": ["alis-files", "nautilus", "dolphin", "thunar", "nemo", "pcmanfm-qt", "pcmanfm", "caja", "xdg-open"],
     "pdfViewer": ["okular", "evince", "papers", "zathura", "sioyek", "qpdfview", "firefox", "zen-browser", "xdg-open"],
     "officeSuite": ["libreoffice", "soffice", "onlyoffice-desktopeditors", "wps", "abiword", "xdg-open"],
     "htmlViewer": ["firefox", "zen-browser", "chromium", "google-chrome-stable", "brave-browser", "code", "xdg-open"],
@@ -78,11 +78,11 @@ KNOWN_SLOT_KEYWORDS = {
         "categories": {"FileManager"},
         "mimes": {"inode/directory"},
         "bins": {
-            "nautilus", "dolphin", "thunar", "nemo", "pcmanfm", "pcmanfm-qt",
+            "alis-files", "nautilus", "dolphin", "thunar", "nemo", "pcmanfm", "pcmanfm-qt",
             "caja", "krusader", "doublecmd", "cosmic-files", "yazi", "ranger", "lf",
         },
         "ids": {
-            "org.gnome.Nautilus", "nautilus", "org.kde.dolphin", "dolphin",
+            "org.alis.Files", "alis-files", "org.gnome.Nautilus", "nautilus", "org.kde.dolphin", "dolphin",
             "thunar", "org.xfce.Thunar", "nemo", "pcmanfm-qt", "org.kde.krusader",
             "com.system76.CosmicFiles",
         },
@@ -1408,6 +1408,8 @@ APP_ID_ALIASES = {
     "codium": {"codium", "vscodium", "com.vscodium.codium"},
     "zed": {"zed", "zeditor", "dev.zed.zed"},
     "zeditor": {"zed", "zeditor", "dev.zed.zed"},
+    "alis-files": {"alis-files", "org.alis.files"},
+    "org.alis.files": {"alis-files", "org.alis.files"},
     "nautilus": {"nautilus", "org.gnome.nautilus"},
     "dolphin": {"dolphin", "org.kde.dolphin"},
     "thunar": {"thunar", "org.xfce.thunar"},
@@ -1443,7 +1445,10 @@ def _apply_force_new_flags(slot_id: str, base_argv: list[str], target_app: dict 
         if exec_bin != "xdg-open" and "--new-window" not in argv:
             argv.append("--new-window")
     elif slot_id == "fileManager":
-        if any(k in ident for k in ("nautilus", "dolphin", "cosmic")) and "--new-window" not in argv:
+        if "alis-files" in ident or "org.alis.files" in ident:
+            if "--new" not in argv and "--new-window" not in argv:
+                argv.append("--new")
+        elif any(k in ident for k in ("nautilus", "dolphin", "cosmic")) and "--new-window" not in argv:
             argv.append("--new-window")
     elif slot_id == "editor":
         if any(k in ident for k in ("code", "codium", "zed", "subl")):

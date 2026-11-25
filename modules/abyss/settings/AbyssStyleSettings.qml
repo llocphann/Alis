@@ -56,90 +56,10 @@ ColumnLayout {
         Config.setNestedValues(updates)
     }
 
-    component CompactSurfaceRow: RowLayout {
-        id: row
-        property string text: ""
-        property real from: 0
-        property real to: 1
-        property real stepSize: .01
-        property real currentValue: 0
-        property string valueText: ""
-        property string toggleIcon: ""
-        property string toggleDescription: ""
-        property string toggleObjectName: ""
-        property var searchKeywords: []
-        property bool toggleChecked: false
-        signal moved(real value)
-        signal toggledByUser(bool checked)
-
+    component CompactSurfaceRow: SettingsMetricControl {
         Layout.fillWidth: true
         Layout.preferredWidth: 1
         Layout.minimumWidth: 0
-        spacing: 8
-        implicitHeight: Math.max(Math.round(32 * Appearance.fontSizeScale), slider.implicitHeight)
-
-        Item {
-            visible: row.toggleIcon.length > 0
-            Layout.preferredWidth: Math.round(26 * Appearance.fontSizeScale)
-            Layout.preferredHeight: Math.round(26 * Appearance.fontSizeScale)
-            Layout.alignment: Qt.AlignVCenter
-            IconToolbarButton {
-                anchors.centerIn: parent
-                width: Math.round(26 * Appearance.fontSizeScale)
-                height: width
-                visible: row.toggleIcon.length > 0
-                objectName: row.toggleObjectName
-                text: row.toggleIcon
-                toggled: row.toggleChecked
-                checked: row.toggleChecked
-                buttonText: row.toggleDescription
-                Accessible.checkable: true
-                Accessible.checked: row.toggleChecked
-                onClicked: row.toggledByUser(!row.toggleChecked)
-                StyledToolTip {
-                    text: row.toggleDescription + (row.toggleChecked ? " · On" : " · Off")
-                }
-            }
-        }
-
-        StyledText {
-            Layout.fillWidth: slider.isVertical || slider.customLength > 0
-            Layout.preferredWidth: (row.toggleIcon.length > 0 ? 172 : 188) * Appearance.fontSizeScale
-            Layout.minimumWidth: 84 * Appearance.fontSizeScale
-            Layout.alignment: Qt.AlignVCenter
-            text: row.text
-            elide: Text.ElideRight
-            color: Appearance.colors.colOnSurface
-            font.pixelSize: Appearance.font.pixelSize.small
-        }
-
-        StyledSlider {
-            id: slider
-            Layout.fillWidth: !isVertical && customLength <= 0
-            Layout.minimumWidth: isVertical ? implicitWidth : Math.min(64 * Appearance.fontSizeScale, implicitWidth)
-            Layout.maximumWidth: isVertical || customLength > 0 ? implicitWidth : Infinity
-            Layout.alignment: Qt.AlignVCenter
-            configuration: StyledSlider.Configuration.S
-            from: row.from
-            to: row.to
-            stepSize: row.stepSize
-            value: row.currentValue
-            tooltipContent: row.valueText
-            Accessible.name: row.text
-            settingsSearchLabel: row.text
-            settingsSearchKeywords: row.searchKeywords
-            onMoved: row.moved(value)
-        }
-
-        StyledText {
-            Layout.preferredWidth: 48 * Appearance.fontSizeScale
-            Layout.minimumWidth: 40 * Appearance.fontSizeScale
-            Layout.alignment: Qt.AlignVCenter
-            text: row.valueText
-            horizontalAlignment: Text.AlignRight
-            color: Appearance.colors.colSubtext
-            font.pixelSize: Appearance.font.pixelSize.smaller
-        }
     }
 
     component CompactSurfacePercent: CompactSurfaceRow {
@@ -148,13 +68,13 @@ ColumnLayout {
         property real fallback: 0
         property real minimum: 0
         property real maximum: 1
-        property string unit: maximum > 4 ? "px" : "%"
+        property string metricUnit: maximum > 4 ? "px" : "%"
         from: minimum
         to: maximum
-        stepSize: unit === "%" ? .01 : 1
+        stepSize: metricUnit === "%" ? .01 : 1
         currentValue: Config.getNestedValue(configKey, fallback)
-        valueText: Math.round(currentValue * (unit === "%" ? 100 : 1))
-            + (unit === "%" ? "%" : " px")
+        valueText: Math.round(currentValue * (metricUnit === "%" ? 100 : 1))
+            + (metricUnit === "%" ? "%" : " px")
         onMoved: value => Config.setNestedValue(configKey, value)
     }
 
@@ -227,9 +147,10 @@ ColumnLayout {
         SettingsGroup {
             id: surfacePerfGroup
 
-            RowLayout {
+            ColumnLayout {
+                id: qualityTierHeaderGrid
                 Layout.fillWidth: true
-                spacing: 12
+                spacing: 8
 
                 ColumnLayout {
                     Layout.fillWidth: true
@@ -248,12 +169,13 @@ ColumnLayout {
                         text: "Glass uses wallpaper, not window capture."
                         font.pixelSize: Appearance.font.pixelSize.smaller
                         color: Appearance.colors.colSubtext
-                        elide: Text.ElideRight
+                        wrapMode: Text.WordWrap
                     }
                 }
 
                 ConfigSelectionArray {
-                    Layout.fillWidth: false
+                    Layout.fillWidth: true
+                    fillWidthSegments: true
                     enabled: !(Config.options?.abyss?.autoQuality ?? false)
                     currentValue: Config.options?.abyss?.quality ?? "balanced"
                     options: [
@@ -270,12 +192,15 @@ ColumnLayout {
             GridLayout {
                 id: qualitySwitches
                 Layout.fillWidth: true
-                columns: LayoutPolicy.fittedControlColumns(qualitySwitches, 3)
-                columnSpacing: 12
+                Layout.minimumWidth: 0
+                columns: width >= 600 * Appearance.fontSizeScale ? 3 : 1
+                uniformCellWidths: columns > 1
+                columnSpacing: 16
                 rowSpacing: 6
 
                 SettingsSwitch {
                     Layout.fillWidth: true
+                    Layout.preferredWidth: 1
                     Layout.minimumWidth: 0
                     buttonIcon: "speed"
                     text: "Auto quality"
@@ -287,6 +212,7 @@ ColumnLayout {
 
                 SettingsSwitch {
                     Layout.fillWidth: true
+                    Layout.preferredWidth: 1
                     Layout.minimumWidth: 0
                     buttonIcon: "energy_savings_leaf"
                     text: "Low power mode"
@@ -298,6 +224,7 @@ ColumnLayout {
 
                 SettingsSwitch {
                     Layout.fillWidth: true
+                    Layout.preferredWidth: 1
                     Layout.minimumWidth: 0
                     buttonIcon: "fullscreen"
                     text: "Show in fullscreen"
@@ -310,93 +237,108 @@ ColumnLayout {
 
             SettingsDivider {}
 
-            CompactSurfacePercent {
-                text: "Surface opacity"
-                configKey: "abyss.surface.opacity"
-                fallback: .78
-                minimum: 0
-                toggleIcon: "opacity"
-                toggleDescription: "Transparent surfaces"
-                searchKeywords: ["transparent", "surface", "opacity"]
-                toggleChecked: (Config.options?.abyss?.surface?.opacity ?? .78) < .999
-                onToggledByUser: checked => Config.setNestedValue("abyss.surface.opacity", checked ? .78 : 1)
+            ContentSubsectionLabel {
+                text: Translation.tr("Material & Glass")
+            }
+
+            GridLayout {
+                id: materialMetricsGrid
+                Layout.fillWidth: true
+                columns: width >= 540 * Appearance.fontSizeScale ? 2 : 1
+                uniformCellWidths: columns === 2
+                columnSpacing: 10
+                rowSpacing: 10
+
+                CompactSurfacePercent {
+                    text: "Surface opacity"
+                    configKey: "abyss.surface.opacity"
+                    fallback: .78
+                    minimum: 0
+                    toggleIcon: "opacity"
+                    toggleLabel: Translation.tr("Transparent")
+                    toggleDescription: "Transparent surfaces"
+                    searchKeywords: ["transparent", "surface", "opacity"]
+                    toggleChecked: (Config.options?.abyss?.surface?.opacity ?? .78) < .999
+                    onToggledByUser: checked => Config.setNestedValue("abyss.surface.opacity", checked ? .78 : 1)
+                }
+
+                CompactSurfaceRow {
+                    objectName: "abyssPanelOpacity"
+                    text: "Panel & content opacity"
+                    from: 0
+                    to: 1
+                    stepSize: .01
+                    currentValue: AbyssStyle.contentOpacity
+                    valueText: Math.round(currentValue * 100) + "%"
+                    toggleIcon: "link"
+                    toggleLabel: Translation.tr("Follow")
+                    toggleObjectName: "abyssPanelOpacityFollow"
+                    toggleDescription: "Panel and content opacity follows Screen Edge"
+                    searchKeywords: ["follow", "screen edge", "panel", "content", "opacity"]
+                    toggleChecked: (Config.options?.abyss?.content?.opacity ?? -1) < 0
+                    onToggledByUser: checked => Config.setNestedValue("abyss.content.opacity", checked ? -1 : AbyssStyle.contentOpacity)
+                    onMoved: value => Config.setNestedValue("abyss.content.opacity", value)
+                }
+
+                CompactSurfacePercent {
+                    text: "Blur strength"
+                    configKey: "abyss.effects.blur.radius"
+                    fallback: 10
+                    maximum: 24
+                    toggleIcon: "blur_on"
+                    toggleLabel: Translation.tr("Blur")
+                    toggleDescription: "Wallpaper blur"
+                    searchKeywords: ["wallpaper", "blur", "toggle"]
+                    toggleChecked: Config.options?.abyss?.effects?.blur?.enabled ?? true
+                    onToggledByUser: checked => Config.setNestedValue("abyss.effects.blur.enabled", checked)
+                }
+
+                CompactSurfaceRow {
+                    objectName: "abyssPanelBlur"
+                    text: "Panel blur"
+                    from: 0
+                    to: 24
+                    stepSize: 1
+                    currentValue: AbyssStyle.configuredContentBlurRadius
+                    valueText: Math.round(currentValue) + " px"
+                    toggleIcon: "link"
+                    toggleLabel: Translation.tr("Follow")
+                    toggleObjectName: "abyssPanelBlurFollow"
+                    toggleDescription: "Panel blur follows Screen Edge"
+                    searchKeywords: ["follow", "screen edge", "panel", "blur"]
+                    toggleChecked: (Config.options?.abyss?.content?.blurRadius ?? -1) < 0
+                    onToggledByUser: checked => Config.setNestedValue("abyss.content.blurRadius", checked ? -1 : AbyssStyle.configuredContentBlurRadius)
+                    onMoved: value => Config.setNestedValue("abyss.content.blurRadius", value)
+                }
+
+                CompactSurfacePercent {
+                    Layout.columnSpan: materialMetricsGrid.columns
+                    text: "Refraction"
+                    configKey: "abyss.effects.refraction.strength"
+                    fallback: 6
+                    minimum: 0
+                    maximum: 16
+                    toggleIcon: "water_lux"
+                    toggleLabel: Translation.tr("Liquid")
+                    toggleDescription: "Liquid refraction (Quality tier)"
+                    searchKeywords: ["refraction", "glass", "distortion", "liquid"]
+                    toggleChecked: Config.options?.abyss?.effects?.refraction?.enabled ?? false
+                    onToggledByUser: checked => Config.setNestedValue("abyss.effects.refraction.enabled", checked)
+                }
             }
 
             SettingsDivider {}
 
-            CompactSurfaceRow {
-                objectName: "abyssPanelOpacity"
-                text: "Panel & content opacity"
-                from: 0
-                to: 1
-                stepSize: .01
-                currentValue: AbyssStyle.contentOpacity
-                valueText: Math.round(currentValue * 100) + "%"
-                toggleIcon: "link"
-                toggleObjectName: "abyssPanelOpacityFollow"
-                toggleDescription: "Panel and content opacity follows Screen Edge"
-                searchKeywords: ["follow", "screen edge", "panel", "content", "opacity"]
-                toggleChecked: (Config.options?.abyss?.content?.opacity ?? -1) < 0
-                onToggledByUser: checked => Config.setNestedValue("abyss.content.opacity", checked ? -1 : AbyssStyle.contentOpacity)
-                onMoved: value => Config.setNestedValue("abyss.content.opacity", value)
+            ContentSubsectionLabel {
+                text: Translation.tr("Geometry & Lighting")
             }
-
-            SettingsDivider {}
-
-            CompactSurfacePercent {
-                text: "Blur strength"
-                configKey: "abyss.effects.blur.radius"
-                fallback: 10
-                maximum: 24
-                toggleIcon: "blur_on"
-                toggleDescription: "Wallpaper blur"
-                searchKeywords: ["wallpaper", "blur", "toggle"]
-                toggleChecked: Config.options?.abyss?.effects?.blur?.enabled ?? true
-                onToggledByUser: checked => Config.setNestedValue("abyss.effects.blur.enabled", checked)
-            }
-
-            SettingsDivider {}
-
-            CompactSurfaceRow {
-                objectName: "abyssPanelBlur"
-                text: "Panel blur"
-                from: 0
-                to: 24
-                stepSize: 1
-                currentValue: AbyssStyle.configuredContentBlurRadius
-                valueText: Math.round(currentValue) + " px"
-                toggleIcon: "link"
-                toggleObjectName: "abyssPanelBlurFollow"
-                toggleDescription: "Panel blur follows Screen Edge"
-                searchKeywords: ["follow", "screen edge", "panel", "blur"]
-                toggleChecked: (Config.options?.abyss?.content?.blurRadius ?? -1) < 0
-                onToggledByUser: checked => Config.setNestedValue("abyss.content.blurRadius", checked ? -1 : AbyssStyle.configuredContentBlurRadius)
-                onMoved: value => Config.setNestedValue("abyss.content.blurRadius", value)
-            }
-
-            SettingsDivider {}
-
-            CompactSurfacePercent {
-                text: "Refraction"
-                configKey: "abyss.effects.refraction.strength"
-                fallback: 6
-                minimum: 0
-                maximum: 16
-                toggleIcon: "water_lux"
-                toggleDescription: "Liquid refraction (Quality tier)"
-                searchKeywords: ["refraction", "glass", "distortion", "liquid"]
-                toggleChecked: Config.options?.abyss?.effects?.refraction?.enabled ?? false
-                onToggledByUser: checked => Config.setNestedValue("abyss.effects.refraction.enabled", checked)
-            }
-
-            SettingsDivider {}
 
             GridLayout {
                 Layout.fillWidth: true
-                columns: width >= 2 * root.pairedSliderWidth + columnSpacing ? 2 : 1
-                uniformCellWidths: columns === 2
-                columnSpacing: 16
-                rowSpacing: 6
+                columns: width >= 740 * Appearance.fontSizeScale ? 3 : (width >= 480 * Appearance.fontSizeScale ? 2 : 1)
+                uniformCellWidths: columns > 1
+                columnSpacing: 10
+                rowSpacing: 10
 
                 CompactSurfacePercent {
                     text: "Curvature"
@@ -480,6 +422,7 @@ ColumnLayout {
 
                 ConfigSelectionArray {
                     Layout.fillWidth: true
+                    fillWidthSegments: true
                     currentValue: Config.options?.abyss?.waves?.preset ?? "balanced"
                     options: [
                         { displayName: "Calm", value: "calm" },
@@ -507,16 +450,16 @@ ColumnLayout {
             GridLayout {
                 id: wavesCommonSlidersGrid
                 Layout.fillWidth: true
-                columns: width >= 2 * root.pairedSliderWidth + columnSpacing ? 2 : 1
+                columns: width >= 480 * Appearance.fontSizeScale ? 2 : 1
                 uniformCellWidths: columns === 2
-                columnSpacing: 16
-                rowSpacing: 6
+                columnSpacing: 10
+                rowSpacing: 10
 
                 CompactSurfaceRow {
                     text: "Strength"
                     from: 0
                     to: 4
-                    stepSize: .01
+                    stepSize: .05
                     currentValue: Wave.bodyStrength(Config.options?.abyss?.waves)
                     valueText: Math.round(currentValue * 100) + "%"
                     onMoved: value => Config.setNestedValue("abyss.waves.strength", value)
@@ -525,7 +468,7 @@ ColumnLayout {
                     text: "Whitewater"
                     from: 0
                     to: 1
-                    stepSize: .01
+                    stepSize: .02
                     currentValue: Config.options?.abyss?.waves?.whitewater ?? .65
                     valueText: Math.round(currentValue * 100) + "%"
                     onMoved: value => Config.setNestedValue("abyss.waves.whitewater", value)
@@ -535,13 +478,15 @@ ColumnLayout {
             GridLayout {
                 id: wavesCommonSwitchesGrid
                 Layout.fillWidth: true
-                columns: LayoutPolicy.fittedControlColumns(wavesCommonSwitchesGrid, 3)
-                uniformCellWidths: false
-                columnSpacing: 12
+                Layout.minimumWidth: 0
+                columns: width >= 640 * Appearance.fontSizeScale ? 3 : 1
+                uniformCellWidths: columns > 1
+                columnSpacing: 16
                 rowSpacing: 6
 
                 SettingsSwitch {
                     Layout.fillWidth: true
+                    Layout.preferredWidth: 1
                     Layout.minimumWidth: 0
                     buttonIcon: "moving"
                     text: "Popup travel"
@@ -551,6 +496,7 @@ ColumnLayout {
                 }
                 SettingsSwitch {
                     Layout.fillWidth: true
+                    Layout.preferredWidth: 1
                     Layout.minimumWidth: 0
                     buttonIcon: "water_drop"
                     text: "Idle ripple"
@@ -560,6 +506,7 @@ ColumnLayout {
                 }
                 SettingsSwitch {
                     Layout.fillWidth: true
+                    Layout.preferredWidth: 1
                     Layout.minimumWidth: 0
                     buttonIcon: "side_navigation"
                     text: "Edge hover sidebars"
@@ -573,10 +520,10 @@ ColumnLayout {
                 id: wavesCustomGrid
                 Layout.fillWidth: true
                 visible: (Config.options?.abyss?.waves?.preset ?? "balanced") === "custom"
-                columns: width >= 2 * root.pairedSliderWidth + columnSpacing ? 2 : 1
+                columns: width >= 480 * Appearance.fontSizeScale ? 2 : 1
                 uniformCellWidths: columns === 2
-                columnSpacing: 16
-                rowSpacing: 6
+                columnSpacing: 10
+                rowSpacing: 10
 
                 WaveControl { text: "Wave size"; parameter: "amplitude" }
                 WaveControl { text: "Propagation"; parameter: "propagation" }
@@ -590,18 +537,28 @@ ColumnLayout {
 
             SettingsDivider {}
 
+            ContentSubsectionLabel {
+                text: Translation.tr("Interaction Reactivity")
+            }
+
             GridLayout {
+                id: interactionReactivityGrid
                 Layout.fillWidth: true
-                columns: width >= 2 * root.pairedSliderWidth + columnSpacing ? 2 : 1
-                uniformCellWidths: columns === 2
-                columnSpacing: 16
-                rowSpacing: 6
+                columns: width >= 480 * Appearance.fontSizeScale ? 2 : 1
+                uniformCellWidths: columns > 1
+                columnSpacing: 10
+                rowSpacing: 10
 
                 CompactSurfacePercent { text: "Hover response"; configKey: "abyss.waves.hover"; fallback: 1 }
                 CompactSurfacePercent { text: "Press response"; configKey: "abyss.waves.press"; fallback: 1 }
                 CompactSurfacePercent { text: "Opening response"; configKey: "abyss.waves.open"; fallback: 1 }
                 CompactSurfacePercent { text: "Closing response"; configKey: "abyss.waves.close"; fallback: 1 }
-                CompactSurfacePercent { text: "Drag response"; configKey: "abyss.waves.drag"; fallback: 1 }
+                CompactSurfacePercent {
+                    Layout.columnSpan: interactionReactivityGrid.columns
+                    text: "Drag response"
+                    configKey: "abyss.waves.drag"
+                    fallback: 1
+                }
             }
         }
     }
@@ -622,9 +579,9 @@ ColumnLayout {
 
             GridLayout {
                 Layout.fillWidth: true
-                columns: width >= 440 ? 2 : 1
+                columns: width >= 500 * Appearance.fontSizeScale ? 2 : 1
                 uniformCellWidths: columns === 2
-                columnSpacing: 12
+                columnSpacing: 20
                 rowSpacing: 6
 
                 SettingsSwitch {
@@ -668,21 +625,24 @@ ColumnLayout {
 
             SettingsDivider {}
 
-            RowLayout {
+            ColumnLayout {
+                id: spectrumEdgeRow
                 Layout.fillWidth: true
-                spacing: 12
+                spacing: 6
 
                 StyledText {
                     Layout.fillWidth: true
                     Layout.minimumWidth: 0
                     text: "Spectrum edge"
                     font.pixelSize: Appearance.font.pixelSize.small
+                    font.weight: Font.Medium
                     color: Appearance.colors.colOnSurface
                     elide: Text.ElideRight
                 }
 
                 ConfigSelectionArray {
-                    Layout.fillWidth: false
+                    Layout.fillWidth: true
+                    fillWidthSegments: true
                     currentValue: Config.options?.abyss?.spectrum?.edge ?? "bar"
                     options: [
                         { displayName: "Bar", value: "bar" },
@@ -700,39 +660,39 @@ ColumnLayout {
 
             GridLayout {
                 Layout.fillWidth: true
-                columns: width >= 440 ? 2 : 1
+                columns: width >= 480 * Appearance.fontSizeScale ? 2 : 1
                 uniformCellWidths: columns === 2
-                columnSpacing: 12
-                rowSpacing: 6
+                columnSpacing: 10
+                rowSpacing: 10
 
-                ConfigSpinBox {
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
+                SettingsMetricControl {
                     icon: "width_normal"
-                    text: Translation.tr("Cava module width (px)")
-                    value: Config.options?.bar?.cava?.width ?? 120
+                    text: Translation.tr("Cava module width")
                     from: 48
                     to: 480
                     stepSize: 8
-                    onValueChanged: {
-                        if (value !== (Config.options?.bar?.cava?.width ?? 120))
-                            Config.setNestedValue("bar.cava.width", value)
+                    currentValue: Config.options?.bar?.cava?.width ?? 120
+                    valueText: Math.round(liveValue) + " px"
+                    onMoved: nextVal => {
+                        const v = Math.round(nextVal)
+                        if (v !== (Config.options?.bar?.cava?.width ?? 120))
+                            Config.setNestedValue("bar.cava.width", v)
                     }
                     StyledToolTip { text: Translation.tr("Width of the Cava Equalizer module on the Bar / Screen Edge (px)") }
                 }
 
-                ConfigSpinBox {
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
+                SettingsMetricControl {
                     icon: "space_bar"
-                    text: Translation.tr("Cava bar spacing (px)")
-                    value: Config.options?.bar?.cava?.barSpacing ?? 2
+                    text: Translation.tr("Cava bar spacing")
                     from: 1
                     to: 6
                     stepSize: 1
-                    onValueChanged: {
-                        if (value !== (Config.options?.bar?.cava?.barSpacing ?? 2))
-                            Config.setNestedValue("bar.cava.barSpacing", value)
+                    currentValue: Config.options?.bar?.cava?.barSpacing ?? 2
+                    valueText: Math.round(liveValue) + " px"
+                    onMoved: nextVal => {
+                        const v = Math.round(nextVal)
+                        if (v !== (Config.options?.bar?.cava?.barSpacing ?? 2))
+                            Config.setNestedValue("bar.cava.barSpacing", v)
                     }
                     StyledToolTip { text: Translation.tr("Gap between equalizer bars inside the module (px)") }
                 }
@@ -756,9 +716,9 @@ ColumnLayout {
 
             GridLayout {
                 Layout.fillWidth: true
-                columns: width >= 440 ? 2 : 1
+                columns: width >= 500 * Appearance.fontSizeScale ? 2 : 1
                 uniformCellWidths: columns === 2
-                columnSpacing: 12
+                columnSpacing: 20
                 rowSpacing: 6
 
                 SettingsSwitch {
@@ -785,10 +745,22 @@ ColumnLayout {
 
             SettingsDivider {}
 
-            CompactSurfacePercent {
-                text: "Motion intensity"
-                configKey: "abyss.motion.intensity"
-                fallback: .6
+            SettingsPresetRow {
+                icon: "animation"
+                text: Translation.tr("Motion intensity")
+                from: 0
+                to: 1
+                stepSize: 0.05
+                value: Config.getNestedValue("abyss.motion.intensity", 0.6)
+                displayValue: Math.round(liveValue * 100) + "%"
+                presets: [
+                    { label: "0%", value: 0.0 },
+                    { label: "30%", value: 0.3 },
+                    { label: "60%", value: 0.6 },
+                    { label: "85%", value: 0.85 },
+                    { label: "100%", value: 1.0 }
+                ]
+                onMoved: nextVal => Config.setNestedValue("abyss.motion.intensity", nextVal)
             }
         }
     }
@@ -819,9 +791,9 @@ ColumnLayout {
 
             GridLayout {
                 Layout.fillWidth: true
-                columns: width >= 440 ? 2 : 1
+                columns: width >= 500 * Appearance.fontSizeScale ? 2 : 1
                 uniformCellWidths: columns === 2
-                columnSpacing: 12
+                columnSpacing: 20
                 rowSpacing: 6
 
                 SettingsSwitch {
@@ -847,21 +819,31 @@ ColumnLayout {
                     autoToggle: false
                     checked: Config.options?.abyss?.editStage?.parkEmptyWorkspace ?? true
                     onToggledByUser: checked => Config.setNestedValue("abyss.editStage.parkEmptyWorkspace", checked)
-                    StyledToolTip { text: Translation.tr("Temporarily switch to an empty workspace while editing desktop widgets, edges, or wallpaper") }
+                    StyledToolTip { text: Translation.tr("Temporarily switch to an empty workspace while editing desktop widgets or edges") }
                 }
             }
 
             SettingsDivider {}
 
-            CompactSurfacePercent {
+            SettingsPresetRow {
                 objectName: "abyssEditStageScale"
                 enabled: Config.options?.abyss?.editStage?.enable ?? true
+                icon: "zoom_out_map"
                 text: Translation.tr("Desktop stage scale")
-                configKey: "abyss.editStage.scale"
-                fallback: 0.83
-                minimum: 0.72
-                maximum: 0.92
-                searchKeywords: ["desktop", "stage", "shrink", "scale", "zoom", "edit mode", "wallpaper", "customization"]
+                from: 0.72
+                to: 0.92
+                stepSize: 0.01
+                value: Config.getNestedValue("abyss.editStage.scale", 0.83)
+                displayValue: Math.round(liveValue * 100) + "%"
+                presets: [
+                    { label: "75%", value: 0.75 },
+                    { label: "80%", value: 0.80 },
+                    { label: "83%", value: 0.83 },
+                    { label: "88%", value: 0.88 },
+                    { label: "92%", value: 0.92 }
+                ]
+                settingsSearchKeywords: ["desktop", "stage", "shrink", "scale", "zoom", "edit mode", "wallpaper", "customization"]
+                onMoved: nextVal => Config.setNestedValue("abyss.editStage.scale", nextVal)
             }
         }
     }
@@ -1157,7 +1139,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     columns: width >= 540 * Appearance.fontSizeScale ? 2 : 1
                     uniformCellWidths: columns === 2
-                    columnSpacing: 10
+                    columnSpacing: 20
                     rowSpacing: 8
 
                     ConfigSwitch {
@@ -1235,9 +1217,9 @@ ColumnLayout {
 
                 GridLayout {
                     Layout.fillWidth: true
-                    columns: width >= 360 ? 2 : 1
+                    columns: width >= 440 * Appearance.fontSizeScale ? 2 : 1
                     uniformCellWidths: columns === 2
-                    columnSpacing: 10
+                    columnSpacing: 20
                     rowSpacing: 8
 
                     ConfigSwitch {

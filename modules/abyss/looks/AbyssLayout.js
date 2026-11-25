@@ -97,6 +97,237 @@ function isParallelToEdge(edge, rotation) {
     var verticalRot = isVerticalRotation(normalizeRotation(rotation, edge));
     return horizontal ? !verticalRot : verticalRot;
 }
+function isCornerPosition(pos, alignment) {
+    var p = Number(pos);
+    return alignment === "start" || alignment === "end"
+        || (Number.isFinite(p) && (p <= 0.095 || p >= 0.905));
+}
+function resolveCornerEdge(edge, pos, rotation) {
+    var p = bounded(pos, 0.5, 0, 1);
+    var nearStart = p < 0.5;
+    var corner = edge === "top" ? (nearStart ? "topLeft" : "topRight")
+        : edge === "bottom" ? (nearStart ? "bottomLeft" : "bottomRight")
+        : edge === "left" ? (nearStart ? "topLeft" : "bottomLeft")
+        : (nearStart ? "topRight" : "bottomRight");
+    var ce = cornerEdges(corner);
+    var verticalRot = isVerticalRotation(normalizeRotation(rotation, edge));
+    var nextEdge = verticalRot ? ce.vertical : ce.horizontal;
+    if (nextEdge === edge) return { edge: edge, position: p, changed: false };
+    var oldStart = (edge === "top" || edge === "bottom") ? ce.hStart : ce.vStart;
+    var newStart = verticalRot ? ce.vStart : ce.hStart;
+    var distFromTip = bounded(oldStart ? p : (1 - p), 0.04, 0, 0.095);
+    return {
+        edge: nextEdge,
+        position: newStart ? distFromTip : (1 - distFromTip),
+        startSide: newStart,
+        changed: true
+    };
+}
+function edgeHasExplicitThickness(options, edge) {
+    var raw = options?.edgeThicknesses?.[edge];
+    return raw !== undefined && raw !== null && raw !== "" && Number.isFinite(Number(raw)) && Number(raw) >= 0;
+}
+function cornerWrapEdgeFlags(placement, options) {
+    var ce = cornerEdges(cornerWrapCorner(placement));
+    var e1 = placement.edge;
+    var e2 = (e1 === ce.horizontal) ? ce.vertical : ce.horizontal;
+    var m1 = options?.edgeWidthAffectsModules?.[e1];
+    var m2 = options?.edgeWidthAffectsModules?.[e2];
+    var a1 = m1 === true || (m1 !== false && (edgeHasExplicitThickness(options, e1) || (edgeThickness(options, e1) > 0 && m2 !== false)));
+    var a2 = m2 === true || (m2 !== false && m1 !== false && (edgeHasExplicitThickness(options, e2) || edgeThickness(options, e2) > 0));
+    return { e1: e1, e2: e2, a1: a1, a2: a2 };
+}
+function cornerWrapInheritedWidth(placement, options, fallbackWidth) {
+    var flags = cornerWrapEdgeFlags(placement, options);
+    if (!flags.a1 && !flags.a2) return 16;
+    if (flags.a1 && !flags.a2) return edgeThickness(options, flags.e1);
+    if (flags.a2 && !flags.a1) return edgeThickness(options, flags.e2);
+    var exp1 = edgeHasExplicitThickness(options, flags.e1);
+    var exp2 = edgeHasExplicitThickness(options, flags.e2);
+    if (exp1 && exp2) return (edgeThickness(options, flags.e1) + edgeThickness(options, flags.e2)) * 0.5;
+    if (exp1) return edgeThickness(options, flags.e1);
+    if (exp2) return edgeThickness(options, flags.e2);
+    return edgeThickness(options, flags.e1);
+}
+function cornerWrapEdgeSize(placement, options) {
+    var flags = cornerWrapEdgeFlags(placement, options);
+    var s1 = edgeSize(options, flags.e1);
+    var s2 = edgeSize(options, flags.e2);
+    if (Math.abs(s1 - 1) > 0.001) return s1;
+    if (Math.abs(s2 - 1) > 0.001) return s2;
+    return s1;
+}
+function cornersAdjacent(cornerA, cornerB) {
+    if (!cornerA || !cornerB || cornerA === cornerB) return false;
+    var ea = cornerEdges(cornerA), eb = cornerEdges(cornerB);
+    return ea.horizontal === eb.horizontal || ea.vertical === eb.vertical;
+}
+function cornerWrapGroupBaseScale(groupItems, options) {
+    var nonCustom = (groupItems || []).filter(function(p) { return p && p.customSize !== true; });
+    if (!nonCustom.length) return 1;
+    var explicit = nonCustom.map(function(p) { return Number(p.cornerWrapGroupSize); })
+        .filter(function(v) { return Number.isFinite(v) && v > 0; });
+    if (explicit.length)
+        return bounded(explicit.reduce(function(sum, v) { return sum + v; }, 0) / explicit.length, 1, .6, 1.8);
+    return 1;
+}
+function cornerWrapGroupScale(groupItems, options) {
+    var nonCustom = (groupItems || []).filter(function(p) { return p && p.customSize !== true; });
+    var sharedEdgeSize = cornerWrapGroupBaseScale(groupItems, options);
+    if (nonCustom.length <= 1) {
+        var single = nonCustom[0] || groupItems[0];
+        var fallbackW = Number(options?.edgeThickness) > 0 ? bounded(options?.edgeThickness, 16, 10, 40) : 16;
+        var singleW = cornerWrapInheritedWidth(single, options, fallbackW);
+        return sharedEdgeSize * (singleW / 16);
+    }
+    var seen = {}, groupEdges = [];
+    nonCustom.forEach(function(p) {
+        var ce = cornerEdges(cornerWrapCorner(p));
+        [ce.horizontal, ce.vertical].forEach(function(edge) {
+            if (!seen[edge]) {
+                seen[edge] = true;
+                groupEdges.push(edge);
+            }
+        });
+    });
+    var defaultW = Number(options?.edgeThickness) > 0
+        ? bounded(options?.edgeThickness, 16, 10, 40) : 16;
+    var affected = groupEdges.filter(function(edge) {
+        return options?.edgeWidthAffectsModules?.[edge] !== false;
+    });
+    var sharedW = defaultW;
+    if (affected.length) {
+        var widths = affected.map(function(edge) { return edgeThickness(options, edge, defaultW); });
+        var nonDefaultW = widths.filter(function(w) { return Math.abs(w - defaultW) > 0.001; });
+        var sourceW = nonDefaultW.length ? nonDefaultW : widths;
+        sharedW = sourceW.reduce(function(sum, w) { return sum + w; }, 0) / sourceW.length;
+    }
+    return sharedEdgeSize * (sharedW / 16);
+}
+function resolveCornerWrapSizes(placements, options) {
+    var result = {};
+    var active = (placements || []).filter(function(p) {
+        if (!p || !p.enabled || p.cornerWrap !== true || moduleSize(p, options) <= 0) return false;
+        var measured = options?.extents?.[p.id];
+        return options?.editing || !Number.isFinite(measured) || measured > 0;
+    });
+    var globalScale = bounded(options?.size, 1, .6, 1.8);
+    var visited = {};
+    for (var i = 0; i < active.length; i++) {
+        if (visited[i]) continue;
+        visited[i] = true;
+        var queue = [i];
+        var comp = [];
+        while (queue.length) {
+            var idx = queue.shift();
+            var cur = active[idx];
+            comp.push(cur);
+            var curCorner = cornerWrapCorner(cur);
+            for (var j = 0; j < active.length; j++) {
+                if (!visited[j] && cornersAdjacent(curCorner, cornerWrapCorner(active[j]))) {
+                    visited[j] = true;
+                    queue.push(j);
+                }
+            }
+        }
+        var nonCustomCount = comp.filter(function(p) { return p.customSize !== true; }).length;
+        var hasGroupSize = comp.some(function(p) {
+            return p.customSize !== true && Number.isFinite(Number(p.cornerWrapGroupSize)) && Number(p.cornerWrapGroupSize) > 0;
+        });
+        var sharedScale = (nonCustomCount >= 2 || hasGroupSize) ? cornerWrapGroupScale(comp, options) * globalScale : NaN;
+        comp.forEach(function(p) {
+            result[p.id] = (p.customSize === true || !Number.isFinite(sharedScale))
+                ? moduleSize(p, options)
+                : sharedScale;
+        });
+    }
+    return result;
+}
+function effectiveCornerWrapScale(placement, placements, options) {
+    if (!placement) return 1;
+    if (placement.customSize === true)
+        return bounded(placement.size, 1, .6, 1.8);
+    var globalScale = Math.max(0.01, bounded(options?.size, 1, .6, 1.8));
+    var sizeMap = resolveCornerWrapSizes(placements && placements.length ? placements : [placement], options);
+    var resolved = Number.isFinite(sizeMap[placement.id])
+        ? sizeMap[placement.id]
+        : moduleSize(placement, options);
+    return bounded(Math.round((resolved / globalScale) * 100) / 100, 1, .6, 1.8);
+}
+function effectiveCornerWrapBaseScale(placement, placements, options) {
+    if (!placement) return 1;
+    if (placement.customSize === true)
+        return bounded(placement.size, 1, .6, 1.8);
+    var active = (placements && placements.length ? placements : [placement]).filter(function(p) {
+        return p && p.enabled !== false && p.cornerWrap === true;
+    });
+    var startIdx = active.findIndex(function(p) { return p.id === placement.id; });
+    if (startIdx < 0) {
+        var soloVal = Number(placement.cornerWrapGroupSize);
+        return (Number.isFinite(soloVal) && soloVal > 0)
+            ? bounded(Math.round(soloVal * 100) / 100, 1, .6, 1.8)
+            : 1;
+    }
+    var visited = {};
+    visited[startIdx] = true;
+    var queue = [startIdx], comp = [];
+    while (queue.length) {
+        var idx = queue.shift();
+        var cur = active[idx];
+        comp.push(cur);
+        var curCorner = cornerWrapCorner(cur);
+        for (var j = 0; j < active.length; j++) {
+            if (!visited[j] && cornersAdjacent(curCorner, cornerWrapCorner(active[j]))) {
+                visited[j] = true;
+                queue.push(j);
+            }
+        }
+    }
+    return bounded(Math.round(cornerWrapGroupBaseScale(comp, options) * 100) / 100, 1, .6, 1.8);
+}
+function applyCornerWrapGroupSize(placements, targetIds, value) {
+    var nextSize = bounded(Math.round(Number(value) * 100) / 100, 1, .6, 1.8);
+    var list = placements || [];
+    if (!targetIds || !targetIds.length) return list;
+    var active = list.filter(function(p) {
+        return p && p.enabled !== false && p.cornerWrap === true;
+    });
+    if (!active.length) return list;
+    var selectedSet = {};
+    targetIds.forEach(function(id) { selectedSet[id] = true; });
+    var visited = {};
+    var updateIds = {};
+    for (var i = 0; i < active.length; i++) {
+        if (visited[i]) continue;
+        visited[i] = true;
+        var queue = [i], comp = [];
+        while (queue.length) {
+            var idx = queue.shift();
+            var cur = active[idx];
+            comp.push(cur);
+            var curCorner = cornerWrapCorner(cur);
+            for (var j = 0; j < active.length; j++) {
+                if (!visited[j] && cornersAdjacent(curCorner, cornerWrapCorner(active[j]))) {
+                    visited[j] = true;
+                    queue.push(j);
+                }
+            }
+        }
+        var nonCustom = comp.filter(function(p) { return p.customSize !== true; });
+        if (!nonCustom.length) continue;
+        if (nonCustom.some(function(p) { return !!selectedSet[p.id]; })) {
+            nonCustom.forEach(function(p) { updateIds[p.id] = true; });
+        }
+    }
+    var changed = false;
+    var next = list.map(function(p) {
+        if (!p || !updateIds[p.id]) return p;
+        if (Number(p.cornerWrapGroupSize) === nextSize) return p;
+        changed = true;
+        return Object.assign({}, p, { cornerWrapGroupSize: nextSize });
+    });
+    return changed ? next : list;
+}
 function canCornerWrap(kind) {
     return catalog.indexOf(String(kind)) >= 0 && !isUnifiedKind(kind);
 }
@@ -120,6 +351,18 @@ function cornerEdges(corner) {
     if (corner === "bottomLeft") return { horizontal: "bottom", vertical: "left", hStart: true, vStart: false };
     if (corner === "bottomRight") return { horizontal: "bottom", vertical: "right", hStart: false, vStart: false };
     return { horizontal: "top", vertical: "left", hStart: true, vStart: true };
+}
+function cornerTargetPlacement(corner) {
+    if (corner === "topRight") return { edge: "top", position: 0.95 };
+    if (corner === "bottomLeft") return { edge: "bottom", position: 0.05 };
+    if (corner === "bottomRight") return { edge: "bottom", position: 0.95 };
+    return { edge: "top", position: 0.05 };
+}
+function edgeCornerList(edge) {
+    if (edge === "bottom") return ["bottomLeft", "bottomRight"];
+    if (edge === "left") return ["topLeft", "bottomLeft"];
+    if (edge === "right") return ["topRight", "bottomRight"];
+    return ["topLeft", "topRight"];
 }
 function isCircleDetachedKind(kind, span, cross) {
     if (isUnifiedKind(kind) || kind === "distroIcon") return true;
@@ -153,12 +396,10 @@ function detachedEdgeOffset(edge, options, fontScale, attachedStripDepth) {
     var gap = Math.round((strip > 0 ? 8 : 10) * fs);
     return strip + gap;
 }
-function cornerWrapMetrics(p, width, height, options, fontScale) {
+function cornerWrapMetrics(p, width, height, options, fontScale, sizeOverride) {
     var fs = bounded(fontScale, 1, 0.7, 2);
     var isCava = p.kind === "cava";
-    var size = isCava
-        ? (p.customSize ? p.size : edgeSize(options, p.edge) * bounded(options?.size, 1, 0.6, 1.8))
-        : moduleSize(p, options);
+    var size = Number.isFinite(sizeOverride) ? sizeOverride : moduleSize(p, options);
     var measured = options?.extents?.[p.id];
     var natural = isCava
         ? bounded(options?.cavaWidth, extent("cava", false), 48, 480) * fs
@@ -167,28 +408,28 @@ function cornerWrapMetrics(p, width, height, options, fontScale) {
             : extent(p.kind, false) * fs);
     var designSpan = Math.max((isCava ? 48 : 40) * fs * size, natural * size);
     var thickness = isCava
-        ? Math.max(28 * fs, (bounded(options?.cavaHeight, 22, 10, 30) + 10) * fs, 32 * fs * size)
-        : Math.max(24 * fs, 32 * fs * size);
-    var contentScale = Math.max(0.6, Math.min(1.8, thickness / Math.max(1, 32 * fs)));
-    var inset = 8;
+        ? Math.max(8, (bounded(options?.cavaHeight, 22, 10, 30) + 10) * fs * size)
+        : Math.max(8, 32 * fs * size);
+    var contentScale = Math.max(0.25, Math.min(2.6, thickness / Math.max(1, 32 * fs)));
+    var inset = isCava ? 2 : 8;
     var maxArmH = Math.max(thickness + 16, Math.min(width * 0.46, width - inset * 2));
     var maxArmV = Math.max(thickness + 16, Math.min(height * 0.46, height - inset * 2));
     var baseArc = Math.max(14, bounded(options?.cornerRadius, 28, 12, 64) * 0.72);
-    var halfT = Math.max(12, thickness * 0.5);
-    var endPad = Math.max(8, halfT * 0.55);
+    var halfT = Math.max(4, thickness * 0.5);
+    var endPad = Math.max(4, halfT * 0.55);
     var minLabelArm = p.kind === "timer"
-        ? Math.ceil(halfT + baseArc + endPad * 0.5 + 35 * fs * contentScale + 8)
+        ? Math.max(70, Math.ceil(halfT + baseArc + endPad * 0.5 + 35 * fs * contentScale + 8))
         : (p.kind === "shellUpdate"
-            ? Math.ceil(halfT + baseArc + endPad * 0.5 + 40 * fs * contentScale + 8)
+            ? Math.max(74, Math.ceil(halfT + baseArc + endPad * 0.5 + 40 * fs * contentScale + 8))
             : 0);
-    var minCleanArm = Math.max(76, Math.ceil(thickness + 16 + 26));
+    var minCleanArm = Math.max(Math.round(64 * Math.min(1.0, size)), Math.ceil(thickness + 12 + 20 * Math.min(1.0, size)));
     var rawDesiredArm = isCava
         ? Math.ceil((designSpan + 2 * (endPad + halfT) + (2 - Math.PI * 0.5) * baseArc) * 0.5)
         : Math.round(designSpan * 0.56 + thickness * 0.48);
-    var desiredArm = Math.max(thickness + 28 * fs * size, minCleanArm, minLabelArm, rawDesiredArm);
+    var desiredArm = Math.max(thickness + 24 * fs * size, minCleanArm, minLabelArm, rawDesiredArm);
     var armH = Math.min(maxArmH, desiredArm);
     var armV = Math.min(maxArmV, desiredArm);
-    var arcRadius = Math.max(14, Math.min(Math.min(armH, armV) - thickness * 0.5, baseArc));
+    var arcRadius = Math.max(10, Math.min(Math.min(armH, armV) - thickness * 0.5, baseArc));
     return {
         designSpan: designSpan,
         thickness: thickness,
@@ -200,13 +441,21 @@ function cornerWrapMetrics(p, width, height, options, fontScale) {
 }
 function normalize(list, fallbackEdge) {
     var seen = {};
-    return Array.from(list || []).filter(function(p) {
+    var unique = Array.from(list || []).filter(function(p) {
         if (!p || catalog.indexOf(String(p.kind)) < 0) return false;
         var id = String(p.id || p.kind);
         if (seen[id]) return false;
         seen[id] = true;
         return true;
-    }).slice(0,24).map(function(p) {
+    }).slice(0,24);
+    var occupiedCornerWrapCorners = {};
+    unique.forEach(function(p) {
+        if (p && p.enabled !== false && p.cornerWrap === true && canCornerWrap(p.kind)) {
+            var e = ["top","right","bottom","left"].indexOf(p.edge) >= 0 ? p.edge : fallbackEdge;
+            occupiedCornerWrapCorners[cornerWrapCorner({ edge: e, position: bounded(p.position, 0.5, 0, 1) })] = true;
+        }
+    });
+    return unique.map(function(p) {
         var edge = ["top","right","bottom","left"].indexOf(p.edge)>=0 ? p.edge : fallbackEdge;
         var cornerWrap = p.cornerWrap === true && canCornerWrap(p.kind);
         var detached = !cornerWrap && p.detached === true && canDetachModule(p.kind);
@@ -223,7 +472,23 @@ function normalize(list, fallbackEdge) {
             lockPosition:p.locked === true ? bounded(p.lockPosition,bounded(p.position,.5,0,1),0,1) : undefined,
             lockScale:p.locked === true ? bounded(p.lockScale,1,.01,1) : undefined};
         if (hasExplicitRotation(p.rotation)) item.rotation = normalizeRotation(p.rotation, edge);
-        if (cornerWrap) item.cornerWrap = true;
+        if (!cornerWrap && !isUnifiedKind(item.kind)
+                && !occupiedCornerWrapCorners[cornerWrapCorner(item)]
+                && hasExplicitRotation(p.rotation)
+                && isCornerPosition(item.position, item.alignment)) {
+            var resolvedCorner = resolveCornerEdge(item.edge, item.position, item.rotation);
+            if (resolvedCorner.changed) {
+                item.edge = resolvedCorner.edge;
+                item.position = resolvedCorner.position;
+                if (item.alignment === "start" || item.alignment === "end")
+                    item.alignment = resolvedCorner.startSide ? "start" : "end";
+            }
+        }
+        if (cornerWrap) {
+            item.cornerWrap = true;
+            if (Number.isFinite(Number(p.cornerWrapGroupSize)) && Number(p.cornerWrapGroupSize) > 0)
+                item.cornerWrapGroupSize = bounded(p.cornerWrapGroupSize, 1, 0.6, 1.8);
+        }
         if (detached) item.detached = true;
         return item;
     });
@@ -328,7 +593,9 @@ function moduleSize(placement, options) {
         ? bounded(options?.edgeThickness, 16, 10, 40) : 16;
     var edgeW = edgeThickness(options, placement.edge);
     var inheritedWidth;
-    if (placement.detached === true || placement.cornerWrap === true) {
+    if (placement.cornerWrap === true) {
+        inheritedWidth = cornerWrapInheritedWidth(placement, options, fallbackWidth);
+    } else if (placement.detached === true) {
         inheritedWidth = options?.edgeWidthAffectsModules?.[placement.edge] === false
             ? fallbackWidth
             : (edgeW > 0 ? edgeW : fallbackWidth);
@@ -340,7 +607,13 @@ function moduleSize(placement, options) {
     // Unified launchers must retain a bounded physical hover target when the
     // decorative Edge is 0px. Hiding their icon never removes the hit zone.
     var width = isUnifiedKind(placement.kind) ? Math.max(12,inheritedWidth) : inheritedWidth;
-    return (placement.customSize ? placement.size : edgeSize(options,placement.edge)*width/16)*bounded(options?.size,1,.6,1.8);
+    var sizeBase = placement.customSize ? placement.size
+        : (placement.cornerWrap === true
+            ? (Number.isFinite(Number(placement.cornerWrapGroupSize)) && Number(placement.cornerWrapGroupSize) > 0
+                ? bounded(placement.cornerWrapGroupSize, 1, .6, 1.8)
+                : 1)
+            : edgeSize(options,placement.edge));
+    return (placement.customSize ? sizeBase : sizeBase*width/16)*bounded(options?.size,1,.6,1.8);
 }
 function unifiedSurfacePad(placement, options) {
     return Math.max(4, Math.round(8 * Math.min(1.5, Math.max(0.5, moduleSize(placement, options)))));
@@ -369,8 +642,12 @@ function move(placements, id, x, y, width, height, preferredEdge) {
     return normalize(placements.map(function(p) {
         if (p.id!==id) return p;
         var next = Object.assign({},p,location,{alignment:"free"});
-        if (p.cornerWrap !== true && (hasExplicitRotation(p.rotation) || location.edge!==p.edge))
-            next.rotation = effectiveRotation(p);
+        if (p.cornerWrap !== true) {
+            if (isUnifiedKind(p.kind))
+                next.rotation = defaultRotationForEdge(location.edge);
+            else if (hasExplicitRotation(p.rotation) || location.edge!==p.edge)
+                next.rotation = effectiveRotation(p);
+        }
         return next;
     }),"top");
 }
@@ -547,12 +824,14 @@ function checkedBatch(placements,ids,action,value,width,height,options,fontScale
     function deny(message) {return {placements:placements,rejected:message};}
     if(!items.length)return deny("Select a module first");
     if(items.some(function(p) {return !p;}))return deny("The selection changed. Select the modules again.");
-    var placementKeys=["edge","position","alignment","size","customSize","depth","cornerWrap","detached"];
+    var placementKeys=["edge","position","alignment","size","customSize","depth","cornerWrap","detached","corner"];
     if(placementKeys.indexOf(action)>=0 && items.some(function(p) {return p.locked;}))
         return deny("Unlock every selected module before changing its placement or size");
     // Icon appearance is only adjustable in Settings > Module behavior.
     if(["remove","locked","enabled","joinCorner"].concat(placementKeys).indexOf(action)<0 && action!=="rotation")
         return deny("This action cannot be applied to modules");
+    if(action==="corner" && ["topLeft","topRight","bottomLeft","bottomRight"].indexOf(String(value))<0)
+        return deny("Choose a valid screen corner");
     if(action==="rotation" && items.some(function(p) {return !canRotateModule(p.kind);}))
         return deny("This module type does not support manual rotation");
     if(action==="rotation" && items.some(function(p) {return p.cornerWrap===true && !canRotateCornerWrap(p.kind);}))
@@ -566,6 +845,13 @@ function checkedBatch(placements,ids,action,value,width,height,options,fontScale
     if(action==="joinCorner" && value && items.some(function(p) {
         return p.detached === true || p.cornerWrap === true || !cornerForModule(records,p.id,width,height);
     }))return deny("Every selected module must be beside a corner to connect the group");
+    var occupiedCorners = {};
+    if ((action === "cornerWrap" && value) || action === "edge" || action === "corner") {
+        placements.forEach(function(item) {
+            if (item && item.enabled && item.cornerWrap === true && selection.ids.indexOf(item.id) < 0)
+                occupiedCorners[cornerWrapCorner(item)] = true;
+        });
+    }
     var proposed=placements.filter(function(p) {return action!=="remove" || selection.ids.indexOf(p.id)<0;})
         .map(function(p) {
             if(selection.ids.indexOf(p.id)<0)return p;
@@ -574,9 +860,42 @@ function checkedBatch(placements,ids,action,value,width,height,options,fontScale
                 var own=records.find(function(r) {return r.id===p.id;});
                 return lockPlacement(p,own,!!value,width,height,options,fontScale);
             }
-            var update={};update[action]=value;
-            if(action==="customSize" && value && !p.customSize)update.size=edgeSize(options,p.edge);
-            if(action==="edge" && (hasExplicitRotation(p.rotation) || value!==p.edge))update.rotation=effectiveRotation(p);
+            var update={};
+            if (action !== "corner") update[action] = value;
+            if(action==="customSize") {
+                if (value && !p.customSize) {
+                    update.size = p.cornerWrap === true
+                        ? effectiveCornerWrapScale(p, placements, options)
+                        : edgeSize(options,p.edge);
+                } else if (!value && p.cornerWrap === true) {
+                    update.cornerWrapGroupSize = undefined;
+                }
+            }
+            if(action==="corner") {
+                var chosenTarget = cornerTargetPlacement(String(value));
+                update.edge = chosenTarget.edge;
+                update.position = chosenTarget.position;
+                update.alignment = "free";
+                occupiedCorners[String(value)] = true;
+            }
+            if(action==="edge") {
+                if (hasExplicitRotation(p.rotation) || value !== p.edge)
+                    update.rotation = effectiveRotation(p);
+                if (p.cornerWrap === true) {
+                    var targetEdge = String(value);
+                    var edgeCorners = edgeCornerList(targetEdge);
+                    var preferFirst = bounded(p.position, 0.5, 0, 1) < 0.5;
+                    var primaryCorner = preferFirst ? edgeCorners[0] : edgeCorners[1];
+                    var alternateCorner = preferFirst ? edgeCorners[1] : edgeCorners[0];
+                    var pickedCorner = !occupiedCorners[primaryCorner]
+                        ? primaryCorner
+                        : (!occupiedCorners[alternateCorner] ? alternateCorner : primaryCorner);
+                    update.edge = targetEdge;
+                    update.position = pickedCorner === edgeCorners[0] ? 0.05 : 0.95;
+                    update.alignment = "free";
+                    occupiedCorners[pickedCorner] = true;
+                }
+            }
             if(action==="rotation") {
                 if (p.cornerWrap === true && canRotateCornerWrap(p.kind)) {
                     if (value === "step" || value === undefined || value === null)
@@ -586,6 +905,15 @@ function checkedBatch(placements,ids,action,value,width,height,options,fontScale
                 } else {
                     update.rotation = (value==="step" || value===undefined || value===null)
                         ? nextRotation(effectiveRotation(p)) : normalizeRotation(value,p.edge);
+                    if (!isUnifiedKind(p.kind) && isCornerPosition(p.position, p.alignment)) {
+                        var cornerTarget = resolveCornerEdge(p.edge, p.position, update.rotation);
+                        if (cornerTarget.changed) {
+                            update.edge = cornerTarget.edge;
+                            update.position = cornerTarget.position;
+                            if (p.alignment === "start" || p.alignment === "end")
+                                update.alignment = cornerTarget.startSide ? "start" : "end";
+                        }
+                    }
                 }
             }
             if(action==="cornerWrap") {
@@ -596,8 +924,33 @@ function checkedBatch(placements,ids,action,value,width,height,options,fontScale
                     update.alignment = "free";
                     if (canRotateCornerWrap(p.kind))
                         update.rotation = effectiveRotation(p) === 180 ? 180 : 0;
-                    if (Math.abs((p.position ?? 0.5) - 0.5) < 0.05)
-                        update.position = 0.05;
+                    if (Math.abs((p.position ?? 0.5) - 0.5) < 0.05) {
+                        var chosenEdge = p.edge;
+                        var chosenPos = 0.05;
+                        var edgeCandidates = [
+                            { edge: p.edge, position: 0.05 },
+                            { edge: p.edge, position: 0.95 },
+                            { edge: "top", position: 0.05 },
+                            { edge: "top", position: 0.95 },
+                            { edge: "bottom", position: 0.05 },
+                            { edge: "bottom", position: 0.95 }
+                        ];
+                        for (var cIdx = 0; cIdx < edgeCandidates.length; cIdx++) {
+                            var cand = edgeCandidates[cIdx];
+                            var candCorner = cornerWrapCorner(cand);
+                            if (!occupiedCorners[candCorner]) {
+                                chosenEdge = cand.edge;
+                                chosenPos = cand.position;
+                                break;
+                            }
+                        }
+                        if (chosenEdge !== p.edge) update.edge = chosenEdge;
+                        update.position = chosenPos;
+                    }
+                    occupiedCorners[cornerWrapCorner({
+                        edge: update.edge || p.edge,
+                        position: update.position !== undefined ? update.position : p.position
+                    })] = true;
                 } else {
                     update.cornerWrap = false;
                 }
@@ -738,9 +1091,17 @@ function stripDepth(placements, edge, options, fontScale) {
         return Math.max(depth,crossBase*p.depth+16);
     },0);
 }
-function modulePaintedDepth(p, edge, options, fontScale, thickness, minimum, attachedStripDepth) {
+function cornerWrapBandDepth(p, options, fontScale, minimum, sizeOverride) {
+    var fs = bounded(fontScale, 1, 0.7, 2);
+    var size = Number.isFinite(sizeOverride) ? sizeOverride : moduleSize(p, options);
+    if (size <= 0) return 0;
+    if (p.kind === "cava")
+        return Math.max(12, Math.round(bounded(options?.cavaHeight, 22, 10, 30) * fs * size + 6));
+    return Math.max(minimum || 0, Math.max(8, 32 * fs * size) + 16);
+}
+function modulePaintedDepth(p, edge, options, fontScale, thickness, minimum, attachedStripDepth, sizeOverride) {
     if (!p || !p.enabled) return 0;
-    var size = moduleSize(p, options);
+    var size = Number.isFinite(sizeOverride) ? sizeOverride : moduleSize(p, options);
     if (size <= 0) return 0;
     var measured = options?.extents?.[p.id];
     if (!options?.editing && Number.isFinite(measured) && measured <= 0) return 0;
@@ -748,8 +1109,7 @@ function modulePaintedDepth(p, edge, options, fontScale, thickness, minimum, att
     if (p.cornerWrap === true) {
         var ce = cornerEdges(cornerWrapCorner(p));
         if (ce.horizontal !== edge && ce.vertical !== edge) return 0;
-        var cwThickness = Math.max(24 * fs, 32 * fs * size);
-        return Math.ceil(Math.max(minimum || 0, cwThickness + 16));
+        return Math.ceil(cornerWrapBandDepth(p, options, fontScale, minimum, size));
     }
     if (p.edge !== edge) return 0;
     var unified = isUnifiedKind(p.kind);
@@ -782,6 +1142,7 @@ function edgeInsetsForModules(placements, options, fontScale, thickness, minimum
     if (placements.length && options?._widthFrame)
         return Object.assign({},reservation ? options._widthFrame.reservationInsets : options._widthFrame.paintInsets);
     var insets = {};
+    var wrapSizes = reservation ? resolveCornerWrapSizes(placements, options) : {};
     ["top","right","bottom","left"].forEach(function(edge) {
         insets[edge]=edgeThickness(options,edge,thickness);
         // A configured 0px Edge has no continuous paint strip. Its modules
@@ -807,7 +1168,7 @@ function edgeInsetsForModules(placements, options, fontScale, thickness, minimum
             insets[edge] = Math.max(insets[edge],minimum,stripDepth(enabled,edge,options,fontScale));
         if (reservation) {
             placements.forEach(function(p) {
-                var painted = modulePaintedDepth(p, edge, options, fontScale, thickness, minimum, attachedStrip);
+                var painted = modulePaintedDepth(p, edge, options, fontScale, thickness, minimum, attachedStrip, wrapSizes[p.id]);
                 if (painted > insets[edge])
                     insets[edge] = painted;
             });
@@ -821,8 +1182,9 @@ function localSurfaces(records, width, height, options, fontScale, minimum) {
     records.forEach(function(p) {
         if (p.cornerWrap !== true) return;
         var ce = cornerEdges(p.wrapCorner || cornerWrapCorner(p));
-        var pad = 8;
-        var bandDepth = Math.max(minimum || 0, (p.wrapThickness || 32) + pad * 2);
+        var isCava = p.kind === "cava";
+        var pad = isCava ? 2 : 8;
+        var bandDepth = cornerWrapBandDepth(p, options, fontScale, minimum, p.cornerWrapSize);
         var armH = (p.wrapArmH || 96) + pad * 2;
         var armV = (p.wrapArmV || 96) + pad * 2;
         var hSurface = ce.horizontal === "top"
@@ -855,10 +1217,16 @@ function localSurfaces(records, width, height, options, fontScale, minimum) {
         // multiplier. Derive the paint extent from the packed foreground so
         // resizing unified launchers scales both their icon and local bump.
         var unified = isUnifiedKind(p.kind);
-        var pad = unified ? unifiedSurfacePad(p, options) : 8;
+        var isCava = p.kind === "cava";
+        var fs = bounded(fontScale, 1, 0.7, 2);
+        var pad = isCava ? 2 : (unified ? unifiedSurfacePad(p, options) : 8);
         var protrude = Math.max(0, Number(p.protrudeOffset) || 0);
-        var cross = p.vertical ? p.content.width : p.content.height;
-        var edgeFloor = unified ? edgeThickness(options, p.edge) + 4 : minimum;
+        var rawCross = p.vertical ? p.content.width : p.content.height;
+        var cross = isCava
+            ? Math.min(rawCross, (bounded(options?.cavaHeight, 22, 10, 30) + 4) * fs * moduleSize(p, options))
+            : rawCross;
+        var edgeFloor = unified ? edgeThickness(options, p.edge) + 4
+            : (isCava ? Math.max(edgeThickness(options, p.edge), 12) : minimum);
         var depth = Math.max(edgeFloor, cross + pad * 2) + protrude;
         var surface = p.edge==="top" ? {x:p.along-pad,y:-50,width:p.span+pad*2,height:depth+50}
             : p.edge==="bottom" ? {x:p.along-pad,y:height-depth,width:p.span+pad*2,height:depth+50}
@@ -1141,10 +1509,12 @@ function packCornerWrapRecords(placements, width, height, options, fontScale, bo
         var corner = cornerWrapCorner(p);
         cornerOwners[corner] = (cornerOwners[corner] || 0) + 1;
     });
+    var wrapSizes = resolveCornerWrapSizes(cornerList, options);
     cornerList.forEach(function(p) {
         var corner = cornerWrapCorner(p);
         var ce = cornerEdges(corner);
-        var m = cornerWrapMetrics(p, width, height, options, fontScale);
+        var wrapSize = wrapSizes[p.id];
+        var m = cornerWrapMetrics(p, width, height, options, fontScale, wrapSize);
         var inset = m.inset, armH = m.armH, armV = m.armV, thickness = m.thickness;
         var content, hRect, vRect;
         if (corner === "topLeft") {
@@ -1167,6 +1537,7 @@ function packCornerWrapRecords(placements, width, height, options, fontScale, bo
         var horizontal = p.edge === "top" || p.edge === "bottom";
         var rec = Object.assign({}, p, {
             cornerWrap: true,
+            cornerWrapSize: wrapSize,
             wrapCorner: corner,
             wrapThickness: thickness,
             wrapArmH: armH,
@@ -1677,4 +2048,39 @@ function alignEdgeModules(placements, targetIds, fallbackEdge, mode, width, heig
     if (failures.length)
         return deny(failures[0]);
     return { placements: proposed, rejected: "" };
+}
+function edgebarAnchorPlacement(options, outputName, kind, width, height, cornerSize) {
+    var fallbackEdge = "bottom";
+    var fallbackPos = kind === "notificationActivity" ? 1.0 : 0.0;
+    var list = resolve(options, outputName, []);
+    var entry = list.find(function(p) { return p && p.kind === kind; });
+    var rawEdge = entry && ["top", "right", "bottom", "left"].indexOf(entry.edge) >= 0
+        ? entry.edge : fallbackEdge;
+    var rawPos = entry
+        ? (entry.alignment === "start" ? 0.0
+            : (entry.alignment === "end" ? 1.0 : bounded(entry.position, fallbackPos, 0, 1)))
+        : fallbackPos;
+    var corner = cornerWrapCorner({ edge: rawEdge, position: rawPos });
+    var ce = cornerEdges(corner);
+    var edge = ce.vertical;
+    var pos = ce.vStart ? 0.0 : 1.0;
+    var w = Math.max(1, Number(width) || 1920);
+    var h = Math.max(1, Number(height) || 1080);
+    var depth = bounded(cornerSize, 14, 8, 48);
+    var rw = depth;
+    var rh = depth;
+    var rx = ce.hStart ? 0 : Math.max(0, w - rw);
+    var ry = ce.vStart ? 0 : Math.max(0, h - rh);
+    return {
+        edge: edge,
+        position: pos,
+        corner: corner,
+        tangentEdge: ce.vStart ? "start" : "end",
+        x: rx,
+        y: ry,
+        width: rw,
+        height: rh,
+        joinEdge: ce.horizontal,
+        niriCorner: corner
+    };
 }

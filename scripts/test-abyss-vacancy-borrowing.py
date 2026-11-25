@@ -174,6 +174,48 @@ assert.equal(r.out.rightPanel.along,268);
 assert.equal(r.out.rightPanel.span,661);
 assert.equal(r.out.rightPanel.along+r.out.rightPanel.span,929);
 
+// 4. Differing panel padding (Sidebar=20 vs Edgebar=14) must STILL align outer
+// panel top/bottom edges cleanly (along=250) and trimCoplanarOverlap must keep
+// the combined SDF top contour flat without smooth-union contour bulge.
+const diffPadSidebar=m("leftPanel","featureSidebar","left",1,{visible:true,along:250,inward:468,span:700,depth:460,content:{x:498,y:270,width:420,height:660}});
+diffPadSidebar.request.padding=20;
+const diffPadNotes=m("styledPopup0","quickNotes","left",2,{visible:true,along:612,inward:0,span:458,depth:478,content:{x:24,y:626,width:450,height:430}});
+diffPadNotes.request.padding=14;
+r=run([diffPadSidebar,diffPadNotes]);
+assert.deepEqual(borrowers(r.out),["styledPopup0"]);
+assert.equal(r.out.styledPopup0.along,250,"outer Edgebar surface top must match inner Sidebar top even when padding differs");
+assert.equal(r.out.styledPopup0.span,820);
+
+const diffIN={left:10,right:10,top:56,bottom:10};
+const pSide20=placedPanel(1920,1200,diffIN,"left",250,700,460,1,20,[],false,r.out.leftPanel);
+const pNotes14=placedPanel(1920,1200,diffIN,"left",612,458,478,1,14,[],false,r.out.styledPopup0);
+assert.equal(pSide20.surface.y,250);
+assert.equal(pNotes14.surface.y,250);
+const trimmed=trimCoplanarOverlap([pSide20,pNotes14],30);
+assert(trimmed[1].surface.y >= 280,"expanded Edgebar start seam must recede past softness into Sidebar");
+function sdfEval(rects,px,py){
+ let d=1e6;
+ for(const rc of rects){
+  if(rc.width<=0||rc.height<=0)continue;
+  const rad=Math.min(29,Math.min(rc.width,rc.height)*0.5);
+  const qx=Math.abs(px-rc.x-rc.width*0.5)-rc.width*0.5+rad;
+  const qy=Math.abs(py-rc.y-rc.height*0.5)-rc.height*0.5+rad;
+  const b=Math.hypot(Math.max(qx,0),Math.max(qy,0))+Math.min(Math.max(qx,qy),0)-rad;
+  const h=Math.max(30-Math.abs(d-b),0)/30;
+  d=Math.min(d,b)-h*h*30*0.25;
+ }
+ return d;
+}
+function topContourY(rects,x){
+ let lo=180,hi=320;
+ for(let i=0;i<30;i++){const mid=(lo+hi)/2;if(sdfEval(rects,x,mid)<0)hi=mid;else lo=mid;}
+ return (lo+hi)/2;
+}
+for(const x of [40,180,320,450,488,530,700,880]){
+ const ty=topContourY([trimmed[0].surface,trimmed[1].surface],x);
+ assert(Math.abs(ty-250)<0.05,`flat top contour expected at x=${x}, got ${ty}`);
+}
+
 console.log("PASS: two semantic pairs borrow independently without collision");
 """
 raise SystemExit(subprocess.run(["node","-e",program],cwd=ROOT).returncode)

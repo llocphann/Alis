@@ -11,7 +11,7 @@ environment {
     XDG_CURRENT_DESKTOP "niri"
 
     // Use Plasma's app-menu prefix so kbuildsycoca6 indexes .desktop files
-    // and Dolphin/Nautilus "Open With" menus work correctly.
+    // and Alis / KDE "Open With" menus work correctly.
     XDG_MENU_PREFIX "plasma-"
 
     // Force Qt apps to use Wayland natively (no XWayland fallback).

@@ -260,8 +260,11 @@ void main() {
     float blurRadius=mix(effects.x,contentMaterial.y,bodyBlend);
     vec4 tint=vec4(surface.rgb/max(surface.a,0.0001)*opacity,opacity);
     vec4 body=mix(tint,raised*opacity,depth*0.38*material.w);
+    vec2 normal=vec2(0.0);
+    bool haveNormal=false;
     if(effects.z>0.5 && coverage>0.0) {
-        vec2 normal=gradient/max(0.0001,length(gradient));
+        normal=gradient/max(0.0001,length(gradient));
+        haveNormal=true;
         vec2 uv=qt_TexCoord0+normal*effects.y*exp(-abs(d)/30.0)/viewport.xy;
         uv=wallpaperCrop.xy+clamp(uv,0.0,1.0)*wallpaperCrop.zw;
         vec2 stepUv=blurRadius/viewport.xy*wallpaperCrop.zw;
@@ -277,24 +280,32 @@ void main() {
         // pixels are sampled. Missing/animated wallpaper uses the color body.
         body.rgb=mix(body.rgb,glass*opacity,0.075+depth*0.07);
     }
-    vec2 normal=gradient/max(0.0001,length(gradient));
-    float facing=clamp(dot(normal,normalize(vec2(-0.45,-0.85)))*0.5+0.5,0.0,1.0);
-    float reflection=exp(-abs(d)*0.19)*(0.10+0.40*pow(facing,3.0))*material.w;
-    float spec=exp(-abs(d)*0.8)*pow(facing,5.0)*material.w;
-    body.rgb=mix(body.rgb,raised.rgb*body.a,reflection);
-    body.rgb+=rim.rgb*body.a*(spec*0.65+reflection*0.32);
-    // QColor uniforms arrive premultiplied. The local specular catch uses the
-    // same light color while recovering its brightness at the liquid contact.
-    body.rgb+=rim.rgb/max(rim.a,0.0001)*body.a*interaction.y*exp(-abs(d)/5.0)*material.w;
-    body.rgb*=1.0-exp(-max(-d,0.0)*0.10)*(1.0-facing)*0.18*material.w;
+    if(material.w>0.0001 && coverage>0.0) {
+        if(!haveNormal) normal=gradient/max(0.0001,length(gradient));
+        float facing=clamp(dot(normal,normalize(vec2(-0.45,-0.85)))*0.5+0.5,0.0,1.0);
+        float reflection=exp(-abs(d)*0.19)*(0.10+0.40*pow(facing,3.0))*material.w;
+        float spec=exp(-abs(d)*0.8)*pow(facing,5.0)*material.w;
+        body.rgb=mix(body.rgb,raised.rgb*body.a,reflection);
+        body.rgb+=rim.rgb*body.a*(spec*0.65+reflection*0.32);
+        // QColor uniforms arrive premultiplied. The local specular catch uses the
+        // same light color while recovering its brightness at the liquid contact.
+        if(interaction.y>0.0001)
+            body.rgb+=rim.rgb/max(rim.a,0.0001)*body.a*interaction.y*exp(-abs(d)/5.0)*material.w;
+        body.rgb*=1.0-exp(-max(-d,0.0)*0.10)*(1.0-facing)*0.18*material.w;
+    }
     // A thin, broken foam band follows the same crest distance. Its phase is
     // driven by crest motion, not a wall-clock uniform, so sleeping stays static.
-    float breaker=wave.y*waveMaterial.z*exp(-abs(d+1.2)/2.8);
-    float lace=0.6+0.4*sin((p.x+p.y)*0.7+wave.x*0.12)*sin((p.x-p.y)*0.37);
-    body.rgb=mix(body.rgb,vec3(0.86,0.97,1.0)*body.a,clamp(breaker*lace,0.0,0.85));
+    if(wave.y>0.0001 && waveMaterial.z>0.5 && coverage>0.0) {
+        float breaker=wave.y*waveMaterial.z*exp(-abs(d+1.2)/2.8);
+        float lace=0.6+0.4*sin((p.x+p.y)*0.7+wave.x*0.12)*sin((p.x-p.y)*0.37);
+        body.rgb=mix(body.rgb,vec3(0.86,0.97,1.0)*body.a,clamp(breaker*lace,0.0,0.85));
+    }
     body.a=opacity;
-    vec4 outside=shadow*exp(-max(d,0.0)/5.0)+glow*exp(-max(d,0.0)/7.0);
-    outside*=smoothstep(-aa,aa,d)*(1.0-smoothstep(16.0,24.0,d));
+    vec4 outside=vec4(0.0);
+    if(d>-aa && (shadow.a>0.0001 || glow.a>0.0001)) {
+        outside=shadow*exp(-max(d,0.0)/5.0)+glow*exp(-max(d,0.0)/7.0);
+        outside*=smoothstep(-aa,aa,d)*(1.0-smoothstep(16.0,24.0,d));
+    }
     float alpha=coverage*body.a;
     fragColor=(body*coverage+outside*(1.0-alpha))*qt_Opacity;
 }

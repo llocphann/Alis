@@ -400,4 +400,85 @@ try:
 except ValueError as error:
     assert "Oversized package file" in str(error)
 
+# Base-v2 + per-plugin GitHub release tarball + SHA256SUMS + omission of khal/curl.
+with tempfile.TemporaryDirectory(prefix="alis-base-v2-mgr-") as tmp2:
+    b2 = pathlib.Path(tmp2)
+    home2 = b2 / "home"
+    data2 = b2 / "home_parent"
+    real_data2 = data2 / "alis-intergration"
+    res_base = manager.operate("install-base", real_data2, pathlib.Path(ROOT))
+    assert res_base["ok"] and (real_data2 / "current" / "AlisSession.qml").is_file()
+    assert not (real_data2 / "plugins").exists()
+    assert not (real_data2 / "current" / "plugins").exists()
+    insp_base = manager.discovery.inspect(ROOT, data2)
+    assert insp_base["layout"] == "base-v2" and insp_base["installedPluginIds"] == []
+    assert "khal" not in insp_base["runtimeTools"] and "curl" not in insp_base["runtimeTools"]
+
+    buf_nx = io.BytesIO()
+    with tarfile.open(fileobj=buf_nx, mode="w:gz") as th:
+        for arc, data in (
+            ("plugins/nexus/modules/settings/NexusThemeSettings.qml", b"import QtQuick\nItem {}\n"),
+            ("plugins/nexus/plugin-manifest.json", json.dumps({"id": "nexus", "sourceSha": "e" * 40}).encode()),
+        ):
+            info = tarfile.TarInfo(arc)
+            info.size = len(data)
+            th.addfile(info, io.BytesIO(data))
+    nx_bytes = buf_nx.getvalue()
+    nx_sha = manager.sha256(nx_bytes)
+    release_doc = json.dumps({
+        "assets": [
+            {"name": "alis-intergration-plugin-nexus.tar.gz", "browser_download_url": "https://github.com/llocphann/Alis-Intergration/releases/download/v1/alis-intergration-plugin-nexus.tar.gz"},
+            {"name": "SHA256SUMS", "browser_download_url": "https://github.com/llocphann/Alis-Intergration/releases/download/v1/SHA256SUMS"},
+        ]
+    }).encode("utf-8")
+    requested_urls = []
+
+    def fake_rel_req(url, limit):
+        requested_urls.append(url)
+        if url == manager.RELEASES_API:
+            return release_doc
+        if url.endswith("alis-intergration-plugin-nexus.tar.gz"):
+            return nx_bytes
+        if url.endswith("SHA256SUMS"):
+            return f"{nx_sha}  alis-intergration-plugin-nexus.tar.gz\n".encode("utf-8")
+        raise AssertionError(f"Unexpected URL fetched: {url}")
+
+    with patch.object(manager, "request_bytes", side_effect=fake_rel_req):
+        res_nx = manager.operate("install-plugin", real_data2, pathlib.Path(ROOT), plugin_id="nexus")
+    assert res_nx["ok"] and res_nx["installedPluginIds"] == ["nexus"]
+    assert all("tlp" not in u and "thinkfan" not in u and "spaced_repetition" not in u for u in requested_urls)
+    assert (real_data2 / "plugins" / "nexus" / "modules/settings/NexusThemeSettings.qml").is_file()
+    assert not (real_data2 / "plugins" / "tlp").exists()
+
+    # Corrupted release checksum must be rejected before extracting.
+    def fake_bad_checksum(url, limit):
+        if url == manager.RELEASES_API:
+            return release_doc
+        if url.endswith("SHA256SUMS"):
+            return f"{'0' * 64}  alis-intergration-plugin-nexus.tar.gz\n".encode("utf-8")
+        return nx_bytes
+
+    with patch.object(manager, "request_bytes", side_effect=fake_bad_checksum):
+        try:
+            manager._try_github_release_plugin("nexus")
+            raise AssertionError("Bad checksum release tarball was accepted")
+        except ValueError as err:
+            assert "checksum mismatch" in str(err).lower()
+
+    # Release missing SHA256SUMS must be rejected rather than silently extracted unverified.
+    no_sums_doc = json.dumps({
+        "assets": [
+            {"name": "alis-intergration-plugin-nexus.tar.gz", "browser_download_url": "https://github.com/llocphann/Alis-Intergration/releases/download/v1/alis-intergration-plugin-nexus.tar.gz"},
+        ]
+    }).encode("utf-8")
+    with patch.object(manager, "request_bytes", side_effect=lambda url, limit: no_sums_doc if url == manager.RELEASES_API else nx_bytes):
+        assert manager._try_github_release_plugin("nexus") is None, "Release asset without SHA256SUMS must not be accepted"
+
+    # Reusing already-intact installed plugin must succeed offline (e.g. `./setup integrations install <id>` after UI install).
+    def fail_offline(*_a, **_kw):
+        raise OSError("offline")
+    res_reuse = manager.operate("install-plugin", real_data2, pathlib.Path(ROOT), plugin_id="nexus",
+                                revision_fetch=fail_offline, archive_fetch=fail_offline, reuse_installed=True)
+    assert res_reuse["ok"] and "nexus" in res_reuse["installedPluginIds"]
+
 print("ALIS_INTERGRATION_MANAGER_PASS explicit install/update/rollback/remove, immutable SHA, package validation, no shell/privilege")

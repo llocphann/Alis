@@ -69,9 +69,10 @@ ContentPage {
         SettingsGroup {
             id: scalingGroup
 
-            // iRiS Wallpaper Hero preview + pan/zoom + quick Change/Random actions
+            // Balanced 2-column Studio Wallpaper Card (true screen aspect ratio, uncropped at 1.0x)
             Rectangle {
                 id: panCard
+                objectName: "wallpaperStudioCard"
                 Layout.fillWidth: true
                 Layout.fillHeight: false
                 Layout.minimumWidth: 0
@@ -79,354 +80,442 @@ ContentPage {
 
                 readonly property var _screen: GlobalStates.primaryScreen ?? Quickshell.screens[0] ?? null
                 readonly property real screenAspect: _screen ? (_screen.width / Math.max(1, _screen.height)) : (16 / 9)
-                readonly property bool isFillMode: (Config.options?.background?.fillMode ?? "fill") === "fill"
+                readonly property string currentFillMode: Config.options?.background?.fillMode ?? "fill"
+                readonly property bool isFillMode: currentFillMode === "fill"
                 readonly property real currentPanX: Config.options?.background?.pan?.x ?? 0.0
                 readonly property real currentPanY: Config.options?.background?.pan?.y ?? 0.0
                 readonly property real currentPanZoom: Math.max(1.0, Math.min(3.0, Config.options?.background?.pan?.zoom ?? 1.0))
                 readonly property bool hasPan: currentPanX !== 0.0 || currentPanY !== 0.0 || currentPanZoom !== 1.0
-                readonly property real targetViewportHeight: Math.round(204 * Appearance.fontSizeScale)
+                readonly property bool twoCol: panCard.width >= Math.round(680 * Appearance.fontSizeScale)
+                readonly property real innerContentWidth: Math.max(240, panCard.width - 24)
+                readonly property real maxPreviewWidth: twoCol
+                    ? Math.round((innerContentWidth - 16) * 0.49)
+                    : Math.min(innerContentWidth, Math.round(215 * screenAspect))
+                readonly property real previewTargetHeight: Math.max(
+                    148,
+                    Math.min(220, Math.round(maxPreviewWidth / Math.max(1.0, screenAspect)))
+                )
+                readonly property real previewTargetWidth: Math.min(
+                    maxPreviewWidth,
+                    Math.round(previewTargetHeight * screenAspect)
+                )
 
-                implicitHeight: panCardContent.implicitHeight + 20
+                implicitHeight: panStudioGrid.implicitHeight + 24
                 radius: SettingsMaterialPreset.cardRadius
                 color: SettingsMaterialPreset.cardColor
                 border.width: 1
                 border.color: SettingsMaterialPreset.cardBorderColor
                 clip: true
 
-                ColumnLayout {
-                    id: panCardContent
+                GridLayout {
+                    id: panStudioGrid
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.top: parent.top
-                    anchors.margins: 10
-                    spacing: 8
+                    anchors.margins: 12
+                    columns: panCard.twoCol ? 2 : 1
+                    columnSpacing: 16
+                    rowSpacing: 12
 
-                    RowLayout {
-                        id: panHeaderRow
-                        Layout.fillWidth: true
+                    // Left column: aspect-ratio-locked interactive wallpaper viewport
+                    ColumnLayout {
+                        id: panPreviewColumn
+                        Layout.fillWidth: !panCard.twoCol
+                        Layout.preferredWidth: panCard.twoCol ? panCard.previewTargetWidth : -1
+                        Layout.minimumWidth: panCard.twoCol ? panCard.previewTargetWidth : 0
+                        Layout.maximumWidth: panCard.twoCol ? panCard.previewTargetWidth : 16777215
+                        Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
                         spacing: 6
 
-                        MaterialSymbol {
-                            text: "open_with"
-                            iconSize: 16
-                            color: Appearance.colors.colPrimary
-                        }
-
-                        StyledText {
-                            Layout.minimumWidth: 0
-                            text: Translation.tr("Wallpaper position")
-                            font.pixelSize: Appearance.font.pixelSize.small
-                            font.weight: Font.Medium
-                            color: Appearance.colors.colOnLayer1
-                        }
-
-                        MaterialSymbol {
-                            text: "info"
-                            iconSize: Appearance.font.pixelSize.large
-                            color: Appearance.colors.colSubtext
-                            MouseArea {
-                                id: panInfoMouseArea
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.WhatsThisCursor
-                                StyledToolTip {
-                                    extraVisibleCondition: false
-                                    alternativeVisibleCondition: panInfoMouseArea.containsMouse
-                                    text: Translation.tr("Drag to reposition, scroll to zoom.\nWhen repositioned or zoomed, the shell renders the wallpaper internally.")
-                                }
-                            }
-                        }
-
-                        Item { Layout.fillWidth: true }
-
-                        StyledText {
-                            Layout.minimumWidth: 0
-                            elide: Text.ElideRight
-                            text: {
-                                if (!panCard.hasPan) return Translation.tr("Centered, no zoom")
-                                const parts = []
-                                const x = Math.round(panCard.currentPanX * 100)
-                                const y = Math.round(panCard.currentPanY * 100)
-                                if (panCard.currentPanX !== 0.0 || panCard.currentPanY !== 0.0)
-                                    parts.push(Translation.tr("%1%, %2%").arg(x).arg(y))
-                                if (panCard.currentPanZoom !== 1.0)
-                                    parts.push(panCard.currentPanZoom.toFixed(1) + "×")
-                                return parts.join(" · ")
-                            }
-                            color: Appearance.colors.colSubtext
-                            font.pixelSize: Appearance.font.pixelSize.smaller
-                        }
-
-                        RippleButton {
-                            visible: panCard.hasPan
-                            implicitWidth: 24
-                            implicitHeight: 24
-                            buttonRadius: Appearance.rounding.full
-                            colBackground: "transparent"
-                            colBackgroundHover: Appearance.colors.colLayer2Hover
-                            onClicked: {
-                                Config.setNestedValue("background.pan.x", 0)
-                                Config.setNestedValue("background.pan.y", 0)
-                                Config.setNestedValue("background.pan.zoom", 1.0)
-                            }
-                            contentItem: MaterialSymbol {
-                                anchors.centerIn: parent
-                                text: "restart_alt"
-                                iconSize: 14
-                                color: Appearance.colors.colSubtext
-                            }
-                            StyledToolTip { text: Translation.tr("Reset position and zoom") }
-                        }
-                    }
-
-                    Rectangle {
-                        id: panViewport
-                        Layout.fillWidth: true
-                        implicitHeight: panCard.targetViewportHeight
-                        Layout.preferredHeight: implicitHeight
-                        radius: SettingsMaterialPreset.groupRadius
-                        color: Appearance.colors.colLayer0
-                        clip: true
-                        border.width: panDragArea.drag.active ? 2 : 0
-                        border.color: Appearance.colors.colPrimary
-
-                        Behavior on border.width {
-                            enabled: Appearance.animationsEnabled
-                            animation: NumberAnimation { duration: 120 }
-                        }
-
-                        StyledImage {
-                            id: panWallpaperImage
-                            readonly property string wpPath: {
-                                if (WallpaperListener.multiMonitorEnabled && panCard._screen) {
-                                    const _monName = WallpaperListener.getMonitorName(panCard._screen)
-                                    const _monData = WallpaperListener.effectivePerMonitor[_monName]
-                                    if (_monData && _monData.path) return _monData.path
-                                }
-                                return Config.options?.background?.wallpaperPath ?? ""
-                            }
-                            readonly property bool isVideo: WallpaperListener.isVideoPath(wpPath)
-                            readonly property string previewPath: isVideo
-                                ? Wallpapers.getVideoFirstFramePath(wpPath) : wpPath
-                            source: root.screensTaskActive && previewPath
-                                ? (previewPath.startsWith("file://") ? previewPath : "file://" + previewPath)
-                                : ""
-                            sourceSize.width: 1200
-                            cache: false
-                            fillMode: Image.Stretch
-                            visible: status === Image.Ready
-
-                            Component.onCompleted: {
-                                if (root.screensTaskActive && isVideo)
-                                    Wallpapers.ensureVideoFirstFrame(wpPath)
-                            }
-                            onWpPathChanged: {
-                                if (root.screensTaskActive && isVideo)
-                                    Wallpapers.ensureVideoFirstFrame(wpPath)
-                            }
-
-                            readonly property real imgNatW: implicitWidth > 0 ? implicitWidth : 1
-                            readonly property real imgNatH: implicitHeight > 0 ? implicitHeight : 1
-                            readonly property real scaleToFill: Math.max(
-                                panViewport.width / imgNatW,
-                                panViewport.height / imgNatH
-                            ) * panCard.currentPanZoom
-                            readonly property real scaledW: imgNatW * scaleToFill
-                            readonly property real scaledH: imgNatH * scaleToFill
-                            readonly property real excessX: Math.max(0, scaledW - panViewport.width)
-                            readonly property real excessY: Math.max(0, scaledH - panViewport.height)
-
-                            width: scaledW
-                            height: scaledH
-
-                            readonly property real restX: -(excessX / 2) + (panCard.currentPanX * excessX / 2)
-                            readonly property real restY: -(excessY / 2) + (panCard.currentPanY * excessY / 2)
-
-                            x: panDragArea.drag.active ? x : restX
-                            y: panDragArea.drag.active ? y : restY
-
-                            Behavior on x {
-                                enabled: Appearance.animationsEnabled && !panDragArea.drag.active
-                                animation: NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
-                            }
-                            Behavior on y {
-                                enabled: Appearance.animationsEnabled && !panDragArea.drag.active
-                                animation: NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
-                            }
-                            Behavior on width {
-                                enabled: Appearance.animationsEnabled && !panDragArea.drag.active
-                                animation: NumberAnimation { duration: 250; easing.type: Easing.OutCubic }
-                            }
-                            Behavior on height {
-                                enabled: Appearance.animationsEnabled && !panDragArea.drag.active
-                                animation: NumberAnimation { duration: 250; easing.type: Easing.OutCubic }
-                            }
-                        }
-
-                        StyledText {
-                            anchors.centerIn: parent
-                            visible: !panWallpaperImage.visible
-                            text: Translation.tr("No wallpaper")
-                            color: Appearance.colors.colSubtext
-                            font.pixelSize: Appearance.font.pixelSize.small
-                        }
-
-                        MouseArea {
-                            id: panDragArea
-                            anchors.fill: parent
-                            drag.target: panWallpaperImage
-                            drag.axis: Drag.XAndYAxis
-                            drag.minimumX: -(panWallpaperImage.excessX)
-                            drag.maximumX: 0
-                            drag.minimumY: -(panWallpaperImage.excessY)
-                            drag.maximumY: 0
-                            cursorShape: drag.active ? Qt.ClosedHandCursor : Qt.OpenHandCursor
-                            enabled: panWallpaperImage.visible && panCard.isFillMode
-                            scrollGestureEnabled: false
-
-                            onReleased: {
-                                if (!panWallpaperImage.visible) return
-                                const ex = panWallpaperImage.excessX
-                                const ey = panWallpaperImage.excessY
-                                const newPanX = ex > 0 ? Math.max(-1, Math.min(1, (panWallpaperImage.x + ex / 2) / (ex / 2))) : 0
-                                const newPanY = ey > 0 ? Math.max(-1, Math.min(1, (panWallpaperImage.y + ey / 2) / (ey / 2))) : 0
-                                Config.setNestedValue("background.pan.x", Math.round(newPanX * 100) / 100)
-                                Config.setNestedValue("background.pan.y", Math.round(newPanY * 100) / 100)
-                            }
-
-                            onWheel: wheel => {
-                                if (!panCard.isFillMode) return
-                                const delta = wheel.angleDelta.y / 120
-                                const newZoom = Math.max(1.0, Math.min(3.0, Math.round((panCard.currentPanZoom + delta * 0.1) * 100) / 100))
-                                Config.setNestedValue("background.pan.zoom", newZoom)
-                            }
-                        }
-
                         Rectangle {
-                            anchors { top: parent.top; right: parent.right; margins: 8 }
-                            width: zoomBadgeLabel.implicitWidth + 12
-                            height: zoomBadgeLabel.implicitHeight + 6
+                            id: panViewport
+                            objectName: "wallpaperPanViewport"
+                            Layout.preferredWidth: panCard.previewTargetWidth
+                            Layout.minimumWidth: panCard.previewTargetWidth
+                            Layout.maximumWidth: panCard.previewTargetWidth
+                            Layout.preferredHeight: panCard.previewTargetHeight
+                            Layout.alignment: Qt.AlignHCenter
+                            implicitWidth: panCard.previewTargetWidth
+                            implicitHeight: panCard.previewTargetHeight
                             radius: SettingsMaterialPreset.groupRadius
-                            color: Qt.rgba(0, 0, 0, 0.6)
-                            visible: panCard.currentPanZoom !== 1.0
+                            color: Appearance.colors.colLayer0
+                            clip: true
+                            border.width: panDragArea.drag.active ? 2 : 1
+                            border.color: panDragArea.drag.active
+                                ? Appearance.colors.colPrimary
+                                : SettingsMaterialPreset.groupBorderColor
+
+                            Behavior on border.width {
+                                enabled: Appearance.animationsEnabled
+                                animation: NumberAnimation { duration: 120 }
+                            }
+
+                            StyledImage {
+                                id: panWallpaperImage
+                                readonly property string wpPath: {
+                                    if (WallpaperListener.multiMonitorEnabled && panCard._screen) {
+                                        const _monName = WallpaperListener.getMonitorName(panCard._screen)
+                                        const _monData = WallpaperListener.effectivePerMonitor[_monName]
+                                        if (_monData && _monData.path) return _monData.path
+                                    }
+                                    return Config.options?.background?.wallpaperPath ?? ""
+                                }
+                                readonly property bool isVideo: WallpaperListener.isVideoPath(wpPath)
+                                readonly property string previewPath: isVideo
+                                    ? Wallpapers.getVideoFirstFramePath(wpPath) : wpPath
+                                source: root.screensTaskActive && previewPath
+                                    ? (previewPath.startsWith("file://") ? previewPath : "file://" + previewPath)
+                                    : ""
+                                sourceSize.width: 1200
+                                cache: false
+                                fillMode: Image.Stretch
+                                visible: status === Image.Ready
+
+                                Component.onCompleted: {
+                                    if (root.screensTaskActive && isVideo)
+                                        Wallpapers.ensureVideoFirstFrame(wpPath)
+                                }
+                                onWpPathChanged: {
+                                    if (root.screensTaskActive && isVideo)
+                                        Wallpapers.ensureVideoFirstFrame(wpPath)
+                                }
+
+                                readonly property real imgNatW: implicitWidth > 0 ? implicitWidth : 1
+                                readonly property real imgNatH: implicitHeight > 0 ? implicitHeight : 1
+                                readonly property real screenW: panCard._screen ? Math.max(1, panCard._screen.width) : 1920
+                                readonly property real screenH: panCard._screen ? Math.max(1, panCard._screen.height) : 1080
+                                readonly property real baseScale: {
+                                    if (panCard.currentFillMode === "fit")
+                                        return Math.min(panViewport.width / imgNatW, panViewport.height / imgNatH)
+                                    if (panCard.currentFillMode === "center") {
+                                        // Image.Pad shows 1:1 pixels centered; when smaller than sourceSize cap
+                                        // preserve exact ratio vs screen size, otherwise fit uncropped centered.
+                                        if (imgNatW < 1190)
+                                            return Math.min(panViewport.width / screenW, panViewport.height / screenH)
+                                        return Math.min(panViewport.width / imgNatW, panViewport.height / imgNatH)
+                                    }
+                                    return Math.max(panViewport.width / imgNatW, panViewport.height / imgNatH)
+                                }
+                                readonly property real scaleToFill: baseScale * (panCard.isFillMode ? panCard.currentPanZoom : 1.0)
+                                readonly property real scaledW: imgNatW * scaleToFill
+                                readonly property real scaledH: imgNatH * scaleToFill
+                                readonly property real excessX: Math.max(0, scaledW - panViewport.width)
+                                readonly property real excessY: Math.max(0, scaledH - panViewport.height)
+
+                                width: scaledW
+                                height: scaledH
+
+                                readonly property real restX: (panCard.isFillMode && scaledW > panViewport.width)
+                                    ? (-(excessX / 2) + (panCard.currentPanX * excessX / 2))
+                                    : Math.round((panViewport.width - scaledW) / 2)
+                                readonly property real restY: (panCard.isFillMode && scaledH > panViewport.height)
+                                    ? (-(excessY / 2) + (panCard.currentPanY * excessY / 2))
+                                    : Math.round((panViewport.height - scaledH) / 2)
+
+                                x: panDragArea.drag.active ? x : restX
+                                y: panDragArea.drag.active ? y : restY
+
+                                Behavior on x {
+                                    enabled: Appearance.animationsEnabled && !panDragArea.drag.active
+                                    animation: NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+                                }
+                                Behavior on y {
+                                    enabled: Appearance.animationsEnabled && !panDragArea.drag.active
+                                    animation: NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+                                }
+                                Behavior on width {
+                                    enabled: Appearance.animationsEnabled && !panDragArea.drag.active
+                                    animation: NumberAnimation { duration: 250; easing.type: Easing.OutCubic }
+                                }
+                                Behavior on height {
+                                    enabled: Appearance.animationsEnabled && !panDragArea.drag.active
+                                    animation: NumberAnimation { duration: 250; easing.type: Easing.OutCubic }
+                                }
+                            }
 
                             StyledText {
-                                id: zoomBadgeLabel
                                 anchors.centerIn: parent
-                                text: panCard.currentPanZoom.toFixed(1) + "×"
-                                color: "white"
+                                visible: !panWallpaperImage.visible
+                                text: Translation.tr("No wallpaper")
+                                color: Appearance.colors.colSubtext
                                 font.pixelSize: Appearance.font.pixelSize.small
-                                font.weight: Font.Medium
+                            }
+
+                            MouseArea {
+                                id: panDragArea
+                                anchors.fill: parent
+                                drag.target: panWallpaperImage
+                                drag.axis: Drag.XAndYAxis
+                                drag.minimumX: -(panWallpaperImage.excessX)
+                                drag.maximumX: 0
+                                drag.minimumY: -(panWallpaperImage.excessY)
+                                drag.maximumY: 0
+                                cursorShape: drag.active ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+                                enabled: panWallpaperImage.visible && panCard.isFillMode
+                                scrollGestureEnabled: false
+
+                                onReleased: {
+                                    if (!panWallpaperImage.visible) return
+                                    const ex = panWallpaperImage.excessX
+                                    const ey = panWallpaperImage.excessY
+                                    const newPanX = ex > 0 ? Math.max(-1, Math.min(1, (panWallpaperImage.x + ex / 2) / (ex / 2))) : 0
+                                    const newPanY = ey > 0 ? Math.max(-1, Math.min(1, (panWallpaperImage.y + ey / 2) / (ey / 2))) : 0
+                                    Config.setNestedValue("background.pan.x", Math.round(newPanX * 100) / 100)
+                                    Config.setNestedValue("background.pan.y", Math.round(newPanY * 100) / 100)
+                                }
+
+                                onWheel: wheel => {
+                                    if (!panCard.isFillMode) return
+                                    const delta = wheel.angleDelta.y / 120
+                                    const newZoom = Math.max(1.0, Math.min(3.0, Math.round((panCard.currentPanZoom + delta * 0.1) * 100) / 100))
+                                    Config.setNestedValue("background.pan.zoom", newZoom)
+                                }
+                            }
+
+                            Rectangle {
+                                anchors { top: parent.top; right: parent.right; margins: 8 }
+                                width: zoomBadgeLabel.implicitWidth + 12
+                                height: zoomBadgeLabel.implicitHeight + 6
+                                radius: SettingsMaterialPreset.groupRadius
+                                color: Qt.rgba(0, 0, 0, 0.6)
+                                visible: panCard.isFillMode && panCard.currentPanZoom !== 1.0
+
+                                StyledText {
+                                    id: zoomBadgeLabel
+                                    anchors.centerIn: parent
+                                    text: panCard.currentPanZoom.toFixed(1) + "×"
+                                    color: "white"
+                                    font.pixelSize: Appearance.font.pixelSize.small
+                                    font.weight: Font.Medium
+                                }
+                            }
+
+                            Rectangle {
+                                anchors.centerIn: parent
+                                width: 1; height: parent.height
+                                color: Qt.rgba(1, 1, 1, 0.25)
+                                visible: panDragArea.drag.active
+                            }
+                            Rectangle {
+                                anchors.centerIn: parent
+                                width: parent.width; height: 1
+                                color: Qt.rgba(1, 1, 1, 0.25)
+                                visible: panDragArea.drag.active
                             }
                         }
 
-                        Rectangle {
-                            anchors.centerIn: parent
-                            width: 1; height: parent.height
-                            color: Qt.rgba(1, 1, 1, 0.25)
-                            visible: panDragArea.drag.active
-                        }
-                        Rectangle {
-                            anchors.centerIn: parent
-                            width: parent.width; height: 1
-                            color: Qt.rgba(1, 1, 1, 0.25)
-                            visible: panDragArea.drag.active
+                        RowLayout {
+                            Layout.preferredWidth: panCard.previewTargetWidth
+                            Layout.maximumWidth: panCard.previewTargetWidth
+                            Layout.alignment: Qt.AlignHCenter
+                            spacing: 8
+
+                            StyledText {
+                                text: panCard._screen
+                                    ? (panCard._screen.width + "×" + panCard._screen.height)
+                                    : "16:9"
+                                font.family: Appearance.font.family.numbers
+                                font.pixelSize: Appearance.font.pixelSize.smallest
+                                color: Appearance.colors.colSubtext
+                            }
+
+                            StyledText {
+                                Layout.fillWidth: true
+                                Layout.minimumWidth: 0
+                                horizontalAlignment: Text.AlignRight
+                                elide: Text.ElideRight
+                                text: panCard.isFillMode
+                                    ? Translation.tr("Drag to pan · Scroll to zoom")
+                                    : Translation.tr("Pan available in Fill mode")
+                                font.pixelSize: Appearance.font.pixelSize.smallest
+                                color: Appearance.colors.colSubtext
+                            }
                         }
                     }
 
-                    RowLayout {
-                        id: panZoomRow
+                    // Right column: position header, zoom presets, scale mode & quick actions flush to right edge
+                    ColumnLayout {
+                        id: panControlsColumn
                         Layout.fillWidth: true
-                        spacing: Appearance.sizes.spacingSmall
-                        enabled: panCard.isFillMode
+                        Layout.minimumWidth: 0
+                        Layout.alignment: Qt.AlignVCenter
+                        spacing: 10
 
-                        MaterialSymbol {
-                            text: "zoom_out"
-                            iconSize: Appearance.font.pixelSize.larger
-                            color: Appearance.colors.colSubtext
-                        }
-
-                        StyledSlider {
-                            id: panZoomSlider
+                        RowLayout {
+                            id: panHeaderRow
                             Layout.fillWidth: true
                             Layout.minimumWidth: 0
+                            spacing: 6
+
+                            MaterialSymbol {
+                                text: "open_with"
+                                iconSize: 16
+                                color: Appearance.colors.colPrimary
+                            }
+
+                            StyledText {
+                                Layout.minimumWidth: 0
+                                text: Translation.tr("Wallpaper position")
+                                font.pixelSize: Appearance.font.pixelSize.small
+                                font.weight: Font.Medium
+                                color: Appearance.colors.colOnLayer1
+                            }
+
+                            MaterialSymbol {
+                                text: "info"
+                                iconSize: Appearance.font.pixelSize.large
+                                color: Appearance.colors.colSubtext
+                                MouseArea {
+                                    id: panInfoMouseArea
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.WhatsThisCursor
+                                    StyledToolTip {
+                                        extraVisibleCondition: false
+                                        alternativeVisibleCondition: panInfoMouseArea.containsMouse
+                                        text: Translation.tr("Drag to reposition, scroll to zoom.\nWhen repositioned or zoomed, the shell renders the wallpaper internally.")
+                                    }
+                                }
+                            }
+
+                            Item { Layout.fillWidth: true }
+
+                            StyledText {
+                                Layout.minimumWidth: 0
+                                elide: Text.ElideRight
+                                text: {
+                                    if (!panCard.hasPan) return Translation.tr("Centered, no zoom")
+                                    const parts = []
+                                    const x = Math.round(panCard.currentPanX * 100)
+                                    const y = Math.round(panCard.currentPanY * 100)
+                                    if (panCard.currentPanX !== 0.0 || panCard.currentPanY !== 0.0)
+                                        parts.push(Translation.tr("%1%, %2%").arg(x).arg(y))
+                                    if (panCard.currentPanZoom !== 1.0)
+                                        parts.push(panCard.currentPanZoom.toFixed(1) + "×")
+                                    return parts.join(" · ")
+                                }
+                                color: Appearance.colors.colSubtext
+                                font.pixelSize: Appearance.font.pixelSize.smaller
+                            }
+
+                            RippleButton {
+                                visible: panCard.hasPan
+                                implicitWidth: 24
+                                implicitHeight: 24
+                                buttonRadius: Appearance.rounding.full
+                                colBackground: "transparent"
+                                colBackgroundHover: Appearance.colors.colLayer2Hover
+                                onClicked: {
+                                    Config.setNestedValue("background.pan.x", 0)
+                                    Config.setNestedValue("background.pan.y", 0)
+                                    Config.setNestedValue("background.pan.zoom", 1.0)
+                                }
+                                contentItem: MaterialSymbol {
+                                    anchors.centerIn: parent
+                                    text: "restart_alt"
+                                    iconSize: 14
+                                    color: Appearance.colors.colSubtext
+                                }
+                                StyledToolTip { text: Translation.tr("Reset position and zoom") }
+                            }
+                        }
+
+                        SettingsPresetRow {
+                            id: panZoomSlider
+                            Layout.fillWidth: true
+                            enabled: panCard.isFillMode
+                            icon: "zoom_in"
+                            text: Translation.tr("Zoom")
                             from: 1.0
                             to: 3.0
                             stepSize: 0.1
-                            stopIndicatorValues: []
+                            matchTolerance: 0.04
                             value: panCard.currentPanZoom
-                            tooltipContent: panCard.currentPanZoom.toFixed(1) + "×"
+                            displayValue: Number(liveValue).toFixed(1) + "×"
                             enableSettingsSearch: false
-                            onMoved: Config.setNestedValue("background.pan.zoom", Math.round(value * 10) / 10)
+                            presets: [
+                                { label: "1.0×", value: 1.0 },
+                                { label: "1.2×", value: 1.2 },
+                                { label: "1.5×", value: 1.5 },
+                                { label: "2.0×", value: 2.0 },
+                                { label: "3.0×", value: 3.0 }
+                            ]
+                            onMoved: nextVal => Config.setNestedValue("background.pan.zoom", Math.round(nextVal * 10) / 10)
                         }
 
-                        MaterialSymbol {
-                            text: "zoom_in"
-                            iconSize: Appearance.font.pixelSize.larger
-                            color: Appearance.colors.colSubtext
-                        }
-                    }
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: Appearance.sizes.spacingSmall
-
-                        RippleButtonWithIcon {
+                        ColumnLayout {
                             Layout.fillWidth: true
-                            buttonRadius: Appearance.rounding.small
-                            materialIcon: "wallpaper"
-                            mainText: Translation.tr("Change wallpaper")
-                            colBackground: Appearance.colors.colPrimaryContainer
-                            colBackgroundHover: Appearance.colors.colPrimaryContainerHover
-                            colRipple: Appearance.colors.colPrimaryContainerActive
-                            mainContentComponent: Component {
+                            Layout.minimumWidth: 0
+                            spacing: 6
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                Layout.minimumWidth: 0
+                                spacing: 8
+
                                 StyledText {
-                                    text: Translation.tr("Change wallpaper")
+                                    text: Translation.tr("Scale mode")
                                     font.pixelSize: Appearance.font.pixelSize.small
-                                    color: Appearance.colors.colOnPrimaryContainer
+                                    font.weight: Font.Medium
+                                    color: Appearance.colors.colOnLayer1
+                                }
+
+                                StyledText {
+                                    Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
+                                    horizontalAlignment: Text.AlignRight
+                                    text: Translation.tr("Fill crops, Fit shows bars")
+                                    font.pixelSize: Appearance.font.pixelSize.smaller
+                                    color: Appearance.colors.colSubtext
+                                    elide: Text.ElideRight
                                 }
                             }
-                            onClicked: {
-                                Config.setNestedValue("wallpaperSelector.selectionTarget", "main")
-                                Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "wallpaperSelector", "toggle"])
+
+                            ConfigSelectionArray {
+                                Layout.fillWidth: true
+                                fillWidthSegments: true
+                                currentValue: panCard.currentFillMode
+                                onSelected: newValue => Config.setNestedValue("background.fillMode", newValue)
+                                options: [
+                                    { displayName: Translation.tr("Fill"), icon: "crop", value: "fill" },
+                                    { displayName: Translation.tr("Fit"), icon: "fit_screen", value: "fit" },
+                                    { displayName: Translation.tr("Center"), icon: "center_focus_strong", value: "center" }
+                                ]
                             }
                         }
 
-                        RippleButtonWithIcon {
+                        RowLayout {
                             Layout.fillWidth: true
-                            buttonRadius: Appearance.rounding.small
-                            materialIcon: "shuffle"
-                            mainText: Translation.tr("Random")
-                            onClicked: Wallpapers.randomFromCurrentFolder(Appearance.m3colors.darkmode)
+                            spacing: 8
+
+                            RippleButtonWithIcon {
+                                Layout.fillWidth: true
+                                Layout.preferredWidth: 3
+                                Layout.minimumWidth: 0
+                                buttonRadius: Appearance.rounding.small
+                                materialIcon: "wallpaper"
+                                mainText: Translation.tr("Change wallpaper")
+                                colBackground: Appearance.colors.colPrimaryContainer
+                                colBackgroundHover: Appearance.colors.colPrimaryContainerHover
+                                colRipple: Appearance.colors.colPrimaryContainerActive
+                                contentColor: Appearance.colors.colOnPrimaryContainer
+                                onClicked: {
+                                    Config.setNestedValue("wallpaperSelector.selectionTarget", "main")
+                                    Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "wallpaperSelector", "toggle"])
+                                }
+                            }
+
+                            RippleButtonWithIcon {
+                                Layout.fillWidth: true
+                                Layout.preferredWidth: 2
+                                Layout.minimumWidth: 0
+                                buttonRadius: Appearance.rounding.small
+                                materialIcon: "shuffle"
+                                mainText: Translation.tr("Random")
+                                onClicked: Wallpapers.randomFromCurrentFolder(Appearance.m3colors.darkmode)
+                            }
                         }
                     }
-                }
-            }
-
-            SettingsDivider {}
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 12
-
-                StyledText {
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    text: Translation.tr("Fill crops, Fit shows bars")
-                    font.pixelSize: Appearance.font.pixelSize.small
-                    color: Appearance.colors.colOnSurface
-                    elide: Text.ElideRight
-                }
-
-                ConfigSelectionArray {
-                    Layout.fillWidth: false
-                    currentValue: Config.options?.background?.fillMode ?? "fill"
-                    onSelected: newValue => Config.setNestedValue("background.fillMode", newValue)
-                    options: [
-                        { displayName: Translation.tr("Fill"), icon: "crop", value: "fill" },
-                        { displayName: Translation.tr("Fit"), icon: "fit_screen", value: "fit" },
-                        { displayName: Translation.tr("Center"), icon: "center_focus_strong", value: "center" }
-                    ]
                 }
             }
 
@@ -436,15 +525,15 @@ ContentPage {
                 id: motionSwitchGrid
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
-                columns: Config.options?.panelFamily === "abyss"
-                    ? LayoutPolicy.fittedControlColumns(motionSwitchGrid, 3) : (width >= 460 ? 3 : 1)
-                uniformCellWidths: Config.options?.panelFamily !== "abyss" && columns > 1
-                columnSpacing: Appearance.sizes.spacingSmall
+                readonly property bool _animEnabled: Config.options?.background?.enableAnimation ?? true
+                columns: _animEnabled ? (width >= 640 ? 3 : 1) : 1
+                uniformCellWidths: columns > 1
+                columnSpacing: 16
                 rowSpacing: Appearance.sizes.spacingSmall
 
                 SettingsSwitch {
                     Layout.fillWidth: true
-                    Layout.preferredWidth: Config.options?.panelFamily === "abyss" ? implicitWidth : 1
+                    Layout.preferredWidth: 1
                     Layout.minimumWidth: 0
                     buttonIcon: "play_circle"
                     text: Translation.tr("Animated wallpapers")
@@ -458,9 +547,9 @@ ContentPage {
 
                 SettingsSwitch {
                     Layout.fillWidth: true
-                    Layout.preferredWidth: Config.options?.panelFamily === "abyss" ? implicitWidth : 1
+                    Layout.preferredWidth: 1
                     Layout.minimumWidth: 0
-                    visible: Config.options?.background?.enableAnimation ?? true
+                    visible: motionSwitchGrid._animEnabled
                     buttonIcon: "battery_saver"
                     text: Translation.tr("Pause on battery")
                     // contract: Translation.tr("Pause animated wallpapers on battery")
@@ -473,11 +562,11 @@ ContentPage {
 
                 SettingsSwitch {
                     Layout.fillWidth: true
-                    Layout.preferredWidth: Config.options?.panelFamily === "abyss" ? implicitWidth : 1
+                    Layout.preferredWidth: 1
                     Layout.minimumWidth: 0
-                    visible: Config.options?.background?.enableAnimation ?? true
+                    visible: motionSwitchGrid._animEnabled
                     buttonIcon: "blur_on"
-                    text: Translation.tr("Blur animated wallpapers (videos/GIFs)")
+                    text: Translation.tr("Blur animated")
                     checked: Config.options?.background?.effects?.enableAnimatedBlur ?? false
                     onCheckedChanged: Config.setNestedValue("background.effects.enableAnimatedBlur", checked)
                     StyledToolTip {
@@ -522,15 +611,14 @@ ContentPage {
                 id: shuffleGrid
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
-                columns: Config.options?.panelFamily === "abyss"
-                    ? LayoutPolicy.fittedControlColumns(shuffleGrid, 2) : (width >= 440 ? 2 : 1)
-                uniformCellWidths: Config.options?.panelFamily !== "abyss" && columns === 2
-                columnSpacing: Appearance.sizes.spacingSmall
+                columns: width >= 620 ? 2 : 1
+                uniformCellWidths: columns === 2
+                columnSpacing: 20
                 rowSpacing: Appearance.sizes.spacingSmall
 
                 SettingsSwitch {
                     Layout.fillWidth: true
-                    Layout.preferredWidth: Config.options?.panelFamily === "abyss" ? implicitWidth : 1
+                    Layout.preferredWidth: 1
                     Layout.minimumWidth: 0
                     buttonIcon: "autorenew"
                     text: Translation.tr("Auto-shuffle")
@@ -541,7 +629,7 @@ ContentPage {
 
                 ConfigSpinBox {
                     Layout.fillWidth: true
-                    Layout.preferredWidth: Config.options?.panelFamily === "abyss" ? implicitWidth : 1
+                    Layout.preferredWidth: 1
                     Layout.minimumWidth: 0
                     enabled: Config.options?.background?.autoWallpaper?.enable ?? false
                     icon: "timer"
@@ -556,7 +644,7 @@ ContentPage {
 
                 SettingsSwitch {
                     Layout.fillWidth: true
-                    Layout.preferredWidth: Config.options?.panelFamily === "abyss" ? implicitWidth : 1
+                    Layout.preferredWidth: 1
                     Layout.minimumWidth: 0
                     enabled: Config.options?.background?.autoWallpaper?.enable ?? false
                     buttonIcon: "palette"
@@ -567,7 +655,7 @@ ContentPage {
 
                 SettingsSwitch {
                     Layout.fillWidth: true
-                    Layout.preferredWidth: Config.options?.panelFamily === "abyss" ? implicitWidth : 1
+                    Layout.preferredWidth: 1
                     Layout.minimumWidth: 0
                     buttonIcon: "folder_open"
                     text: Translation.tr("System file dialog")
@@ -626,7 +714,7 @@ ContentPage {
                 Layout.minimumWidth: 0
                 columns: width >= 440 ? 2 : 1
                 uniformCellWidths: columns === 2
-                columnSpacing: Appearance.sizes.spacingSmall
+                columnSpacing: 20
                 rowSpacing: Appearance.sizes.spacingSmall
 
                 SettingsSwitch {
@@ -679,6 +767,7 @@ ContentPage {
                 title: Translation.tr("Transition style")
 
                 ConfigSelectionArray {
+                    fillWidthSegments: true
                     currentValue: ["alisMelt"].includes(Config.options?.background?.transition?.type) ? "alisMelt"
                         : Config.options?.background?.transition?.type === "wallfx" ? "wallfx"
                         : AwwwBackend.normalizedAwwwTransitionType(Config.options?.background?.transition?.type ?? "alisMelt", Config.options?.background?.transition?.direction ?? "right")
@@ -766,6 +855,7 @@ ContentPage {
                 }
 
                 ConfigSelectionArray {
+                    fillWidthSegments: true
                     currentValue: Config.options?.background?.transition?.direction ?? "right"
                     onSelected: newValue => Config.setNestedValue("background.transition.direction", newValue)
                     options: [
@@ -788,9 +878,12 @@ ContentPage {
                 onValueChanged: Config.setNestedValue("background.backend.awww.transitionFps", value)
             }
 
-            SettingsDivider {}
+            SettingsDivider {
+                visible: (Config.options?.panelFamily ?? "abyss") === "ii"
+            }
 
             ContentSubsection {
+                visible: (Config.options?.panelFamily ?? "abyss") === "ii"
                 title: Translation.tr("Ripple event triggers")
 
                 GridLayout {
@@ -798,7 +891,7 @@ ContentPage {
                     Layout.minimumWidth: 0
                     columns: width >= 440 ? 3 : 2
                     uniformCellWidths: true
-                    columnSpacing: Appearance.sizes.spacingSmall
+                    columnSpacing: 20
                     rowSpacing: Appearance.sizes.spacingSmall
 
                     SettingsSwitch {
@@ -882,7 +975,7 @@ ContentPage {
                 Layout.minimumWidth: 0
                 columns: width >= 440 ? 2 : 1
                 uniformCellWidths: columns === 2
-                columnSpacing: Appearance.sizes.spacingSmall
+                columnSpacing: 20
                 rowSpacing: Appearance.sizes.spacingSmall
 
                 SettingsSwitch {
@@ -1276,11 +1369,11 @@ ContentPage {
             Rectangle {
                 id: bgMonPreviewCard
                 Layout.fillWidth: true
-                implicitHeight: bgMonPreviewCol.implicitHeight
-                radius: Appearance.rounding.small
-                color: Appearance.colors.colLayer1
+                implicitHeight: bgMonStudioGrid.implicitHeight + 24
+                radius: SettingsMaterialPreset.cardRadius
+                color: SettingsMaterialPreset.cardColor
                 border.width: 1
-                border.color: Appearance.colors.colLayer0Border
+                border.color: SettingsMaterialPreset.cardBorderColor
                 clip: true
 
                 readonly property string _activePath: bgMultiMonPanel.showBackdropView
@@ -1292,33 +1385,60 @@ ContentPage {
                 }
                 readonly property bool isVideo: WallpaperListener.isVideoPath(_activePath)
                 readonly property bool isGif: WallpaperListener.isGifPath(_activePath)
+                readonly property var _selScreen: {
+                    const screens = Quickshell.screens ?? []
+                    for (let i = 0; i < screens.length; ++i) {
+                        if ((WallpaperListener.getMonitorName(screens[i]) ?? "") === bgMultiMonPanel.selectedMonitor)
+                            return screens[i]
+                    }
+                    return screens[0] ?? null
+                }
+                readonly property real screenAspect: _selScreen
+                    ? (_selScreen.width / Math.max(1, _selScreen.height)) : (16 / 9)
+                readonly property bool twoCol: bgMonPreviewCard.width >= Math.round(660 * Appearance.fontSizeScale)
+                readonly property real innerContentW: Math.max(240, bgMonPreviewCard.width - 24)
+                readonly property real maxPreviewW: twoCol
+                    ? Math.round((innerContentW - 16) * 0.48)
+                    : Math.min(innerContentW, Math.round(210 * screenAspect))
+                readonly property real previewH: Math.max(140, Math.min(215, Math.round(maxPreviewW / Math.max(1.0, screenAspect))))
+                readonly property real previewW: Math.min(maxPreviewW, Math.round(previewH * screenAspect))
 
                 on_ActivePathChanged: if (root.screensTaskActive && isVideo) Wallpapers.ensureVideoFirstFrame(_activePath)
 
-                ColumnLayout {
-                    id: bgMonPreviewCol
-                    anchors { left: parent.left; right: parent.right }
-                    spacing: 0
+                GridLayout {
+                    id: bgMonStudioGrid
+                    anchors { left: parent.left; right: parent.right; top: parent.top; margins: 12 }
+                    columns: bgMonPreviewCard.twoCol ? 2 : 1
+                    columnSpacing: 16
+                    rowSpacing: 12
 
-                    Item {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 160
+                    // Left: aspect-ratio-locked monitor wallpaper preview (entire wallpaper visible uncropped)
+                    Rectangle {
+                        Layout.fillWidth: !bgMonPreviewCard.twoCol
+                        Layout.preferredWidth: bgMonPreviewCard.previewW
+                        Layout.minimumWidth: bgMonPreviewCard.twoCol ? bgMonPreviewCard.previewW : 0
+                        Layout.maximumWidth: bgMonPreviewCard.previewW
+                        Layout.preferredHeight: bgMonPreviewCard.previewH
+                        Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
+                        radius: SettingsMaterialPreset.groupRadius
+                        color: Appearance.colors.colLayer0
+                        border.width: 1
+                        border.color: SettingsMaterialPreset.groupBorderColor
                         clip: true
 
                         StyledImage {
                             visible: !bgMonPreviewCard.isGif && !bgMonPreviewCard.isVideo
                             anchors.fill: parent
-                            fillMode: Image.PreserveAspectCrop
+                            fillMode: Image.PreserveAspectFit
                             source: root.screensTaskActive && visible ? bgMonPreviewCard.wpUrl : ""
-                            sourceSize.width: 600
-                            sourceSize.height: 340
+                            sourceSize.width: 960
                             cache: false
                         }
 
                         AnimatedImage {
                             visible: bgMonPreviewCard.isGif
                             anchors.fill: parent
-                            fillMode: Image.PreserveAspectCrop
+                            fillMode: Image.PreserveAspectFit
                             source: root.screensTaskActive && visible ? bgMonPreviewCard.wpUrl : ""
                             asynchronous: true
                             cache: false
@@ -1328,7 +1448,7 @@ ContentPage {
                         StyledImage {
                             visible: bgMonPreviewCard.isVideo
                             anchors.fill: parent
-                            fillMode: Image.PreserveAspectCrop
+                            fillMode: Image.PreserveAspectFit
                             source: {
                                 if (!root.screensTaskActive) return ""
                                 const ff = Wallpapers.videoFirstFrames[bgMonPreviewCard._activePath]
@@ -1345,66 +1465,59 @@ ContentPage {
                             anchors.bottom: parent.bottom
                             anchors.left: parent.left
                             anchors.right: parent.right
-                            height: parent.height * 0.55
+                            height: Math.min(parent.height * 0.42, 54)
                             gradient: Gradient {
                                 GradientStop { position: 0.0; color: "transparent" }
-                                GradientStop { position: 0.5; color: Qt.rgba(0, 0, 0, 0.4) }
-                                GradientStop { position: 1.0; color: Qt.rgba(0, 0, 0, 0.8) }
+                                GradientStop { position: 0.55; color: Qt.rgba(0, 0, 0, 0.45) }
+                                GradientStop { position: 1.0; color: Qt.rgba(0, 0, 0, 0.82) }
                             }
 
                             RowLayout {
                                 anchors {
                                     bottom: parent.bottom; left: parent.left; right: parent.right
-                                    margins: 12; bottomMargin: 10
+                                    margins: 10; bottomMargin: 7
                                 }
-                                spacing: Appearance.sizes.spacingSmall
+                                spacing: 6
 
-                                ColumnLayout {
-                                    Layout.fillWidth: true
-                                    spacing: 1
-                                    StyledText {
-                                        text: bgMultiMonPanel.selectedMonitor || Translation.tr("No monitor selected")
-                                        font.pixelSize: Appearance.font.pixelSize.large
-                                        font.weight: Font.Medium
-                                        color: Appearance.colors.colOnLayer0
+                                StyledText {
+                                    text: bgMultiMonPanel.selectedMonitor || Translation.tr("No monitor selected")
+                                    font.pixelSize: Appearance.font.pixelSize.small
+                                    font.weight: Font.DemiBold
+                                    color: "white"
+                                }
+
+                                Item { Layout.fillWidth: true }
+
+                                StyledText {
+                                    text: {
+                                        if (bgMultiMonPanel.showBackdropView) return Translation.tr("Backdrop wallpaper")
+                                        const custom = bgMultiMonPanel.selMonData.hasCustomWallpaper ?? false
+                                        const animated = bgMultiMonPanel.selMonData.isAnimated ?? false
+                                        let label = custom ? Translation.tr("Custom wallpaper") : Translation.tr("Global wallpaper")
+                                        if (animated) label += " · " + WallpaperListener.mediaTypeLabel(bgMultiMonPanel.selMonPath)
+                                        return label
                                     }
-                                    StyledText {
-                                        text: {
-                                            if (bgMultiMonPanel.showBackdropView) return Translation.tr("Backdrop wallpaper")
-                                            const custom = bgMultiMonPanel.selMonData.hasCustomWallpaper ?? false
-                                            const animated = bgMultiMonPanel.selMonData.isAnimated ?? false
-                                            let label = custom ? Translation.tr("Custom wallpaper") : Translation.tr("Global wallpaper")
-                                            if (animated) label += " · " + WallpaperListener.mediaTypeLabel(bgMultiMonPanel.selMonPath)
-                                            return label
-                                        }
-                                        font.pixelSize: Appearance.font.pixelSize.smaller - 1
-                                        color: Qt.rgba(1, 1, 1, 0.7)
-                                    }
+                                    font.pixelSize: Appearance.font.pixelSize.smallest
+                                    color: Qt.rgba(1, 1, 1, 0.82)
                                 }
                             }
                         }
                     }
 
-                    Rectangle {
-                        Layout.fillWidth: true
-                        implicitHeight: 1
-                        color: Appearance.colors.colOutlineVariant
-                        opacity: 0.5
-                    }
-
+                    // Right: file path, action buttons & backdrop toggle flush right
                     ColumnLayout {
                         Layout.fillWidth: true
-                        Layout.margins: 12
-                        Layout.topMargin: 10
-                        Layout.bottomMargin: 12
+                        Layout.minimumWidth: 0
+                        Layout.alignment: Qt.AlignVCenter
                         spacing: Appearance.sizes.spacingSmall
 
                         StyledText {
                             Layout.fillWidth: true
+                            Layout.minimumWidth: 0
                             elide: Text.ElideMiddle
                             font.pixelSize: Appearance.font.pixelSize.smaller
                             color: Appearance.colors.colSubtext
-                            opacity: 0.7
+                            opacity: 0.8
                             text: {
                                 const p = bgMultiMonPanel.showBackdropView
                                     ? bgMultiMonPanel.backdropPath : bgMultiMonPanel.selMonPath
@@ -1419,19 +1532,15 @@ ContentPage {
 
                             RippleButtonWithIcon {
                                 Layout.fillWidth: true
+                                Layout.preferredWidth: 3
+                                Layout.minimumWidth: 0
                                 buttonRadius: Appearance.rounding.small
                                 materialIcon: "wallpaper"
                                 mainText: Translation.tr("Change wallpaper")
                                 colBackground: Appearance.colors.colPrimaryContainer
                                 colBackgroundHover: Appearance.colors.colPrimaryContainerHover
                                 colRipple: Appearance.colors.colPrimaryContainerActive
-                                mainContentComponent: Component {
-                                    StyledText {
-                                        text: Translation.tr("Change wallpaper")
-                                        font.pixelSize: Appearance.font.pixelSize.small
-                                        color: Appearance.colors.colOnPrimaryContainer
-                                    }
-                                }
+                                contentColor: Appearance.colors.colOnPrimaryContainer
                                 onClicked: {
                                     const mon = bgMultiMonPanel.selectedMonitor
                                     if (mon) {
@@ -1443,6 +1552,8 @@ ContentPage {
                             }
                             RippleButtonWithIcon {
                                 Layout.fillWidth: true
+                                Layout.preferredWidth: 2
+                                Layout.minimumWidth: 0
                                 buttonRadius: Appearance.rounding.small
                                 materialIcon: "shuffle"
                                 mainText: Translation.tr("Random")
@@ -1465,19 +1576,15 @@ ContentPage {
 
                             RippleButtonWithIcon {
                                 Layout.fillWidth: true
+                                Layout.preferredWidth: 1
+                                Layout.minimumWidth: 0
                                 buttonRadius: Appearance.rounding.small
                                 materialIcon: "blur_on"
                                 mainText: Translation.tr("Change backdrop")
                                 colBackground: Appearance.colors.colSecondaryContainer
                                 colBackgroundHover: ColorUtils.transparentize(Appearance.colors.colSecondaryContainer, 0.15)
                                 colRipple: ColorUtils.transparentize(Appearance.colors.colSecondaryContainer, 0.3)
-                                mainContentComponent: Component {
-                                    StyledText {
-                                        text: Translation.tr("Change backdrop")
-                                        font.pixelSize: Appearance.font.pixelSize.small
-                                        color: Appearance.colors.colOnSecondaryContainer
-                                    }
-                                }
+                                contentColor: Appearance.colors.colOnSecondaryContainer
                                 onClicked: {
                                     Config.setNestedValue("wallpaperSelector.selectionTarget", "backdrop")
                                     Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "wallpaperSelector", "toggle"])
@@ -1485,6 +1592,8 @@ ContentPage {
                             }
                             RippleButtonWithIcon {
                                 Layout.fillWidth: true
+                                Layout.preferredWidth: 1
+                                Layout.minimumWidth: 0
                                 buttonRadius: Appearance.rounding.small
                                 materialIcon: "arrow_back"
                                 mainText: Translation.tr("Back to wallpaper")
@@ -1499,6 +1608,8 @@ ContentPage {
 
                             RippleButtonWithIcon {
                                 Layout.fillWidth: true
+                                Layout.preferredWidth: 1
+                                Layout.minimumWidth: 0
                                 buttonRadius: Appearance.rounding.small
                                 materialIcon: "restart_alt"
                                 mainText: Translation.tr("Reset to global")
@@ -1516,6 +1627,8 @@ ContentPage {
                             }
                             RippleButtonWithIcon {
                                 Layout.fillWidth: true
+                                Layout.preferredWidth: 1
+                                Layout.minimumWidth: 0
                                 buttonRadius: Appearance.rounding.small
                                 materialIcon: "select_all"
                                 mainText: Translation.tr("Apply to all")
@@ -1608,7 +1721,7 @@ ContentPage {
                 enabled: Config.options?.background?.widgets?.powerSaving?.enable ?? true
                 columns: width >= 440 ? 2 : 1
                 uniformCellWidths: columns === 2
-                columnSpacing: Appearance.sizes.spacingSmall
+                columnSpacing: 20
                 rowSpacing: Appearance.sizes.spacingSmall
 
                 SettingsSwitch {
@@ -1680,7 +1793,7 @@ ContentPage {
                 Layout.minimumWidth: 0
                 columns: width >= 440 ? 2 : 1
                 uniformCellWidths: columns === 2
-                columnSpacing: Appearance.sizes.spacingSmall
+                columnSpacing: 20
                 rowSpacing: Appearance.sizes.spacingSmall
 
                 SettingsSwitch {

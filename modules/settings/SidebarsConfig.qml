@@ -57,38 +57,36 @@ ContentPage {
         readonly property var state: ShellLayoutController.currentState(role, "")
         GridLayout {
             Layout.fillWidth: true
-            columns: width >= 680 * Appearance.fontSizeScale ? 2 : 1
+            columns: width >= 480 * Appearance.fontSizeScale ? 2 : 1
             uniformCellWidths: columns > 1
-            columnSpacing: 16
-            rowSpacing: 8
+            columnSpacing: 10
+            rowSpacing: 10
 
-            WindowDialogSlider {
-                text: "Width"
-                Layout.fillWidth: true
-                Layout.minimumWidth: 0
+            SettingsMetricControl {
+                icon: "width"
+                text: Translation.tr("Width")
                 from: 320
                 to: 900
-                stepSize: 1
-                value: sizing.state.width
-                valueText: Math.round(value) + " px"
-                onMoved: ShellLayoutController.setProperty(sizing.role, "thickness", value, "")
+                stepSize: 10
+                currentValue: sizing.state.width
+                valueText: Math.round(liveValue) + " px"
+                onMoved: val => ShellLayoutController.setProperty(sizing.role, "thickness", Math.round(val), "")
             }
-            WindowDialogSlider {
-                text: "Height"
-                Layout.fillWidth: true
-                Layout.minimumWidth: 0
+            SettingsMetricControl {
+                icon: "height"
+                text: Translation.tr("Height")
                 from: 320
                 to: 2160
-                stepSize: 1
-                value: sizing.state.customHeight
-                valueText: Math.round(value) + " px"
-                onMoved: {
+                stepSize: 10
+                currentValue: sizing.state.customHeight
+                valueText: Math.round(liveValue) + " px"
+                onMoved: val => {
                     if (sizing.state.sizeMode !== "custom") {
                         ShellLayoutController.setProperty(sizing.role, "sizeMode", "custom", "");
                         if (sizing.role === "featureSidebar")
                             Config.setNestedValue("sidebar.collapseWidgetsTab", false);
                     }
-                    ShellLayoutController.setProperty(sizing.role, "height", value, "");
+                    ShellLayoutController.setProperty(sizing.role, "height", Math.round(val), "");
                 }
             }
         }
@@ -112,9 +110,18 @@ ContentPage {
                 title: Translation.tr("Left Sidebar")
                 tooltip: Translation.tr("Choose which tabs appear in the left sidebar")
 
-                ConfigRow {
-                    uniform: true
+                GridLayout {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    columns: width >= 460 ? 3 : 1
+                    uniformCellWidths: columns > 1
+                    columnSpacing: 14
+                    rowSpacing: 8
+
                     SettingsSwitch {
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        Layout.minimumWidth: 0
                         buttonIcon: "translate"
                         text: Translation.tr("Translator")
                         checked: Config.options.sidebar?.translator?.enable ?? false
@@ -125,6 +132,9 @@ ContentPage {
                     }
 
                     SettingsSwitch {
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        Layout.minimumWidth: 0
                         buttonIcon: "newspaper"
                         text: Translation.tr("News")
                         checked: Config.options.sidebar?.news?.enable ?? true
@@ -133,27 +143,17 @@ ContentPage {
                             text: Translation.tr("Local and topic headlines from Google News")
                         }
                     }
-                }
 
-                ConfigRow {
-                    uniform: true
                     SettingsSwitch {
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        Layout.minimumWidth: 0
                         buttonIcon: "build"
                         text: Translation.tr("Tools")
                         checked: Config.options.sidebar?.tools?.enable ?? false
                         onCheckedChanged: Config.setNestedValue("sidebar.tools.enable", checked)
                         StyledToolTip {
                             text: Translation.tr("Niri debug options and quick actions")
-                        }
-                    }
-
-                    SettingsSwitch {
-                        buttonIcon: "bolt"
-                        text: Translation.tr("Keep loaded")
-                        checked: Config.options?.sidebar?.keepLeftSidebarLoaded ?? true
-                        onCheckedChanged: Config.setNestedValue("sidebar.keepLeftSidebarLoaded", checked)
-                        StyledToolTip {
-                            text: Translation.tr("Keep left sidebar loaded in memory for instant opening")
                         }
                     }
                 }
@@ -235,9 +235,18 @@ ContentPage {
                 title: Translation.tr("Sliders")
                 tooltip: Translation.tr("Choose which sliders appear in the right sidebar")
 
-                ConfigRow {
-                    uniform: true
+                GridLayout {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    columns: width >= 460 ? 3 : 1
+                    uniformCellWidths: columns > 1
+                    columnSpacing: 14
+                    rowSpacing: 8
+
                     SettingsSwitch {
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        Layout.minimumWidth: 0
                         buttonIcon: "brightness_6"
                         text: Translation.tr("Brightness")
                         checked: Config.options.sidebar.quickSliders.showBrightness
@@ -252,6 +261,9 @@ ContentPage {
                     }
 
                     SettingsSwitch {
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        Layout.minimumWidth: 0
                         buttonIcon: "volume_up"
                         text: Translation.tr("Volume")
                         checked: Config.options.sidebar.quickSliders.showVolume
@@ -264,11 +276,11 @@ ContentPage {
                             text: Translation.tr("Show volume slider")
                         }
                     }
-                }
 
-                ConfigRow {
-                    uniform: true
                     SettingsSwitch {
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        Layout.minimumWidth: 0
                         buttonIcon: "mic"
                         text: Translation.tr("Microphone")
                         checked: Config.options.sidebar.quickSliders.showMic
@@ -279,16 +291,6 @@ ContentPage {
                         }
                         StyledToolTip {
                             text: Translation.tr("Show microphone input level slider")
-                        }
-                    }
-
-                    SettingsSwitch {
-                        buttonIcon: "bolt"
-                        text: Translation.tr("Keep loaded")
-                        checked: Config.options?.sidebar?.keepRightSidebarLoaded ?? true
-                        onCheckedChanged: Config.setNestedValue("sidebar.keepRightSidebarLoaded", checked)
-                        StyledToolTip {
-                            text: Translation.tr("Keep right sidebar loaded in memory for instant opening")
                         }
                     }
                 }
@@ -329,32 +331,30 @@ ContentPage {
                 title: Translation.tr("Left Edgebar size")
                 GridLayout {
                     Layout.fillWidth: true
-                    columns: width >= 680 * Appearance.fontSizeScale ? 2 : 1
+                    columns: width >= 480 * Appearance.fontSizeScale ? 2 : 1
                     uniformCellWidths: columns > 1
-                    columnSpacing: 16
-                    rowSpacing: 8
+                    columnSpacing: 10
+                    rowSpacing: 10
 
-                    WindowDialogSlider {
-                        text: "Width"
-                        Layout.fillWidth: true
-                        Layout.minimumWidth: 0
+                    SettingsMetricControl {
+                        icon: "width"
+                        text: Translation.tr("Width")
                         from: 280
                         to: 720
                         stepSize: 10
-                        value: Config.options?.quickNotes?.popupWidth ?? 420
-                        valueText: Math.round(value) + " px"
-                        onMoved: Config.setNestedValue("quickNotes.popupWidth", value)
+                        currentValue: Config.options?.quickNotes?.popupWidth ?? 420
+                        valueText: Math.round(liveValue) + " px"
+                        onMoved: val => Config.setNestedValue("quickNotes.popupWidth", Math.round(val))
                     }
-                    WindowDialogSlider {
-                        text: "Height"
-                        Layout.fillWidth: true
-                        Layout.minimumWidth: 0
+                    SettingsMetricControl {
+                        icon: "height"
+                        text: Translation.tr("Height")
                         from: 300
                         to: 640
                         stepSize: 10
-                        value: Config.options?.quickNotes?.popupHeight ?? 300
-                        valueText: Math.round(value) + " px"
-                        onMoved: Config.setNestedValue("quickNotes.popupHeight", value)
+                        currentValue: Config.options?.quickNotes?.popupHeight ?? 300
+                        valueText: Math.round(liveValue) + " px"
+                        onMoved: val => Config.setNestedValue("quickNotes.popupHeight", Math.round(val))
                     }
                 }
                 // contract: Config.setNestedValue("quickNotes.popupWidth",value) Config.setNestedValue("quickNotes.popupHeight",value)
@@ -423,32 +423,30 @@ ContentPage {
                 title: Translation.tr("Right Edgebar size")
                 GridLayout {
                     Layout.fillWidth: true
-                    columns: width >= 680 * Appearance.fontSizeScale ? 2 : 1
+                    columns: width >= 480 * Appearance.fontSizeScale ? 2 : 1
                     uniformCellWidths: columns > 1
-                    columnSpacing: 16
-                    rowSpacing: 8
+                    columnSpacing: 10
+                    rowSpacing: 10
 
-                    WindowDialogSlider {
-                        text: "Width"
-                        Layout.fillWidth: true
-                        Layout.minimumWidth: 0
+                    SettingsMetricControl {
+                        icon: "width"
+                        text: Translation.tr("Width")
                         from: 320
                         to: 760
                         stepSize: 10
-                        value: Config.options?.notificationCenter?.popupWidth ?? 420
-                        valueText: Math.round(value) + " px"
-                        onMoved: Config.setNestedValue("notificationCenter.popupWidth", value)
+                        currentValue: Config.options?.notificationCenter?.popupWidth ?? 420
+                        valueText: Math.round(liveValue) + " px"
+                        onMoved: val => Config.setNestedValue("notificationCenter.popupWidth", Math.round(val))
                     }
-                    WindowDialogSlider {
-                        text: "Height"
-                        Layout.fillWidth: true
-                        Layout.minimumWidth: 0
+                    SettingsMetricControl {
+                        icon: "height"
+                        text: Translation.tr("Height")
                         from: 260
                         to: 900
                         stepSize: 10
-                        value: Config.options?.notificationCenter?.popupHeight ?? 560
-                        valueText: Math.round(value) + " px"
-                        onMoved: Config.setNestedValue("notificationCenter.popupHeight", value)
+                        currentValue: Config.options?.notificationCenter?.popupHeight ?? 560
+                        valueText: Math.round(liveValue) + " px"
+                        onMoved: val => Config.setNestedValue("notificationCenter.popupHeight", Math.round(val))
                     }
                 }
                 // contract: Config.setNestedValue("notificationCenter.popupWidth",value) Config.setNestedValue("notificationCenter.popupHeight",value)
@@ -727,11 +725,18 @@ ContentPage {
 
                 SettingsDivider {}
 
-                ConfigRow {
-                    uniform: true
+                GridLayout {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    columns: width >= 460 * Appearance.fontSizeScale ? 2 : 1
+                    uniformCellWidths: columns > 1
+                    columnSpacing: 14
+                    rowSpacing: 8
 
                     SettingsSwitch {
                         Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        Layout.minimumWidth: 0
                         buttonIcon: "ads_click"
                         text: Translation.tr("Keep open on click")
                         checked: Config.options?.overview?.keepOverviewOpenOnWindowClick ?? true
@@ -740,32 +745,13 @@ ContentPage {
 
                     SettingsSwitch {
                         Layout.fillWidth: true
-                        buttonIcon: "move_up"
-                        text: Translation.tr("Close after move")
-                        checked: Config.options?.overview?.closeAfterWindowMove ?? true
-                        onCheckedChanged: Config.setNestedValue("overview.closeAfterWindowMove", checked)
-                    }
-                }
-
-                ConfigRow {
-                    uniform: true
-
-                    SettingsSwitch {
-                        Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        Layout.minimumWidth: 0
                         buttonIcon: "highlight_mouse_cursor"
                         text: Translation.tr("Hover popup")
                         // contract: Translation.tr("Workspace hover popup")
                         checked: Config.options?.overview?.workspaceHover?.enable ?? true
                         onCheckedChanged: Config.setNestedValue("overview.workspaceHover.enable", checked)
-                    }
-
-                    SettingsSwitch {
-                        Layout.fillWidth: true
-                        buttonIcon: "apps"
-                        text: Translation.tr("All-apps grid")
-                        // contract: Translation.tr("All-apps launcher grid")
-                        checked: Config.options?.overview?.allAppsGrid ?? false
-                        onCheckedChanged: Config.setNestedValue("overview.allAppsGrid", checked)
                     }
                 }
             }
@@ -827,6 +813,7 @@ ContentPage {
 
                 ConfigRow {
                     uniform: true
+                    visible: (Config.options?.panelFamily ?? "abyss") === "ii"
 
                     SettingsSwitch {
                         Layout.fillWidth: true
@@ -848,24 +835,12 @@ ContentPage {
                     }
                 }
 
-                ConfigRow {
-                    uniform: true
-
-                    SettingsSwitch {
-                        Layout.fillWidth: true
-                        buttonIcon: "animation"
-                        text: Translation.tr("Focus animations")
-                        checked: Config.options?.overview?.focusAnimationEnable ?? true
-                        onCheckedChanged: Config.setNestedValue("overview.focusAnimationEnable", checked)
-                    }
-
-                    SettingsSwitch {
-                        Layout.fillWidth: true
-                        buttonIcon: "open_in_new"
-                        text: Translation.tr("Jump on open")
-                        checked: Config.options?.overview?.switchToWorkspaceOnOpen ?? false
-                        onCheckedChanged: Config.setNestedValue("overview.switchToWorkspaceOnOpen", checked)
-                    }
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    buttonIcon: "animation"
+                    text: Translation.tr("Focus animations")
+                    checked: Config.options?.overview?.focusAnimationEnable ?? true
+                    onCheckedChanged: Config.setNestedValue("overview.focusAnimationEnable", checked)
                 }
 
                 SettingsDivider {}

@@ -18,7 +18,6 @@ Rectangle {
     property string searchQuery: ""
     property bool windowed: false
     property bool abyssLockOverlay: false
-    property bool navEditMode: false
 
     signal homeClicked()
     signal areaClicked(int pageIndex)
@@ -29,10 +28,8 @@ Rectangle {
     signal searchCleared()
     signal switchWindowModeRequested()
     signal closeRequested()
-    signal navEditToggleRequested()
 
     readonly property bool searching: root.searchQuery.trim().length > 0
-    readonly property bool showingCustomTab: SettingsLayoutManager.activeCustomTabId.length > 0
     property alias searchField: searchInput
 
     function focusSearch(): void {
@@ -52,65 +49,18 @@ Rectangle {
         color: IrisTheme.hairline
     }
 
-    // Build clustered area list honoring user customization & visibility
+    // Build clustered area list
     readonly property var clusteredAreas: {
-        void(SettingsPageRegistry.categories)
-        void(SettingsPageRegistry.hiddenPages)
         void(SettingsPageRegistry.pages)
-        const hiddenSet = new Set(SettingsPageRegistry.hiddenPages ?? [])
-        const customRaw = String(Config.options?.settingsUi?.categories ?? "").trim()
         const seen = new Set()
         const out = []
-
-        if (customRaw.length > 0) {
-            const cats = SettingsPageRegistry.categories ?? []
-            for (let c = 0; c < cats.length; c++) {
-                const cat = cats[c]
-                const pages = []
-                for (const idx of (cat?.pages ?? [])) {
-                    if (seen.has(idx) || hiddenSet.has(idx) || !SettingsPageRegistry.isPageApplicable(idx))
-                        continue
-                    const p = SettingsPageRegistry.pages[idx]
-                    if (!p)
-                        continue
-                    seen.add(idx)
-                    pages.push({
-                        pageIndex: idx,
-                        key: String(p.key ?? ""),
-                        name: String(p.name ?? ""),
-                        icon: String(p.icon ?? "settings"),
-                        iconRotation: Number(p.iconRotation ?? 0)
-                    })
-                }
-                if (pages.length > 0) {
-                    out.push({
-                        id: "cat-" + c,
-                        label: String(cat?.label ?? "").toUpperCase(),
-                        pages: pages
-                    })
-                }
-            }
-            if (!seen.has(40) && !hiddenSet.has(40) && SettingsPageRegistry.isPageApplicable(40) && SettingsPageRegistry.pages[40]) {
-                const p40 = SettingsPageRegistry.pages[40]
-                if (out.length > 0) {
-                    out[out.length - 1].pages.push({
-                        pageIndex: 40,
-                        key: String(p40.key ?? "about"),
-                        name: String(p40.name ?? "About"),
-                        icon: String(p40.icon ?? "info"),
-                        iconRotation: 0
-                    })
-                }
-            }
-            return out
-        }
 
         const clusters = SettingsPageRegistryData.irisClusters ?? []
         for (let i = 0; i < clusters.length; i++) {
             const cl = clusters[i]
             const items = []
             for (const idx of (cl?.pages ?? [])) {
-                if (seen.has(idx) || hiddenSet.has(idx) || !SettingsPageRegistry.isPageApplicable(idx))
+                if (seen.has(idx) || !SettingsPageRegistry.isPageApplicable(idx))
                     continue
                 const p = SettingsPageRegistry.pages[idx]
                 if (!p)
@@ -224,42 +174,6 @@ Rectangle {
                 }
                 StyledToolTip {
                     text: Translation.tr("Edit Abyss layout")
-                }
-            }
-
-            // Edit Layout compact icon button
-            RippleButton {
-                id: editHeaderBtn
-                objectName: root.windowed ? "windowEditSettingsLayoutButton" : "overlayEditSettingsLayoutButton"
-                Layout.alignment: Qt.AlignVCenter
-                implicitWidth: 26
-                implicitHeight: 26
-                buttonRadius: 8
-                toggled: SettingsLayoutManager.editMode
-                colBackground: "transparent"
-                colBackgroundHover: IrisTheme.plateHover
-                colBackgroundToggled: IrisTheme.accent
-                colBackgroundToggledHover: Qt.lighter(IrisTheme.accent, 1.08)
-                onClicked: {
-                    if (root.showingHome)
-                        root.areaClicked(root.activePageIndex)
-                    if (SettingsLayoutManager.editMode)
-                        SettingsLayoutManager.commitEditMode()
-                    else
-                        SettingsLayoutManager.beginEditMode()
-                }
-                contentItem: Item {
-                    implicitWidth: 16
-                    implicitHeight: 16
-                    MaterialSymbol {
-                        anchors.centerIn: parent
-                        text: SettingsLayoutManager.editMode ? "check" : "dashboard_customize"
-                        iconSize: 16
-                        color: SettingsLayoutManager.editMode ? IrisTheme.onAccent : IrisTheme.textMuted
-                    }
-                }
-                StyledToolTip {
-                    text: SettingsLayoutManager.editMode ? Translation.tr("Done editing") : Translation.tr("Edit layout")
                 }
             }
 
@@ -481,7 +395,7 @@ Rectangle {
                         Layout.fillWidth: true
                         implicitHeight: Math.round(34 * IrisTheme.scale)
                         radius: IrisTheme.radiusSmall
-                        readonly property bool selected: root.showingHome && !root.searching && !root.showingCustomTab
+                        readonly property bool selected: root.showingHome && !root.searching
                         color: selected
                             ? IrisTheme.accentTint
                             : (homeMouse.containsMouse ? IrisTheme.plateHover : "transparent")
@@ -559,7 +473,7 @@ Rectangle {
                                 Layout.fillWidth: true
                                 implicitHeight: Math.round(30 * IrisTheme.scale)
                                 radius: IrisTheme.radiusSmall
-                                readonly property bool selected: !root.showingHome && !root.searching && !root.showingCustomTab
+                                readonly property bool selected: !root.showingHome && !root.searching
                                     && root.activePageIndex === Number(modelData.pageIndex)
                                 color: selected
                                     ? Qt.alpha(IrisTheme.accent, 0.10)
@@ -657,7 +571,6 @@ Rectangle {
                                     readonly property int pageIdx: Number(modelData.pageIndex)
                                     readonly property bool isCurrentArea: !root.showingHome
                                         && !root.searching
-                                        && !root.showingCustomTab
                                         && root.activePageIndex === pageIdx
                                     readonly property var areaSubTabs: {
                                         if (!isCurrentArea || !root.currentPageItem)
@@ -676,36 +589,16 @@ Rectangle {
                                     Layout.fillWidth: true
                                     spacing: 2
 
-                                    readonly property string dropTargetId: (root.windowed ? "win-nav-page:" : "ov-nav-page:") + pageIdx
-
-                                    // Drop target support in SettingsLayoutManager.editMode
-                                    Component.onCompleted: {
-                                        SettingsLayoutManager.registerDropTarget(dropTargetId, areaRowRect, {
-                                            kind: "sidebar-page",
-                                            pageIndex: pageIdx,
-                                            customTabId: "",
-                                            subTabId: "",
-                                            label: String(modelData.name || "")
-                                        })
-                                    }
-                                    Component.onDestruction: {
-                                        SettingsLayoutManager.unregisterDropTarget(dropTargetId, areaRowRect)
-                                    }
-
                                     Rectangle {
                                         id: areaRowRect
                                         objectName: "settingsNav_" + String(areaItemCol.modelData.key || "")
                                         Layout.fillWidth: true
                                         implicitHeight: Math.round(34 * IrisTheme.scale)
                                         radius: IrisTheme.radiusSmall
-                                        readonly property bool isDragOver: SettingsLayoutManager.dragActive
-                                            && SettingsLayoutManager.hoveredDropTargetId === areaItemCol.dropTargetId
-                                        color: isDragOver
-                                            ? IrisTheme.accentTintStrong
-                                            : (areaItemCol.isCurrentArea
-                                                ? IrisTheme.accentTint
-                                                : (areaMouse.containsMouse ? IrisTheme.plateHover : "transparent"))
-                                        border.width: (areaItemCol.isCurrentArea || isDragOver) ? 1 : 0
+                                        color: areaItemCol.isCurrentArea
+                                            ? IrisTheme.accentTint
+                                            : (areaMouse.containsMouse ? IrisTheme.plateHover : "transparent")
+                                        border.width: areaItemCol.isCurrentArea ? 1 : 0
                                         border.color: IrisTheme.accentBorder
 
                                         Rectangle {
@@ -941,166 +834,6 @@ Rectangle {
                         }
                     }
 
-                    // 4) Custom Sidebar Tabs (SettingsLayoutManager)
-                    ColumnLayout {
-                        visible: (SettingsLayoutManager.customTabs?.length ?? 0) > 0 || SettingsLayoutManager.editMode
-                        Layout.fillWidth: true
-                        Layout.topMargin: 8
-                        spacing: 2
-
-                        StyledText {
-                            Layout.fillWidth: true
-                            Layout.leftMargin: 8
-                            Layout.bottomMargin: 2
-                            text: Translation.tr("CUSTOM")
-                            font.pixelSize: Appearance.font.pixelSize.smallest - 1
-                            font.weight: Font.DemiBold
-                            font.letterSpacing: 0.9
-                            color: IrisTheme.textDim
-                        }
-
-                        Repeater {
-                            model: SettingsLayoutManager.customTabs ?? []
-
-                            delegate: Rectangle {
-                                id: customTabRow
-                                required property var modelData
-                                readonly property string tabId: String(modelData?.id ?? "")
-                                readonly property string dropTargetId: (root.windowed ? "win-nav-custom:" : "ov-nav-custom:") + tabId
-                                readonly property string tabLabel: String(modelData?.label ?? modelData?.name ?? Translation.tr("Custom Tab"))
-                                readonly property bool selected: !root.showingHome && !root.searching
-                                    && SettingsLayoutManager.activeCustomTabId === tabId
-                                readonly property bool isDragOver: SettingsLayoutManager.dragActive
-                                    && SettingsLayoutManager.hoveredDropTargetId === dropTargetId
-                                objectName: "settingsCustomNav_" + tabId
-                                Layout.fillWidth: true
-                                implicitHeight: Math.round(32 * IrisTheme.scale)
-                                radius: IrisTheme.radiusSmall
-                                color: isDragOver
-                                    ? IrisTheme.accentTintStrong
-                                    : (selected ? IrisTheme.accentTint : (customTabMouse.containsMouse ? IrisTheme.plateHover : "transparent"))
-                                border.width: (selected || isDragOver) ? 1 : 0
-                                border.color: IrisTheme.accentBorder
-
-                                Component.onCompleted: {
-                                    if (tabId.length > 0) {
-                                        SettingsLayoutManager.registerDropTarget(dropTargetId, customTabRow, {
-                                            kind: "sidebar-custom-tab",
-                                            pageIndex: -1,
-                                            customTabId: tabId,
-                                            subTabId: "",
-                                            label: tabLabel
-                                        })
-                                    }
-                                }
-                                Component.onDestruction: {
-                                    if (tabId.length > 0)
-                                        SettingsLayoutManager.unregisterDropTarget(dropTargetId, customTabRow)
-                                }
-
-                                RowLayout {
-                                    anchors.fill: parent
-                                    anchors.leftMargin: 10
-                                    anchors.rightMargin: 6
-                                    spacing: 8
-
-                                    MaterialSymbol {
-                                        Layout.alignment: Qt.AlignVCenter
-                                        text: String(customTabRow.modelData?.icon ?? "dashboard_customize")
-                                        iconSize: 16
-                                        color: customTabRow.selected ? IrisTheme.accent : IrisTheme.textMuted
-                                    }
-
-                                    StyledText {
-                                        Layout.fillWidth: true
-                                        Layout.minimumWidth: 0
-                                        Layout.alignment: Qt.AlignVCenter
-                                        text: customTabRow.tabLabel
-                                        font.pixelSize: Appearance.font.pixelSize.small
-                                        color: customTabRow.selected ? IrisTheme.text : IrisTheme.textSecondary
-                                    }
-
-                                    Rectangle {
-                                        visible: SettingsLayoutManager.editMode
-                                        Layout.alignment: Qt.AlignVCenter
-                                        width: 20
-                                        height: 20
-                                        radius: 6
-                                        color: delCustomTabMouse.containsMouse ? Qt.alpha(Appearance.colors.colError, 0.16) : "transparent"
-
-                                        MaterialSymbol {
-                                            anchors.centerIn: parent
-                                            text: "close"
-                                            iconSize: 13
-                                            color: Appearance.colors.colError
-                                        }
-
-                                        MouseArea {
-                                            id: delCustomTabMouse
-                                            anchors.fill: parent
-                                            hoverEnabled: true
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: SettingsLayoutManager.deleteCustomTab(customTabRow.tabId)
-                                        }
-                                    }
-                                }
-
-                                MouseArea {
-                                    id: customTabMouse
-                                    anchors.fill: parent
-                                    anchors.rightMargin: SettingsLayoutManager.editMode ? 28 : 0
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        if (root.showingHome)
-                                            root.areaClicked(root.activePageIndex)
-                                        SettingsLayoutManager.activeCustomTabId = customTabRow.tabId
-                                    }
-                                }
-                            }
-                        }
-
-                        Rectangle {
-                            visible: SettingsLayoutManager.editMode
-                            Layout.fillWidth: true
-                            implicitHeight: Math.round(30 * IrisTheme.scale)
-                            radius: IrisTheme.radiusSmall
-                            color: addCustomTabMouse.containsMouse ? IrisTheme.accentTintHover : IrisTheme.accentTint
-                            border.width: 1
-                            border.color: IrisTheme.accentBorder
-
-                            Row {
-                                anchors.centerIn: parent
-                                spacing: 5
-
-                                MaterialSymbol {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: "add"
-                                    iconSize: 15
-                                    color: IrisTheme.accent
-                                }
-
-                                StyledText {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: Translation.tr("New tab")
-                                    font.pixelSize: Appearance.font.pixelSize.smaller
-                                    font.weight: Font.Medium
-                                    color: IrisTheme.accent
-                                }
-                            }
-
-                            MouseArea {
-                                id: addCustomTabMouse
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    const newId = SettingsLayoutManager.createCustomTab(Translation.tr("Custom Tab"), "dashboard_customize", 0)
-                                    SettingsLayoutManager.activeCustomTabId = newId
-                                }
-                            }
-                        }
-                    }
                 }
             }
 
@@ -1116,98 +849,6 @@ Rectangle {
                 edge: "bottom"
                 fadeColor: IrisTheme.sidebarBg
                 fadeExtent: 18
-            }
-        }
-
-        // ── Bottom Footer Actions: Edit Layout & Edit Navigation ──
-        Rectangle {
-            Layout.fillWidth: true
-            height: 1
-            color: IrisTheme.hairline
-        }
-
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 6
-
-            Rectangle {
-                id: footerLayoutBtn
-                objectName: root.windowed ? "windowLayoutEditToggle" : "overlayLayoutEditToggle"
-                Layout.fillWidth: true
-                implicitHeight: Math.round(30 * IrisTheme.scale)
-                radius: IrisTheme.radiusSmall
-                color: SettingsLayoutManager.editMode
-                    ? IrisTheme.accent
-                    : (footerLayoutMouse.containsMouse ? IrisTheme.plateHover : IrisTheme.plate)
-                border.width: 1
-                border.color: SettingsLayoutManager.editMode ? IrisTheme.accent : IrisTheme.hairline
-
-                Row {
-                    anchors.centerIn: parent
-                    spacing: 5
-
-                    MaterialSymbol {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: SettingsLayoutManager.editMode ? "check" : "dashboard_customize"
-                        iconSize: 14
-                        color: SettingsLayoutManager.editMode ? IrisTheme.onAccent : IrisTheme.textMuted
-                    }
-
-                    StyledText {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: SettingsLayoutManager.editMode ? Translation.tr("Done") : Translation.tr("Edit layout")
-                        font.pixelSize: Appearance.font.pixelSize.smallest
-                        font.weight: Font.Medium
-                        color: SettingsLayoutManager.editMode ? IrisTheme.onAccent : IrisTheme.textSecondary
-                    }
-                }
-
-                MouseArea {
-                    id: footerLayoutMouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        if (root.showingHome)
-                            root.areaClicked(root.activePageIndex)
-                        if (SettingsLayoutManager.editMode)
-                            SettingsLayoutManager.commitEditMode()
-                        else
-                            SettingsLayoutManager.beginEditMode()
-                    }
-                }
-            }
-
-            Rectangle {
-                id: footerNavBtn
-                Layout.preferredWidth: 30
-                implicitHeight: Math.round(30 * IrisTheme.scale)
-                radius: IrisTheme.radiusSmall
-                color: root.navEditMode
-                    ? IrisTheme.accent
-                    : (footerNavMouse.containsMouse ? IrisTheme.plateHover : IrisTheme.plate)
-                border.width: 1
-                border.color: root.navEditMode ? IrisTheme.accent : IrisTheme.hairline
-
-                MaterialSymbol {
-                    anchors.centerIn: parent
-                    text: root.navEditMode ? "check" : "reorder"
-                    iconSize: 15
-                    color: root.navEditMode ? IrisTheme.onAccent : IrisTheme.textMuted
-                }
-
-                MouseArea {
-                    id: footerNavMouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.navEditToggleRequested()
-                }
-
-                StyledToolTip {
-                    extraVisibleCondition: footerNavMouse.containsMouse
-                    text: root.navEditMode ? Translation.tr("Done organizing sidebar") : Translation.tr("Organize sidebar")
-                }
             }
         }
     }

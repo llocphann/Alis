@@ -11,12 +11,34 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
 import time
 import zlib
 import struct
+
+
+def _capture_frame(qs_target, wl_env, out_path, log_path=None):
+    if shutil.which("grim"):
+        subprocess.run(["grim", str(out_path)], env=wl_env, check=True)
+        return
+    out_path.unlink(missing_ok=True)
+    res = subprocess.run(
+        ["qs", "-p", str(qs_target), "ipc", "call", "wpTest", "grab", str(out_path)],
+        env=wl_env,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    deadline = time.monotonic() + 3.0
+    while time.monotonic() < deadline:
+        if out_path.exists() and out_path.stat().st_size > 0:
+            return
+        time.sleep(0.05)
+    log_tail = log_path.read_text(errors="replace")[-2000:] if log_path and log_path.exists() else ""
+    raise RuntimeError(f"Timed out waiting for grabbed frame at {out_path} (ipc={res.stdout!r} {res.stderr!r}):\n{log_tail}")
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -38,40 +60,79 @@ def _write_solid_png(path: Path, width: int, height: int, rgb: tuple[int, int, i
     path.write_bytes(png)
 
 
+def _load_rgb_buffer(png_path: Path) -> tuple[int, int, int, bytes]:
+    try:
+        from PIL import Image
+        with Image.open(png_path) as im:
+            rgb = im.convert("RGB")
+            w, h = rgb.size
+            return w, h, w * 3, rgb.tobytes()
+    except ImportError:
+        py_bin = sys.executable if Path(sys.executable).exists() else "python3"
+        try:
+            __import__("PySide6.QtGui")
+        except ImportError:
+            py_bin = "/usr/bin/python3"
+        raw = subprocess.check_output(
+            [
+                py_bin,
+                "-c",
+                (
+                    "import sys; from PySide6.QtGui import QImage\n"
+                    "img = QImage(sys.argv[1]).convertToFormat(QImage.Format.Format_RGB888)\n"
+                    "w, h, stride = img.width(), img.height(), img.bytesPerLine()\n"
+                    "sys.stdout.buffer.write(f'{w} {h} {stride}\\n'.encode('ascii'))\n"
+                    "sys.stdout.buffer.write(bytes(img.constBits())[:h * stride])\n"
+                ),
+                str(png_path),
+            ],
+        )
+        header, payload = raw.split(b"\n", 1)
+        w_s, h_s, stride_s = header.decode("ascii").split()
+        return int(w_s), int(h_s), int(stride_s), payload
+
+
 def _read_ppm_stats(png_path: Path) -> dict[str, float]:
-    # Convert PNG to raw RGB bytes using python + magick/ffmpeg or PIL
-    out = subprocess.check_output(
-        [
-            sys.executable,
-            "-c",
-            (
-                "import sys; from PySide6.QtGui import QImage\n"
-                "img = QImage(sys.argv[1]).convertToFormat(QImage.Format.Format_RGB888)\n"
-                "w, h = img.width(), img.height()\n"
-                "ptr = img.constBits()\n"
-                "b = bytes(ptr)\n"
-                "stride = img.bytesPerLine()\n"
-                "red_dom = blue_dom = dark_px = total = 0\n"
-                "luma_sum = 0.0\n"
-                "for y in range(60, h - 60, 8):\n"
-                "    row = b[y*stride : y*stride + w*3]\n"
-                "    for x in range(80, w - 80, 8):\n"
-                "        r, g, bl = row[x*3], row[x*3+1], row[x*3+2]\n"
-                "        total += 1\n"
-                "        luma = 0.299*r + 0.587*g + 0.114*bl\n"
-                "        luma_sum += luma\n"
-                "        if r > bl + 45 and r > 90: red_dom += 1\n"
-                "        elif bl > r + 45 and bl > 90: blue_dom += 1\n"
-                "        elif luma < 22: dark_px += 1\n"
-                "import json\n"
-                "print(json.dumps({'red': red_dom/max(1,total), 'blue': blue_dom/max(1,total), "
-                "'dark': dark_px/max(1,total), 'luma': luma_sum/max(1,total)}))\n"
-            ),
-            str(png_path),
-        ],
-        text=True,
-    )
-    return json.loads(out.strip())
+    # Inspect BOTH center stage pixels (y=60..h-60) and outer AbyssEditStageFrame surround
+    # pixels (top strip y=8..44, x=80..w-80 outside stageRect y=90).
+    w, h, stride, b = _load_rgb_buffer(png_path)
+    red_dom = blue_dom = dark_px = total = 0
+    o_red = o_blue = o_dark = o_total = 0
+    luma_sum = 0.0
+    for y in range(110, h - 140, 8):
+        row = b[y * stride : y * stride + w * 3]
+        for x in range(180, w - 180, 8):
+            r, g, bl = row[x * 3], row[x * 3 + 1], row[x * 3 + 2]
+            total += 1
+            luma = 0.299 * r + 0.587 * g + 0.114 * bl
+            luma_sum += luma
+            if r > bl + 45 and r > 90:
+                red_dom += 1
+            elif bl > r + 45 and bl > 90:
+                blue_dom += 1
+            elif luma < 22:
+                dark_px += 1
+    for y in range(10, 44, 6):
+        row = b[y * stride : y * stride + w * 3]
+        for x in range(80, w - 80, 12):
+            r, g, bl = row[x * 3], row[x * 3 + 1], row[x * 3 + 2]
+            o_total += 1
+            luma = 0.299 * r + 0.587 * g + 0.114 * bl
+            if r > bl + 25 and r > 55:
+                o_red += 1
+            elif bl > r + 25 and bl > 55:
+                o_blue += 1
+            elif luma < 14:
+                o_dark += 1
+    return {
+        "red": red_dom / max(1, total),
+        "blue": blue_dom / max(1, total),
+        "dark": dark_px / max(1, total),
+        "luma": luma_sum / max(1, total),
+        "outer_red": o_red / max(1, o_total),
+        "outer_blue": o_blue / max(1, o_total),
+        "outer_dark": o_dark / max(1, o_total),
+    }
 
 
 def main() -> int:
@@ -111,49 +172,54 @@ ShellRoot {{
         color: "#05070a"
 
         Item {{
-            id: stage
-            x: 160; y: 90
-            width: parent.width - 320
-            height: parent.height - 220
-
-            WallpaperCrossfader {{
-                id: crossfader
-                anchors.fill: parent
-                source: root.currentWp
-                enableTransitions: true
-                transitionType: root.currentTransType
-                transitionBaseDuration: 1500
-                sourceSize: Qt.size(640, 360)
-            }}
-        }}
-
-        AbyssEditStageFrame {{
-            id: stageFrame
+            id: captureRoot
             anchors.fill: parent
-            readonly property string manualUrl: "file://" + root.currentWp
-            card: ({{
-                p: 1.0,
-                x: 160,
-                y: 90,
-                width: win.width - 320,
-                height: win.height - 220,
-                cornerRadius: 24,
-                bezel: 12,
-                dockRadius: 28,
-                dockX: 360,
-                dockY: win.height - 110,
-                dockWidth: win.width - 720,
-                dockHeight: 90
-            }})
-            Component.onCompleted: {{
-                stageFrame._pendingUrl = manualUrl
-                stageFrame._loadNextPending()
+
+            Item {{
+                id: stage
+                x: 160; y: 90
+                width: parent.width - 320
+                height: parent.height - 220
+
+                WallpaperCrossfader {{
+                    id: crossfader
+                    anchors.fill: parent
+                    source: root.currentWp
+                    enableTransitions: true
+                    transitionType: root.currentTransType
+                    transitionBaseDuration: 1500
+                    sourceSize: Qt.size(640, 360)
+                }}
             }}
-            Connections {{
-                target: root
-                function onCurrentWpChanged(): void {{
-                    stageFrame._pendingUrl = "file://" + root.currentWp
+
+            AbyssEditStageFrame {{
+                id: stageFrame
+                anchors.fill: parent
+                readonly property string manualUrl: "file://" + root.currentWp
+                card: ({{
+                    p: 1.0,
+                    x: 160,
+                    y: 90,
+                    width: win.width - 320,
+                    height: win.height - 220,
+                    cornerRadius: 24,
+                    bezel: 12,
+                    dockRadius: 28,
+                    dockX: 360,
+                    dockY: win.height - 110,
+                    dockWidth: win.width - 720,
+                    dockHeight: 90
+                }})
+                Component.onCompleted: {{
+                    stageFrame._pendingUrl = manualUrl
                     stageFrame._loadNextPending()
+                }}
+                Connections {{
+                    target: root
+                    function onCurrentWpChanged(): void {{
+                        stageFrame._pendingUrl = "file://" + root.currentWp
+                        stageFrame._loadNextPending()
+                    }}
                 }}
             }}
         }}
@@ -165,6 +231,13 @@ ShellRoot {{
             root.currentTransType = transType
             root.currentWp = path
             return "ok"
+        }}
+        function grab(outPath: string): string {{
+            const ok = captureRoot.grabToImage(function(res) {{
+                const saved = res ? res.saveToFile(outPath) : false
+                console.info("WP_GRAB_CB", ok, Boolean(res), saved, outPath)
+            }})
+            return ok ? ("ok:" + captureRoot.width + "x" + captureRoot.height) : ("false:" + captureRoot.width + "x" + captureRoot.height)
         }}
         function state(): string {{
             return JSON.stringify({{
@@ -214,7 +287,7 @@ ShellRoot {{
 
                 time.sleep(0.2)
                 snap0 = tmp / "snap_initial.png"
-                subprocess.run(["grim", str(snap0)], env=wl_env, check=True)
+                _capture_frame(harness_dir, wl_env, snap0, log_path)
                 s0 = _read_ppm_stats(snap0)
                 assert s0["red"] > 0.55, f"Expected initial red dominance, got {s0}"
 
@@ -231,7 +304,7 @@ ShellRoot {{
                 for idx in range(7):
                     time.sleep(0.14)
                     snap = tmp / f"snap_melt_{idx}.png"
-                    subprocess.run(["grim", str(snap)], env=wl_env, check=True)
+                    _capture_frame(harness_dir, wl_env, snap, log_path)
                     st_mid = json.loads(
                         subprocess.check_output(
                             ["qs", "-p", str(harness_dir), "ipc", "call", "wpTest", "state"],
@@ -248,7 +321,7 @@ ShellRoot {{
                 # Wait for completion
                 time.sleep(0.6)
                 snap_end = tmp / "snap_end.png"
-                subprocess.run(["grim", str(snap_end)], env=wl_env, check=True)
+                _capture_frame(harness_dir, wl_env, snap_end, log_path)
                 s_end = _read_ppm_stats(snap_end)
                 st_after = json.loads(
                     subprocess.check_output(
@@ -263,11 +336,30 @@ ShellRoot {{
                 # 2. ZERO black blink frame during transition (previously dark spiked > 0.60 because source2 was transparent/black!)
                 max_dark = max(s["dark"] for s in mid_samples)
                 assert max_dark < 0.25, f"Black flash detected during shader transition! samples={mid_samples}"
-                # 3. Genuine mid-transition blend: at least one frame has BOTH significant red AND significant blue!
+                # 3. Genuine mid-transition blend inside stage AND outer surround animated smoothly
                 has_both = any(s["red"] > 0.08 and s["blue"] > 0.08 for s in mid_samples)
                 assert has_both, f"Expected mid-transition blend with both red & blue visible, got {mid_samples}"
-                # 4. Final frame settled on Blue
+                assert s0["outer_red"] > 0.45, f"Expected initial outer surround red, got {s0}"
+                assert max(s["frameMix"] for s in mid_samples) > 0.05, f"Expected outer surround frameMix animation, got {mid_samples}"
+                outer_transitioned = any(s["outer_red"] > 0.05 and s["outer_blue"] > 0.05 for s in mid_samples) or (
+                    any(0.05 < s["frameMix"] < 0.95 and s["outer_dark"] < 0.35 for s in mid_samples)
+                )
+                assert outer_transitioned, f"Expected smooth outer surround transition without dark blink, got {mid_samples}"
+                # 4. Final frame settled on Blue in both inner stage and outer surround
                 assert s_end["blue"] > 0.55, f"Expected settled blue dominance, got {s_end}"
+                assert s_end["outer_blue"] > 0.45, f"Expected settled outer surround blue dominance, got {s_end}"
+
+                # 5. Verify AbyssEditStageFrame.frag.qsb is up-to-date with source .frag
+                rebuilt_qsb = tmp / "AbyssEditStageFrame.frag.qsb"
+                subprocess.run(
+                    ["/usr/lib/qt6/bin/qsb", "--qt6", "-o", str(rebuilt_qsb),
+                     str(ROOT / "modules/abyss/looks/AbyssEditStageFrame.frag")],
+                    check=True,
+                    capture_output=True,
+                )
+                assert rebuilt_qsb.read_bytes() == (ROOT / "modules/abyss/looks/AbyssEditStageFrame.frag.qsb").read_bytes(), (
+                    "AbyssEditStageFrame.frag.qsb is out of date with AbyssEditStageFrame.frag"
+                )
 
                 log_txt = log_path.read_text(errors="replace")
                 assert "Shader failed" not in log_txt and "Error:" not in log_txt, f"Unexpected QML/shader error:\n{log_txt}"

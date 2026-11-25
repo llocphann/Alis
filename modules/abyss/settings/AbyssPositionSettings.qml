@@ -239,7 +239,8 @@ ColumnLayout {
             objectName:"abyssIpcJoinCornerToggle"
             parent:root.compactSideToolbar && root.compactCornerHost
                 ? root.compactCornerHost : ipcPositionSelectorRow
-            visible:root.visible && root.compactIpcEditor && Presentation.canJoin(root.kind)
+            visible:(root.compactSideToolbar && root.compactCornerHost ? root.visible : true)
+                && root.compactIpcEditor && Presentation.canJoin(root.kind)
             text:"Join nearby corner";glyph:"join_inner"
             compact:true;editorSquare:true;checkable:true
             description:root.nearbyEdge
@@ -256,7 +257,9 @@ ColumnLayout {
         }
     }
     WindowDialogSlider {
-        text:"Position along Edge";Layout.fillWidth:true
+        text:root.compactIpcEditor && root.compactVertical ? "Position" : "Position along Edge"
+        Layout.fillWidth:true
+        Layout.minimumWidth:0
         visible:root.position.alignment==="custom"
         from:0;to:100;stepSize:1;value:(root.position.position ?? .5)*100
         valueText:Math.round(value)+" %"

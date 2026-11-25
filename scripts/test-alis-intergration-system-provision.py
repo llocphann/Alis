@@ -99,6 +99,32 @@ with tempfile.TemporaryDirectory(prefix="alis-intergration-gateway-fixture-") as
         raise AssertionError("Symlinked untrusted source accepted")
     except (OSError, ValueError):
         pass
+    target.unlink()
+    target.write_bytes(payload[first])
+
+    # Independent per-plugin helper scope ('tlp' vs 'thinkfan'):
+    # installing/removing one scope must leave the sibling helper undisturbed.
+    assert mod.state(root, scope="all")["diagnostic"] == "not-installed"
+    tlp_res = mod.install(package, root, scope="tlp")
+    assert tlp_res["installed"] and tlp_res["scope"] == "tlp"
+    assert mod.state(root, scope="tlp")["installed"] is True
+    assert mod.state(root, scope="thinkfan")["installed"] is False
+    assert mod.state(root, scope="all")["installed"] is False
+    assert mod.state(root, scope="all")["plugins"]["tlp"]["installed"] is True
+    assert mod.state(root, scope="all")["plugins"]["thinkfan"]["installed"] is False
+    assert not mod.destination(root, mod.TRUSTED["plugins/thinkfan/assets/helpers/alis-thinkfan"][0]).exists()
+
+    tf_res = mod.install(package, root, scope="thinkfan")
+    assert tf_res["installed"] and mod.state(root, scope="all")["installed"] is True
+
+    rem_tlp = mod.remove(root, scope="tlp")
+    assert rem_tlp["scope"] == "tlp" and not mod.state(root, scope="tlp")["installed"]
+    assert mod.state(root, scope="thinkfan")["installed"] is True
+    assert not mod.destination(root, mod.TRUSTED["plugins/tlp/assets/helpers/alis-battery-charge-limit"][0]).exists()
+    assert mod.destination(root, mod.TRUSTED["plugins/thinkfan/assets/helpers/alis-thinkfan"][0]).exists()
+    assert state_path.exists()
+    rem_tf = mod.remove(root, scope="thinkfan")
+    assert not mod.state(root, scope="all")["managed"] and not state_path.exists()
 
 for name in ("alis-shell", "alis-shell-git"):
     recipe = (ROOT / "distro/arch" / name / "PKGBUILD").read_text()

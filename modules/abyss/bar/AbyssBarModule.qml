@@ -25,6 +25,7 @@ Item {
     property bool compact: false
     property bool editing: GlobalStates.abyssEditing
         && (GlobalStates.abyssEditorTargetOutput === "" || GlobalStates.abyssEditorTargetOutput === root.outputName)
+    property bool edgebarBlocked: false
     // Presentation-only: false retains the hover target and user data.
     property bool showIcon: true
     signal notesEditorFocusChanged(string outputName, bool focused)
@@ -71,7 +72,7 @@ Item {
         if ((kind === "timer" || kind === "shellUpdate") && !item.contentAvailable)
             return 0
         if (kind === "activeWindow") return Math.min(item.maxContentWidth ?? 220,
-                Math.max(60,item.contentImplicitWidth))
+                Math.max(item.verticalContent ? 28 : 60, item.contentImplicitWidth))
         if (kind === "taskbar") return Math.min(320,Math.max(40,item.dockItems.length*item.itemPitch+item.contentInset))
         return item.implicitWidth
     }
@@ -125,27 +126,10 @@ Item {
         anchors.fill: parent
         visible: root.detached && !root.cornerWrap && root.contentAvailable
         radius: Math.min(width, height) * 0.5
-        readonly property real surfaceAlpha: AbyssStyle.surfaceOpacity >= 0.999 ? 1.0 : AbyssStyle.surfaceOpacity
-        color: root.hovered
-            ? Qt.alpha(ColorUtils.mix(AbyssStyle.surfaceDeep, AbyssStyle.accent, 0.08), detachedPillBg.surfaceAlpha)
-            : AbyssStyle.surface
-        border.width: 1
-        border.color: root.hovered
-            ? Qt.alpha(AbyssStyle.accent, 0.56)
-            : Qt.alpha(AbyssStyle.specular, Appearance.m3colors.darkmode ? 0.16 : 0.24)
+        color: AbyssStyle.surface
+        border.width: 0
+        border.color: "transparent"
         Behavior on color { enabled: AbyssStyle.motionEnabled; ColorAnimation { duration: AbyssStyle.motionFast } }
-        Behavior on border.color { enabled: AbyssStyle.motionEnabled; ColorAnimation { duration: AbyssStyle.motionFast } }
-
-        // Subtle inner hairline rim matching Abyss / iRiS floating island sheen
-        Rectangle {
-            anchors.fill: parent
-            anchors.margins: 1
-            radius: Math.max(0, parent.radius - 1)
-            color: "transparent"
-            border.width: 1
-            border.color: Qt.alpha(AbyssStyle.specular, root.hovered ? 0.20 : 0.10)
-            visible: Appearance.effectsEnabled && AbyssStyle.quality !== "performance"
-        }
     }
 
     Loader {
@@ -325,9 +309,22 @@ Item {
                 liquidPresentationKind: "notesTimers"
                 strictSourceHover: true
                 anchorItem: notesFace.trigger
+                hoverAllowed: !root.edgebarBlocked
+                externallyBlocked: root.edgebarBlocked
                 cornerAttachmentEdge: root.attachedEdge
                 cornerAttachmentThickness: -1
+                onHoverAllowedChanged: {
+                    if (!hoverAllowed && presentationActive && !popupPinned && !editorFocused && !todoDialogOpen)
+                        dismissPresentation()
+                }
                 onEditorFocusedChanged: root.notesEditorFocusChanged(root.outputName, editorFocused)
+            }
+            Connections {
+                target: root
+                function onEditingChanged(): void {
+                    if (root.editing)
+                        notesPopup.clearSuspendedSession()
+                }
             }
         }
     }
@@ -354,8 +351,13 @@ Item {
                 anchorItem: notificationFace.trigger
                 outputName: root.outputName
                 moduleAnchorMode: true
+                hoverAllowed: !root.edgebarBlocked
                 cornerAttachmentEdge: root.attachedEdge
                 cornerAttachmentThickness: -1
+                onHoverAllowedChanged: {
+                    if (!hoverAllowed && presentationActive && !explicitForThisOutput && !keyboardInteraction)
+                        dismissPresentation()
+                }
             }
         }
     }

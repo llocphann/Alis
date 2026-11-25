@@ -327,20 +327,15 @@ ShellRoot {
             try {
                 tryCompare(Config, "ready", true, 4000)
 
-                // 1. SettingsCardSection & SettingsGroup lazy reorder overlays
-                const secLoader = testSection.children.find(c => c.hasOwnProperty("sourceComponent") && c.sourceComponent !== undefined)
-                // Direct lookup via child scanning: check active state indirectly via child with _participatesInLayout
-                SettingsLayoutManager.editMode = false
+                // 1. SettingsCardSection & SettingsGroup stay lightweight with inert SettingsLayoutManager facade
+                root.check(SettingsLayoutManager.editMode === false, "SettingsLayoutManager.editMode must stay false (Edit Layout retired)")
+                SettingsLayoutManager.beginEditMode()
                 wait(20)
+                root.check(SettingsLayoutManager.editMode === false, "SettingsLayoutManager.beginEditMode must remain inert")
                 const secOverlayHidden = testSection.children.filter(c => c.item && c.hasOwnProperty("asynchronous"))
-                root.check(secOverlayHidden.length === 0, "SettingsCardSection reorder overlay loaded outside edit mode")
-                SettingsLayoutManager.editMode = true
-                wait(20)
-                const secOverlayShown = testSection.children.filter(c => c.item && c.hasOwnProperty("asynchronous"))
-                root.check(secOverlayShown.length >= 1, "SettingsCardSection reorder overlay failed to activate synchronously in edit mode")
-                const grpOverlayShown = testGroup.children.filter(c => c.item && c.hasOwnProperty("asynchronous"))
-                root.check(grpOverlayShown.length >= 1, "SettingsGroup reorder overlay failed to activate synchronously in edit mode")
-                SettingsLayoutManager.editMode = false
+                root.check(secOverlayHidden.length === 0, "SettingsCardSection must not load edit reorder overlays")
+                const grpOverlayHidden = testGroup.children.filter(c => c.item && c.hasOwnProperty("asynchronous"))
+                root.check(grpOverlayHidden.length === 0, "SettingsGroup must not load edit reorder overlays")
 
                 // 2. SettingsSearchRegistry lazy keywords + preparedSearch
                 const id1 = SettingsSearchRegistry.registerOption({

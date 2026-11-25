@@ -356,6 +356,7 @@ ContentPage {
             }
 
             ConfigSelectionArray {
+                fillWidthSegments: true
                 options: [
                     { displayName: "Segoe UI", icon: "window", value: "Segoe UI Variable" },
                     { displayName: "Inter", icon: "text_fields", value: "Inter" },
@@ -469,6 +470,7 @@ ContentPage {
 
         SettingsGroup {
             ConfigSelectionArray {
+                fillWidthSegments: true
                 options: [
                     { displayName: Translation.tr("Mini"), icon: "crop_square", value: "mini" },
                     { displayName: Translation.tr("Compact"), icon: "view_compact", value: "compact" },
@@ -557,6 +559,7 @@ ContentPage {
             }
 
             ConfigSelectionArray {
+                fillWidthSegments: true
                 options: [
                     { displayName: Translation.tr("Thumbnails"), icon: "grid_view", value: "thumbnails" },
                     { displayName: Translation.tr("Cards"), icon: "view_carousel", value: "cards" },

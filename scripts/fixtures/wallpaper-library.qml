@@ -181,6 +181,25 @@ Window {
             models.target = null
             wait(100)
             picker.setMode("animated")
+            if (abyss) {
+                // Random wallpaper must only preview (never mutate durable wallpaperPath)
+                GlobalStates.wallpaperLauncherSearchText = ""
+                picker.setMode("static")
+                const savedPath = String(Config.options?.background?.wallpaperPath ?? "")
+                view.fallbackEntries = [view.entries.find(e => e.path === win.animated) ?? {path: win.animated, name: "BLUE đô thị.GIF", kind: "gif", searchKey: "blue"}, {path: win.still, name: "still.png", kind: "static", searchKey: "still"}]
+                tryVerify(() => picker.count >= 2, 2000)
+                picker.pickRandomWallpaper()
+                check(Wallpapers.internalPreviewPath.length > 0, "random wallpaper did not trigger preview")
+                check(String(Config.options?.background?.wallpaperPath ?? "") === savedPath, "random wallpaper applied instead of previewing")
+
+                // Folder post-close Escape race must absorb 1st Escape and close on 2nd Escape
+                picker._folderDialogClosedAtMs = Date.now()
+                picker.handleEscape()
+                check(GlobalStates.wallpaperLauncherOpen === true, "first Escape after folder close should keep Change Wallpaper open")
+                wait(340)
+                picker.handleEscape()
+                check(GlobalStates.wallpaperLauncherOpen === false, "second Escape did not close Change Wallpaper")
+            }
             GlobalStates.wallpaperLauncherOpen = false
             loader.active = false
             tryVerify(() => loader.item === null, 2000)

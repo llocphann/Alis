@@ -126,6 +126,7 @@ ContentPage {
                 title: Translation.tr("Position")
 
                 ConfigSelectionArray {
+                    fillWidthSegments: true
                     currentValue: ((Config.options?.bar?.bottom ?? false) ? 1 : 0)
                         | ((Config.options?.bar?.vertical ?? false) ? 2 : 0)
                     onSelected: newValue => {
@@ -297,6 +298,7 @@ ContentPage {
             SettingsDivider {}
 
             ConfigSelectionArray {
+                fillWidthSegments: true
                 enabled: root.spectrumEnabled
                 opacity: enabled ? 1 : 0.5
                 currentValue: Config.options?.bar?.visualizer?.multiMonitorMode ?? "primary"
@@ -308,6 +310,7 @@ ContentPage {
             }
 
             ConfigSelectionArray {
+                fillWidthSegments: true
                 enabled: root.spectrumEnabled
                 opacity: enabled ? 1 : 0.5
                 currentValue: Config.options?.bar?.visualizer?.type ?? "bars"
@@ -652,6 +655,7 @@ ContentPage {
                 }
 
                 ConfigSelectionArray {
+                    fillWidthSegments: true
                     currentValue: root.isVertical
                         ? (Config.options?.bar?.verticalLayout?.spacerMode ?? "auto")
                         : (Config.options?.bar?.layout?.spacerMode ?? "auto")
@@ -789,6 +793,7 @@ ContentPage {
                 title: Translation.tr("Workspaces")
 
                 ConfigSelectionArray {
+                    fillWidthSegments: true
                     visible: CompositorService.isNiri
                     currentValue: Config.options?.bar?.workspaces?.scrollBehavior ?? "workspace"
                     onSelected: newValue => Config.setNestedValue("bar.workspaces.scrollBehavior", newValue)

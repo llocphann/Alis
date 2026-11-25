@@ -77,12 +77,19 @@ function append(existing, incoming) {
         return {event:existing,duplicate:true};
     return {event:store(existing,slots.concat([slot])),duplicate:false};
 }
-function reschedule(event,index,start,end) {
+function reschedule(event,index,start,end,nowMs) {
     if ((event.recurrence || "none")!=="none") return null;
-    var slots=entries(event),newSlot=entry(start,end,false,false);
-    if (!newSlot || !Number.isInteger(index) || index<0 || index>=slots.length) return null;
+    var slots=entries(event);
+    if (!Number.isInteger(index) || index<0 || index>=slots.length) return null;
     var a=valid(start),b=valid(end);
     if (!a || !b || b <= a) return null;
+    var oldStart=valid(slots[index].startDate || slots[index].dateTime);
+    var startChanged=!oldStart || oldStart.getTime()!==a.getTime();
+    var isPast=Number.isFinite(nowMs) && a.getTime()<=nowMs;
+    var nextNotified=startChanged ? isPast : (slots[index].notified===true);
+    var nextReminded=startChanged ? isPast : (slots[index].reminderNotified===true);
+    var newSlot=entry(start,end,nextNotified,nextReminded);
+    if (!newSlot) return null;
     if (slots.some(function(s,i) {
         return i!==index && s.startDate===newSlot.startDate && s.endDate===newSlot.endDate;
     })) return null;

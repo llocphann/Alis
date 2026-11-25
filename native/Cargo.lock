@@ -102,6 +102,7 @@ dependencies = [
  "anyhow",
  "clap",
  "image",
+ "libc",
  "material-color-utils",
  "regex",
  "serde",

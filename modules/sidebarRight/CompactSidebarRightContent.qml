@@ -816,7 +816,7 @@ Item {
         }
         clip: true
 
-        layer.enabled: root.panelVisible && !gameModeMinimal
+        layer.enabled: root.panelVisible && !root.externalConnectedSurface && !gameModeMinimal
         layer.effect: GE.OpacityMask {
             maskSource: Rectangle {
                 width: bg.width
@@ -866,7 +866,7 @@ Item {
                 }
                 clip: true
 
-                layer.enabled: root.panelVisible && !bg.gameModeMinimal
+                layer.enabled: root.panelVisible && !root.externalConnectedSurface && !bg.gameModeMinimal
                 layer.effect: GE.OpacityMask {
                     maskSource: Rectangle {
                         width: compactSurface.width
@@ -1209,10 +1209,17 @@ Item {
                         Loader {
                             id: sectionContentLoader
                             anchors.fill: parent
-                            // Lazy loading: base sections always loaded, widgets only when adjacent or current
-                            active: sectionItem.isBase
+                            property bool everLoaded: false
+                            readonly property bool shouldActivate: sectionItem.isBase
                                 || sectionItem.isCurrent
-                                || Math.abs(root.activeSection - sectionItem.index) <= 1
+                                || (root.panelVisible && Math.abs(root.activeSection - sectionItem.index) <= 1)
+                            onShouldActivateChanged: if (shouldActivate && !everLoaded) everLoaded = true
+                            Component.onCompleted: if (shouldActivate) everLoaded = true
+                            // Lazy loading: base/current sections load immediately; adjacent widgets
+                            // prewarm asynchronously only once the sidebar is actually opened.
+                            active: everLoaded || shouldActivate
+                            asynchronous: !sectionItem.isCurrent && status !== Loader.Ready
+                                && Quickshell.env("QT_QUICK_BACKEND") !== "software"
 
                             sourceComponent: {
                                 if (sectionItem.modelData.id === "controls")

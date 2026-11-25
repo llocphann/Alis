@@ -13,18 +13,47 @@ ContentPage {
     property bool isIiActive: Config.options?.panelFamily !== "waffle"
     property string activeSection: "general"
     readonly property var tabChoices: {
+        const customIcons = Config.options?.dashboard?.tabIcons
         const choices = [
-            {displayName:Translation.tr("Dashboard"),icon:"dashboard",value:"dashboard"},
-            {displayName:Translation.tr("Weekly Planner"),icon:"calendar_month",value:"weeklyPlanner"}
+            {displayName:Translation.tr("Dashboard"),icon:TabPolicy.iconFor(customIcons, "dashboard"),value:"dashboard"},
+            {displayName:Translation.tr("Weekly Planner"),icon:TabPolicy.iconFor(customIcons, "weeklyPlanner"),value:"weeklyPlanner"}
         ]
         if (Config.options?.dashboard?.music?.enable ?? true)
-            choices.splice(1,0,{displayName:Translation.tr("Music"),icon:"library_music",value:"music"})
-        if (Config.options?.dashboard?.spacedRepetition?.enable ?? true)
-            choices.push({displayName:Translation.tr("Spaced Repetition"),icon:"school",value:"spacedRepetition"})
+            choices.splice(1,0,{displayName:Translation.tr("Music"),icon:TabPolicy.iconFor(customIcons, "music"),value:"music"})
+        if (AlisIntergration.spacedRepetitionEnabled && (Config.options?.dashboard?.spacedRepetition?.enable ?? true))
+            choices.push({displayName:Translation.tr("Spaced Repetition"),icon:TabPolicy.iconFor(customIcons, "spacedRepetition"),value:"spacedRepetition"})
+        if (AlisIntergration.exercisesTrackerEnabled && (Config.options?.dashboard?.exercisesTracker?.enable ?? true))
+            choices.push({displayName:Translation.tr("Exercises Tracker"),icon:TabPolicy.iconFor(customIcons, "exercisesTracker"),value:"exercisesTracker"})
         for (const tab of TabPolicy.tabs(Config.options?.dashboard?.customTabs))
-            choices.push({displayName:tab.name,icon:"tab",value:tab.id})
+            choices.push({displayName:tab.name,icon:TabPolicy.iconFor(customIcons, tab.id),value:tab.id})
         return choices
     }
+    property string selectedIconTabId: "dashboard"
+    readonly property string effectiveIconTabId: root.tabChoices.some(item => item.value === root.selectedIconTabId)
+        ? root.selectedIconTabId
+        : (root.tabChoices[0]?.value ?? "dashboard")
+    readonly property string selectedTabDefaultIcon: TabPolicy.defaultIconFor(root.effectiveIconTabId)
+    readonly property string selectedTabActiveIcon: TabPolicy.iconFor(Config.options?.dashboard?.tabIcons, root.effectiveIconTabId)
+    readonly property bool selectedTabHasCustomIcon: TabPolicy.hasCustomIcon(Config.options?.dashboard?.tabIcons, root.effectiveIconTabId)
+    property bool _syncingTabIconInput: false
+    function _syncTabIconInput(force): void {
+        if (!tabIconField)
+            return
+        if (!force && tabIconField.activeFocus)
+            return
+        const nextText = root.selectedTabHasCustomIcon ? root.selectedTabActiveIcon : ""
+        if (tabIconField.text === nextText)
+            return
+        root._syncingTabIconInput = true
+        tabIconField.text = nextText
+        root._syncingTabIconInput = false
+    }
+    function applySelectedTabIcon(iconName): void {
+        const nextIcons = TabPolicy.setTabIcon(Config.options?.dashboard?.tabIcons, root.effectiveIconTabId, iconName)
+        Config.setNestedValue("dashboard.tabIcons", nextIcons)
+    }
+    onEffectiveIconTabIdChanged: Qt.callLater(() => root._syncTabIconInput(true))
+    onSelectedTabActiveIconChanged: Qt.callLater(() => root._syncTabIconInput(false))
 
     SettingsTaskNavigator {
         visible: root.isIiActive
@@ -93,6 +122,132 @@ ContentPage {
                             ? (Config.options?.dashboard?.defaultTabId || "dashboard") : "dashboard"
                         options: root.tabChoices
                         onSelected: id => Config.setNestedValue("dashboard.defaultTabId",id)
+                    }
+                }
+
+                ContentSubsection {
+                    title: Translation.tr("Tab indicator icons")
+
+                    ConfigSelectionArray {
+                        objectName: "dashboardTabIconTargetSelector"
+                        currentValue: root.effectiveIconTabId
+                        options: root.tabChoices
+                        onSelected: id => root.selectedIconTabId = String(id ?? "dashboard")
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 8
+
+                        Rectangle {
+                            implicitWidth: 36
+                            implicitHeight: 36
+                            radius: Appearance.rounding.small
+                            color: Appearance.colors.colPrimaryContainer
+
+                            MaterialSymbol {
+                                objectName: "dashboardTabIconPreview"
+                                anchors.centerIn: parent
+                                text: root.selectedTabActiveIcon
+                                iconSize: 20
+                                fill: 1
+                                horizontalAlignment: Text.AlignHCenter
+                                color: Appearance.colors.colOnPrimaryContainer
+                            }
+                        }
+
+                        MaterialTextField {
+                            id: tabIconField
+                            objectName: "dashboardTabIconInput"
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: 0
+                            placeholderText: Translation.tr("Material Symbol name (default: %1)").arg(root.selectedTabDefaultIcon)
+                            text: root.selectedTabHasCustomIcon ? root.selectedTabActiveIcon : ""
+                            Component.onCompleted: root._syncTabIconInput(true)
+                            onTextEdited: {
+                                if (root._syncingTabIconInput)
+                                    return
+                                root.applySelectedTabIcon(text)
+                            }
+                        }
+
+                        RippleButton {
+                            id: tabIconResetButton
+                            objectName: "dashboardTabIconResetButton"
+                            implicitWidth: resetIconRow.implicitWidth + 18
+                            implicitHeight: 36
+                            buttonRadius: Appearance.rounding.small
+                            enabled: root.selectedTabHasCustomIcon
+                            opacity: enabled ? 1.0 : 0.45
+                            colBackground: Appearance.colors.colLayer2
+                            colBackgroundHover: Appearance.colors.colLayer2Hover
+                            onClicked: {
+                                root.applySelectedTabIcon("")
+                                root._syncTabIconInput(true)
+                            }
+                            contentItem: Item {
+                                Row {
+                                    id: resetIconRow
+                                    anchors.centerIn: parent
+                                    spacing: 5
+                                    MaterialSymbol {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: "restart_alt"
+                                        iconSize: 16
+                                        color: Appearance.colors.colOnLayer2
+                                    }
+                                    StyledText {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        horizontalAlignment: Text.AlignHCenter
+                                        text: Translation.tr("Reset")
+                                        font.pixelSize: Appearance.font.pixelSize.smaller
+                                        color: Appearance.colors.colOnLayer2
+                                    }
+                                }
+                            }
+                            StyledToolTip {
+                                text: Translation.tr("Reset tab icon to default")
+                            }
+                        }
+                    }
+
+                    Flow {
+                        Layout.fillWidth: true
+                        spacing: 6
+
+                        Repeater {
+                            model: TabPolicy.presetTabIcons
+                            delegate: RippleButton {
+                                id: iconPresetButton
+                                required property string modelData
+                                objectName: "dashboardTabIconPreset_" + modelData
+                                implicitWidth: 34
+                                implicitHeight: 34
+                                buttonRadius: Appearance.rounding.small
+                                toggled: root.selectedTabActiveIcon === modelData
+                                colBackground: Appearance.colors.colLayer2
+                                colBackgroundHover: Appearance.colors.colLayer2Hover
+                                colBackgroundToggled: Appearance.colors.colPrimaryContainer
+                                colBackgroundToggledHover: Appearance.colors.colPrimaryContainerHover
+                                onClicked: {
+                                    root.applySelectedTabIcon(modelData)
+                                    root._syncTabIconInput(true)
+                                }
+                                contentItem: MaterialSymbol {
+                                    anchors.centerIn: parent
+                                    text: iconPresetButton.modelData
+                                    iconSize: 18
+                                    fill: iconPresetButton.toggled ? 1 : 0
+                                    horizontalAlignment: Text.AlignHCenter
+                                    color: iconPresetButton.toggled
+                                        ? Appearance.colors.colOnPrimaryContainer
+                                        : Appearance.colors.colOnLayer2
+                                }
+                                StyledToolTip {
+                                    text: iconPresetButton.modelData
+                                }
+                            }
+                        }
                     }
                 }
 

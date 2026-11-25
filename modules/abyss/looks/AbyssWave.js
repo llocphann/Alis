@@ -43,13 +43,15 @@ function arc(edge, along, width, height) {
 }
 function create(count, width, height, options) {
     var length=Math.max(1,2*(width+height)),corners=[0,width,width+height,2*width+height];
+    var cornerSamples=new Uint8Array(count);
+    for(var i=0;i<count;i++) cornerSamples[i]=nearCorner(i*length/count,corners,length,length/count) ? 1 : 0;
     return {count:count,width:width,height:height,length:length,
         displacement:Array(count).fill(0),velocity:Array(count).fill(0),mass:Array(count).fill(1),
         spectrumTargets:Array(count).fill(0),hasSpectrum:false,
         traveling:[],travelTargets:Array(count).fill(0),hasTravelTargets:false,
         // Geometry is immutable until this output resets. Corner classification
         // therefore belongs to initialization, not every solver substep.
-        cornerSamples:Array.from({length:count},function(_,i) { return nearCorner(i*length/count,corners,length,length/count); }),
+        cornerSamples:cornerSamples,
         acceleration:Array(count).fill(0),
         crestSource:Array(count).fill(0),crests:Array(count).fill(0),whitewater:Array(count).fill(0),crestPeak:0,
         parameters:options,mode:"SLEEPING",quiet:0,age:0,steps:0};
@@ -271,43 +273,65 @@ function spectrum(state, edges, points, ceiling, strength, phase) {
 }
 function advance(state, elapsed) {
     if(state.mode === "SLEEPING") return false;
-    var p=state.parameters,dx=state.length/state.count;
+    var p=state.parameters,count=state.count,dx=state.length/count;
     var speed=(160+700*p.speed)*(.3+.7*p.propagation);
-    var parts=Math.ceil(Math.max(0,Math.min(.05,elapsed))*Math.max(120,2.5*speed/dx));
-    var dt=Math.max(0,Math.min(.05,elapsed))/Math.max(1,parts);
+    var clampedElapsed=Math.max(0,Math.min(.05,elapsed));
+    var parts=Math.ceil(clampedElapsed*Math.max(120,2.5*speed/dx));
+    var dt=clampedElapsed/Math.max(1,parts);
     var limit=heightLimit(state);
+    var disp=state.displacement,vel=state.velocity,mass=state.mass;
+    var accel=state.acceleration,travelTargets=state.travelTargets,cornerSamples=state.cornerSamples;
+    var dx2=dx*dx;
+    var waveCoeff=speed*speed/dx2;
+    var cornerTransfer=.15+.85*p.corner;
+    var spring=(18+62*p.tension)*(.4+.6*p.rebound);
+    var travelGain=60+120*p.tension;
+    var viscCoeff=p.viscosity*900/dx2;
+    var baseDamping=1.2+7*p.decay+3*(1-p.propagation);
+    var cornerDamping=baseDamping+(1-p.corner)*2;
+    var lastIdx=count-1;
     for(var step=0;step<parts;step++) {
         advanceTravel(state,dt);
-        var acceleration=state.acceleration;
-        for(var i=0;i<state.count;i++) {
-            var left=(i+state.count-1)%state.count,right=(i+1)%state.count;
-            var atCorner=state.cornerSamples[i];
-            var transfer=atCorner ? .15+.85*p.corner : 1;
-            var lap=state.displacement[left]+state.displacement[right]-2*state.displacement[i];
-            var viscous=state.velocity[left]+state.velocity[right]-2*state.velocity[i];
-            var spring=(18+62*p.tension)*(.4+.6*p.rebound);
-            var damping=1.2+7*p.decay+3*(1-p.propagation)+(atCorner?(1-p.corner)*2:0);
-            acceleration[i]=(speed*speed/(dx*dx)*lap*transfer+spring*(0-state.displacement[i])
-                +(60+120*p.tension)*state.travelTargets[i]
-                +p.viscosity*900/(dx*dx)*viscous)/state.mass[i]-damping*state.velocity[i];
+        var hasTravel=state.hasTravelTargets;
+        for(var i=0;i<count;i++) {
+            var left=i===0 ? lastIdx : i-1;
+            var right=i===lastIdx ? 0 : i+1;
+            var atCorner=cornerSamples[i];
+            var transfer=atCorner ? cornerTransfer : 1;
+            var di=disp[i],vi=vel[i];
+            var lap=disp[left]+disp[right]-2*di;
+            var viscous=vel[left]+vel[right]-2*vi;
+            var damping=atCorner ? cornerDamping : baseDamping;
+            accel[i]=(waveCoeff*lap*transfer+spring*(0-di)
+                +(hasTravel ? travelGain*travelTargets[i] : 0)
+                +viscCoeff*viscous)/mass[i]-damping*vi;
         }
-        for(var j=0;j<state.count;j++) {
-            state.velocity[j]+=acceleration[j]*dt;
-            state.displacement[j]+=state.velocity[j]*dt;
-            if(Math.abs(state.displacement[j])>limit) {
-                state.displacement[j]=Math.sign(state.displacement[j])*limit;
-                state.velocity[j]*=.2;
+        for(var j=0;j<count;j++) {
+            var vj=vel[j]+accel[j]*dt;
+            var dj=disp[j]+vj*dt;
+            if(Math.abs(dj)>limit) {
+                dj=Math.sign(dj)*limit;
+                vj*=.2;
             }
+            vel[j]=vj;
+            disp[j]=dj;
         }
         state.steps++;
     }
     state.age+=elapsed;
-    var quiet=state.traveling.length===0 && state.displacement.every(function(v) { return Math.abs(v)<.025; })
-        && state.velocity.every(function(v) { return Math.abs(v)<.12; });
+    var quiet=state.traveling.length===0;
+    if(quiet) {
+        for(var q=0;q<count;q++) {
+            if(Math.abs(disp[q])>=.025 || Math.abs(vel[q])>=.12) {
+                quiet=false;
+                break;
+            }
+        }
+    }
     state.quiet=quiet ? state.quiet+1 : 0;
     if(state.quiet>=8) {
-        state.displacement.fill(0);
-        state.velocity.fill(0);state.mode="SLEEPING";
+        disp.fill(0);
+        vel.fill(0);state.mode="SLEEPING";
     } else state.mode=state.age<.2 ? "ACTIVE" : "SETTLING";
     return true;
 }
@@ -342,15 +366,20 @@ function projectCrests(state, foamAllowed) {
     }
     // Whitewater rides fast/steep crests in the existing texture's blue channel.
     // No particles, extra render target, independent clock or foam-only timer.
-    var dx=state.length/count;
+    if(!foamAllowed || state.crestPeak<=0) {
+        state.whitewater.fill(0);
+        return state.crestPeak;
+    }
+    var dx=state.length/count,limitDenom=Math.max(1,limit),twoDx=2*dx,ww=state.parameters.whitewater;
+    var lastIdx=count-1;
     for(var k=0;k<count;k++) {
-        var left=crests[(k+count-1)%count],right=crests[(k+1)%count];
+        var left=crests[k===0 ? lastIdx : k-1],right=crests[k===lastIdx ? 0 : k+1];
         var curvature=(2*crests[k]-left-right)/dx;
-        var steepness=Math.abs(right-left)/(2*dx);
-        state.whitewater[k]=foamAllowed ? state.parameters.whitewater
-            *smoothRange(.05,.45,crests[k]/Math.max(1,limit))
+        var steepness=Math.abs(right-left)/twoDx;
+        state.whitewater[k]=ww
+            *smoothRange(.05,.45,crests[k]/limitDenom)
             *smoothRange(.05,.28,Math.max(curvature,steepness*.35))
-            *smoothRange(6,100,Math.abs(state.velocity[k])) : 0;
+            *smoothRange(6,100,Math.abs(state.velocity[k]));
     }
     return state.crestPeak;
 }

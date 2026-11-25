@@ -105,13 +105,87 @@ Item {
     readonly property var nextWallpaperImage: root._activeSlot === 0 ? wallpaperImage1 : wallpaperImage0
     readonly property bool wallpaperReady: activeWallpaperImage.status === Image.Ready
     readonly property bool nextWallpaperReady: nextWallpaperImage.status === Image.Ready
-    // Wallpaper transitions run strictly inside the shrunk Desktop Stage
-    // (`Background.qml` -> `WallpaperCrossfader`); the outer blurred surround
-    // swaps decoded preview slots directly without a second competing transition.
-    readonly property bool transitionsEnabled: false
-    readonly property int transitionDurationMs: Appearance.calcEffectiveDuration(
+    readonly property bool transitionsEnabled: Appearance.animationsEnabled
+        && (Config.options?.background?.transition?.enable ?? true)
+        && String(Config.options?.background?.transition?.type ?? "crossfade") !== "none"
+    readonly property var _configuredBezier: Config.options?.background?.transition?.bezier ?? [0.54, 0.0, 0.34, 0.99]
+    readonly property list<real> _transitionBezierCurve: [
+        Number(_configuredBezier?.[0] ?? 0.54) || 0,
+        Number(_configuredBezier?.[1] ?? 0.0) || 0,
+        Number(_configuredBezier?.[2] ?? 0.34) || 0,
+        Number(_configuredBezier?.[3] ?? 0.99) || 0,
+        1, 1
+    ]
+    property int _transMode: 0
+    property real _transOriginX: 0.5
+    property real _transOriginY: 0.5
+    property real _transAngleRad: 0.0
+    property int _transDurationMs: Appearance.calcEffectiveDuration(
         Config.options?.background?.transition?.duration ?? 800
     )
+
+    function _modeNumberForType(rawType: string, targetPath: string): int {
+        const t = String(rawType ?? "crossfade");
+        if (t === "wallfx")
+            return Wallpapers.isFavourite(targetPath) ? 6 : 1;
+        if (t === "alisMelt" || t === "inirMelt" || t === "shaderRandom")
+            return 1;
+        if (t === "grow" || t === "center" || t === "any")
+            return 2;
+        if (t === "outer")
+            return 3;
+        if (t === "wave")
+            return 4;
+        if (t === "wipe" || t === "slide" || t === "push"
+                || t === "left" || t === "right" || t === "top" || t === "bottom")
+            return 5;
+        return 0;
+    }
+
+    function _angleForDirection(dir: string): real {
+        switch (String(dir ?? "right")) {
+        case "left": return Math.PI;
+        case "top": return Math.PI * 0.5;
+        case "bottom": return Math.PI * 1.5;
+        default: return 0.0;
+        }
+    }
+
+    function _syncActiveTransitionParams(targetUrl: string): void {
+        const cleanPath = FileUtils.trimFileProtocol(String(targetUrl ?? ""));
+        const meta = Wallpapers.activeTransitionMeta;
+        const baseDur = Appearance.calcEffectiveDuration(
+            Config.options?.background?.transition?.duration ?? 800
+        );
+        if (meta && String(meta.source ?? "") === cleanPath && String(meta.type ?? "").length > 0) {
+            root._transMode = root._modeNumberForType(meta.type, cleanPath);
+            root._transOriginX = Number.isFinite(Number(meta.originX)) ? Number(meta.originX) : 0.5;
+            root._transOriginY = Number.isFinite(Number(meta.originY)) ? Number(meta.originY) : 0.5;
+            root._transAngleRad = Number.isFinite(Number(meta.angleRad)) ? Number(meta.angleRad) : root._angleForDirection(meta.direction);
+            root._transDurationMs = Math.max(120, Number(meta.durationMs) || baseDur);
+            return;
+        }
+        let cfgType = String(Config.options?.background?.transition?.type ?? "crossfade");
+        if (cfgType === "random") {
+            const pool = ["alisMelt", "wipe", "wave", "grow", "center", "outer", "any", "fade"];
+            cfgType = pool[Math.floor(Math.random() * pool.length)];
+        }
+        const cfgDir = ["left", "right", "top", "bottom"].includes(cfgType)
+            ? cfgType
+            : String(Config.options?.background?.transition?.direction ?? "right");
+        root._transMode = root._modeNumberForType(cfgType, cleanPath);
+        if (cfgType === "any") {
+            root._transOriginX = 0.15 + Math.random() * 0.7;
+            root._transOriginY = 0.15 + Math.random() * 0.7;
+        } else {
+            root._transOriginX = 0.5;
+            root._transOriginY = 0.5;
+        }
+        root._transAngleRad = root._angleForDirection(cfgDir);
+        root._transDurationMs = root._transMode === 6
+            ? Math.max(baseDur, Appearance.calcEffectiveDuration(1650))
+            : baseDur;
+    }
 
     function _cropForImage(imgItem): vector4d {
         const imageAspect = Math.max(1, imgItem.implicitWidth) / Math.max(1, imgItem.implicitHeight);
@@ -159,6 +233,7 @@ Item {
             root._finishBackdropCrossfade();
             return;
         }
+        root._syncActiveTransitionParams(String(root.nextWallpaperImage.source));
         root._wallMix = 0;
         wallMixAnim.restart();
     }
@@ -192,6 +267,14 @@ Item {
             root._activeSlot = 0;
             return;
         }
+        if (wallMixAnim.running && url !== String(root.nextWallpaperImage.source)) {
+            wallMixAnim.stop();
+            if (root._wallMix >= 0.5 && root.nextWallpaperReady) {
+                root._activeSlot = root._activeSlot === 0 ? 1 : 0;
+                root._displayedUrl = String(root.activeWallpaperImage.source);
+            }
+            root._wallMix = 0;
+        }
         root._pendingUrl = url;
         root._loadNextPending();
     }
@@ -209,8 +292,9 @@ Item {
         property: "_wallMix"
         from: 0
         to: 1
-        duration: Math.max(120, root.transitionDurationMs)
-        easing.type: Easing.OutCubic
+        duration: Math.max(120, root._transDurationMs)
+        easing.type: root._transMode === 6 ? Easing.Linear : Easing.BezierSpline
+        easing.bezierCurve: root._transitionBezierCurve
         onFinished: root._finishBackdropCrossfade()
     }
 
@@ -382,7 +466,13 @@ Item {
             root._wallMix,
             root.nextWallpaperReady ? 1.0 : 0.0,
             Math.max(1, root.nextWallpaperImage.implicitWidth),
-            0.0
+            root._transMode
+        )
+        readonly property vector4d transitionParams: Qt.vector4d(
+            root._transOriginX,
+            root._transOriginY,
+            root._transAngleRad,
+            root._wallMix * (Math.max(120, root._transDurationMs) / 1000.0)
         )
 
         readonly property var wallpaper: root.wallpaperReady ? root.activeWallpaperImage : emptyWallpaperTex

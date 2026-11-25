@@ -224,19 +224,8 @@ function setup_desktop_settings(){
   mkdir -p "${XDG_CONFIG_HOME}/Kvantum"
   echo -e "[General]\ntheme=MaterialAdw" > "${XDG_CONFIG_HOME}/Kvantum/kvantum.kvconfig"
 
-  # Nautilus dconf defaults (sidebar, mounted volumes, tree view, space info)
-  if command -v dconf &>/dev/null; then
-    dconf write /org/gnome/nautilus/preferences/default-folder-viewer "'list-view'" 2>/dev/null || true
-    dconf write /org/gnome/nautilus/list-view/use-tree-view true 2>/dev/null || true
-    dconf write /org/gnome/nautilus/list-view/default-zoom-level "'small'" 2>/dev/null || true
-    dconf write /org/gnome/nautilus/list-view/default-visible-columns "['name', 'size', 'type', 'date_modified']" 2>/dev/null || true
-    dconf write /org/gnome/nautilus/list-view/default-column-order "['name', 'size', 'type', 'owner', 'group', 'permissions', 'date_modified', 'date_accessed', 'date_created', 'recency', 'detailed_type']" 2>/dev/null || true
-    dconf write /org/gnome/nautilus/preferences/show-hidden-files false 2>/dev/null || true
-    dconf write /org/gnome/nautilus/preferences/date-time-format "'simple'" 2>/dev/null || true
-    # Window size
-    dconf write /org/gnome/nautilus/window-state/initial-size "(1100, 700)" 2>/dev/null || true
-    log_success "Nautilus defaults configured"
-  fi
+  # Alis Files is the default built-in file manager (compiled and configured via setup/integrations)
+  mkdir -p "${XDG_CONFIG_HOME}/alis"
 
   # Materialize the cursor everywhere XWayland apps look. niri already exports
   # XCURSOR_* to the clients it spawns, but X11/Electron apps (Spotify, etc.)

@@ -248,23 +248,28 @@ Item {
         1.0
     )
     readonly property real tonalDir: Qt.color(root.colTonalBase).hslLightness > 0.86 ? -1 : 1
-    readonly property color colTonalSurface: ColorUtils.tonalStep(root.colTonalBase, root.tonalDir * 0.02, 1.04)
 
     Rectangle {
         id: translatorCloudBackground
+        objectName: "translatorCloudBackground"
         visible: root.abyssMode
         anchors.fill: parent
-        anchors.margins: root.padding
-        radius: 14
-        color: root.colTonalSurface
+        anchors.margins: 0
+        radius: Appearance.rounding.normal
+        color: root.cloudColor
         border.width: 1
         border.color: root.cloudBorderColor
+        gradient: Gradient {
+            orientation: Gradient.Vertical
+            GradientStop { position: 0.0; color: root.edgeSurfaceColor(1.0) }
+            GradientStop { position: 1.0; color: root.edgeSurfaceColor(0.25) }
+        }
     }
 
     ColumnLayout {
         anchors {
             fill: parent
-            margins: root.abyssMode ? (root.padding + 10) : root.padding
+            margins: root.abyssMode ? 10 : root.padding
         }
         spacing: 8
 
@@ -350,7 +355,11 @@ Item {
                             Layout.fillWidth: true
                             implicitHeight: histLbl.implicitHeight + 10
                             radius: 8
-                            color: ColorUtils.tonalStep(root.colTonalBase, root.tonalDir * 0.04, 1.05)
+                            color: root.abyssMode
+                                ? Qt.alpha(AbyssStyle.textColor, 0.05)
+                                : ColorUtils.tonalStep(root.colTonalBase, root.tonalDir * 0.04, 1.05)
+                            border.width: root.abyssMode ? 1 : 0
+                            border.color: root.abyssMode ? Qt.alpha(AbyssStyle.textColor, 0.08) : "transparent"
                             StyledText {
                                 id: histLbl
                                 anchors.fill: parent
@@ -358,7 +367,7 @@ Item {
                                 text: `${modelData.from}→${modelData.to}: ${modelData.source} = ${modelData.target}`
                                 elide: Text.ElideRight
                                 font.pixelSize: Appearance.font.pixelSize.smallest
-                                color: Appearance.colors.colOnLayer1
+                                color: root.abyssMode ? AbyssStyle.textColor : Appearance.colors.colOnLayer1
                             }
                             MouseArea {
                                 anchors.fill: parent

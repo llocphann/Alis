@@ -11,6 +11,10 @@ QtObject {
     id: root
 
     readonly property bool waffle: Config.options?.panelFamily === "waffle"
+    readonly property bool abyss: Config.options?.panelFamily === "abyss"
+    readonly property bool isDarkSurface: Qt.color(Appearance.colors.colLayer0Base).hslLightness < 0.52
+    readonly property real tonalDirection: Qt.color(Appearance.colors.colLayer1Base).hslLightness > 0.86 ? -1 : 1
+    readonly property real _surfaceAlpha: abyss ? Math.max(0.18, AbyssStyle.contentOpacity) : 1.0
     readonly property string fontFamily: waffle ? Waffle.Looks.font.family.ui : Appearance.font.family.main
     readonly property color textColor: waffle ? Waffle.Looks.colors.fg : Appearance.colors.colOnLayer1
     readonly property color secondaryTextColor: waffle ? Waffle.Looks.colors.subfg : Appearance.colors.colSubtext
@@ -18,24 +22,86 @@ QtObject {
         ? (Waffle.Looks.useMaterial ? Appearance.colors.colLayer0
             : Waffle.Looks.applyBackgroundTransparency(Qt.tint(Waffle.Looks.dark ? "#202020" : "#f3f3f3", Qt.alpha(Waffle.Looks.colors.accent, 0.035))))
         : Appearance.colors.colLayer0
+
+    // ── Redesigned Tonal Surface Hierarchy (derived smoothly from theme base) ──
+    readonly property color _sidebarSolid: ColorUtils.tonalStep(
+        Appearance.colors.colLayer0Base,
+        isDarkSurface ? 0.022 : -0.024,
+        1.06
+    )
+    readonly property color sidebarColor: waffle
+        ? "transparent"
+        : Qt.alpha(_sidebarSolid, abyss ? Math.min(1.0, AbyssStyle.contentOpacity * 0.94) : 1.0)
+    readonly property color sidebarBorderColor: waffle
+        ? "transparent"
+        : Qt.alpha(Appearance.colors.colOutlineVariant, isDarkSurface ? 0.24 : 0.30)
+
+    readonly property color _controlSolid: ColorUtils.tonalStep(
+        Appearance.colors.colLayer1Base,
+        tonalDirection * 0.026,
+        1.08
+    )
+    readonly property color _controlHoverSolid: ColorUtils.tonalStep(
+        Appearance.colors.colLayer1Base,
+        tonalDirection * 0.048,
+        1.10
+    )
+    readonly property color _controlActiveSolid: ColorUtils.tonalStep(
+        Appearance.colors.colLayer1Base,
+        tonalDirection * 0.068,
+        1.12
+    )
+    readonly property color controlSurface: waffle
+        ? (Waffle.Looks.useMaterial ? Appearance.colors.colLayer2 : Waffle.Looks.colors.bg2)
+        : Qt.alpha(_controlSolid, _surfaceAlpha)
+    readonly property color controlSurfaceHover: waffle
+        ? (Waffle.Looks.useMaterial ? Appearance.colors.colLayer2Hover : Waffle.Looks.colors.bg2Hover)
+        : Qt.alpha(_controlHoverSolid, Math.min(1.0, _surfaceAlpha + 0.06))
+    readonly property color controlSurfaceActive: waffle
+        ? (Waffle.Looks.useMaterial ? Appearance.colors.colLayer2Active : Waffle.Looks.colors.bg2Active)
+        : Qt.alpha(_controlActiveSolid, Math.min(1.0, _surfaceAlpha + 0.10))
+    readonly property color controlBorderColor: waffle
+        ? cardBorderColor
+        : Qt.alpha(Appearance.colors.colOutlineVariant, isDarkSurface ? 0.24 : 0.30)
+
+    readonly property color accentTint: waffle
+        ? Qt.alpha(Waffle.Looks.colors.accent, 0.14)
+        : Qt.alpha(Appearance.colors.colPrimary, isDarkSurface ? 0.15 : 0.12)
+    readonly property color accentTintHover: waffle
+        ? Qt.alpha(Waffle.Looks.colors.accent, 0.22)
+        : Qt.alpha(Appearance.colors.colPrimary, isDarkSurface ? 0.23 : 0.19)
+    readonly property color accentBorder: waffle
+        ? Qt.alpha(Waffle.Looks.colors.accent, 0.32)
+        : Qt.alpha(Appearance.colors.colPrimary, isDarkSurface ? 0.30 : 0.28)
+    readonly property color pillSelectedColor: waffle
+        ? navSelectedColor
+        : Appearance.colors.colPrimaryContainer
+    readonly property color pillSelectedHoverColor: waffle
+        ? navSelectedHoverColor
+        : Appearance.colors.colPrimaryContainerHover
+    readonly property color pillSelectedTextColor: waffle
+        ? textColor
+        : ColorUtils.ensureReadable(Appearance.colors.colOnPrimaryContainer, Appearance.colors.colPrimaryContainer, 5.0)
+
     readonly property color navSelectedColor: waffle ? Qt.alpha(Waffle.Looks.colors.fg, 0.065) : Appearance.colors.colPrimaryContainer
-    readonly property color navHoverColor: waffle ? Qt.alpha(Waffle.Looks.colors.fg, 0.045) : Appearance.colors.colLayer1Hover
+    readonly property color navHoverColor: waffle ? Qt.alpha(Waffle.Looks.colors.fg, 0.045) : controlSurfaceHover
     readonly property color navSelectedHoverColor: waffle ? Qt.alpha(Waffle.Looks.colors.fg, 0.09) : Appearance.colors.colPrimaryContainerHover
-    readonly property color navSelectedTextColor: waffle ? Waffle.Looks.colors.fg : Appearance.colors.colOnPrimaryContainer
-    readonly property int navItemRadius: waffle ? 6 : Appearance.rounding.small
+    readonly property color navSelectedTextColor: waffle ? Waffle.Looks.colors.fg : pillSelectedTextColor
+    readonly property int navItemRadius: waffle ? 6 : 10
+    readonly property int navSidebarWidth: Math.round(226 * Math.min(1.25, Math.max(1.0, Appearance.fontSizeScale)))
     readonly property int waffleRailWidth: 280
-    readonly property int compactNavWidth: 56
+    readonly property int compactNavWidth: 62
 
     function useCompactNav(surfaceWidth: real, editing: bool): bool {
-        return Config.options?.panelFamily === "abyss" && !editing && surfaceWidth > 0 && surfaceWidth < 910
+        return !waffle && surfaceWidth > 0 && surfaceWidth < 860
     }
-    readonly property int searchRadius: waffle ? 4 : Appearance.rounding.full
-    readonly property color searchColor: waffle ? cardColor : Appearance.colors.colLayer0
+    readonly property int searchRadius: waffle ? 4 : 10
+    readonly property color searchColor: waffle ? cardColor : controlSurface
     readonly property color searchBottomLineColor: Waffle.Looks.dark ? "#8a8a8a" : "#868686"
 
-    // ── Page layout (iRiS single-column plate cadence / Win11 4px card stack) ──
-    readonly property int pageSpacing: Math.round((waffle ? 4 : Appearance.regaliaEverywhere ? Appearance.regalia.tileGap : Config.options?.panelFamily === "abyss" ? 12 : 16) * Appearance.fontSizeScale)
-    // Legacy compatibility no-ops (Bento forced-height equalization retired in favor of iRiS single-column plates)
+    // ── Page layout (Clean single-column editorial card cadence / Win11 4px card stack) ──
+    readonly property int pageSpacing: Math.round((waffle ? 4 : Appearance.regaliaEverywhere ? Appearance.regalia.tileGap : 12) * Appearance.fontSizeScale)
+    // Legacy compatibility no-ops
     property real _measuredThemesBentoHeight: 0
     property real _measuredThemesFontScale: -1
     property string _measuredThemesPanelFamily: ""
@@ -46,38 +112,23 @@ QtObject {
         : Appearance.regaliaEverywhere ? Appearance.regalia.roundNormal
         : Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius + 1
         : Appearance.alisEverywhere ? Appearance.alis.roundingNormal
-        : Appearance.rounding.normal
+        : 14
     readonly property int cardPadding: Math.round((Appearance.regaliaEverywhere ? Appearance.regalia.tilePadding
-        : Config.options?.panelFamily === "abyss" ? 10 : 14) * Appearance.fontSizeScale)
+        : abyss ? 14 : 15) * Appearance.fontSizeScale)
 
     // ── Card header ──
-    readonly property int headerRadius: waffle ? 4 : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-        : Appearance.regaliaEverywhere ? Appearance.regalia.controlRadius
-        : Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius
-        : Appearance.alisEverywhere ? Appearance.alis.roundingSmall
-        : Appearance.rounding.small
-    readonly property int headerPaddingX: Math.round((Appearance.regaliaEverywhere ? Appearance.regalia.controlPaddingHorizontal : 10) * Appearance.fontSizeScale)
-    readonly property int headerPaddingY: Math.round((Appearance.regaliaEverywhere ? Appearance.regalia.controlPaddingVertical : 4) * Appearance.fontSizeScale)
+    readonly property int headerRadius: waffle ? 4 : 8
+    readonly property int headerPaddingX: Math.round((Appearance.regaliaEverywhere ? Appearance.regalia.controlPaddingHorizontal : 4) * Appearance.fontSizeScale)
+    readonly property int headerPaddingY: Math.round((Appearance.regaliaEverywhere ? Appearance.regalia.controlPaddingVertical : 2) * Appearance.fontSizeScale)
 
-    // ── Group (SettingsGroup) ──
-    readonly property int groupRadius: waffle ? 4 : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-        : Appearance.regaliaEverywhere ? Appearance.regalia.roundSmall
-        : Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius
-        : Appearance.alisEverywhere ? Appearance.alis.roundingSmall
-        : Appearance.rounding.small
-    readonly property int groupPadding: Math.round((Appearance.regaliaEverywhere ? Appearance.regalia.tilePadding : Config.options?.panelFamily === "abyss" ? 8 : 10) * Appearance.fontSizeScale)
-    readonly property int groupSpacing: Math.round((Appearance.regaliaEverywhere ? Appearance.regalia.tileGap : 6) * Appearance.fontSizeScale)
+    // ── Group (SettingsGroup — clean borderless flow inside card plate, no double-boxing) ──
+    readonly property int groupRadius: waffle ? 4 : 10
+    readonly property int groupPadding: Math.round((waffle ? 10 : abyss ? 2 : 4) * Appearance.fontSizeScale)
+    readonly property int groupSpacing: Math.round((Appearance.regaliaEverywhere ? Appearance.regalia.tileGap : 8) * Appearance.fontSizeScale)
 
     // ── Colors ──
-    // In angel/aurora, cards are more transparent to let the content area's
-    // GlassBackground blur show through (like Overlay widgets do).
-    readonly property color cardColor: waffle ? (Waffle.Looks.useMaterial ? Appearance.colors.colLayer1 : Waffle.Looks.applyBackgroundTransparency(Waffle.Looks.dark ? "#2b2b2b" : "#fbfbfb")) : Config.options?.panelFamily === "abyss" ? AbyssStyle.contentLayer : Appearance.angelEverywhere
+    readonly property color cardColor: waffle ? (Waffle.Looks.useMaterial ? Appearance.colors.colLayer1 : Waffle.Looks.applyBackgroundTransparency(Waffle.Looks.dark ? "#2b2b2b" : "#fbfbfb")) : abyss ? AbyssStyle.contentLayer : Appearance.angelEverywhere
         ? ColorUtils.transparentize(Appearance.colors.colLayer1Base, Appearance.angel.cardTransparentize * 0.7)
-        // bg3 (not tile): the content field sits at bg2 now, so cards must lift a
-        // clear step above it instead of matching it — depth by layer, not stroke.
-        // ZZZ: transparent so the card complements the window/console ground
-        // (dark or light) instead of stacking another dark plate. Definition comes
-        // from the diagonal pattern + accent bar, not a filled surface + line.
         : Appearance.regaliaEverywhere ? Appearance.regalia.surfacePlate
         : Appearance.zzzEverywhere ? "transparent"
         : Appearance.alisEverywhere ? Appearance.alis.colLayer1
@@ -85,33 +136,21 @@ QtObject {
         : Appearance.colors.colLayer1
     readonly property color cardBorderColor: waffle
         ? (Waffle.Looks.useMaterial ? Qt.alpha(Appearance.colors.colOutlineVariant, 0.36) : (Waffle.Looks.dark ? "#353535" : "#e5e5e5"))
-        : Config.options?.panelFamily === "abyss"
-        ? Qt.alpha(Appearance.colors.colOutlineVariant, 0.34)
+        : abyss
+        ? Qt.alpha(Appearance.colors.colOutlineVariant, isDarkSurface ? 0.26 : 0.32)
         : Appearance.angelEverywhere
         ? Appearance.angel.colCardBorder
         : Appearance.regaliaEverywhere ? "transparent"
         : Appearance.zzzEverywhere ? Appearance.zzz.hairline
         : Appearance.alisEverywhere ? Appearance.alis.colBorder
         : Appearance.auroraEverywhere ? Appearance.aurora.colPopupBorder
-        : Qt.alpha(Appearance.colors.colOutlineVariant, 0.36)
+        : Qt.alpha(Appearance.colors.colOutlineVariant, isDarkSurface ? 0.28 : 0.34)
     readonly property color plateDividerColor: waffle
         ? (Waffle.Looks.useMaterial ? Qt.alpha(Appearance.colors.colOutlineVariant, 0.24) : (Waffle.Looks.dark ? "#353535" : "#e5e5e5"))
-        : Qt.alpha(Appearance.colors.colOutlineVariant, 0.24)
+        : Qt.alpha(Appearance.colors.colOutlineVariant, isDarkSurface ? 0.20 : 0.26)
 
-    readonly property color groupColor: waffle ? "transparent" : Config.options?.panelFamily === "abyss" ? Qt.alpha(Appearance.colors.colLayer2Base,AbyssStyle.contentOpacity*.55) : Appearance.angelEverywhere
-        ? ColorUtils.transparentize(Appearance.colors.colLayer2Base, Appearance.angel.popupTransparentize * 0.6)
-        : Appearance.regaliaEverywhere ? "transparent"
-        : Appearance.zzzEverywhere ? "transparent"
-        : Appearance.alisEverywhere ? ColorUtils.transparentize(Appearance.alis.colLayer2, 0.45)
-        : Appearance.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colLayer2Base, 0.88)
-        : ColorUtils.transparentize(Appearance.colors.colLayer2, 0.4)
-    readonly property color groupBorderColor: Appearance.angelEverywhere
-        ? Appearance.angel.colBorderSubtle
-        : Appearance.regaliaEverywhere ? "transparent"
-        : Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong
-        : Appearance.alisEverywhere ? Appearance.alis.colBorderSubtle
-        : Appearance.auroraEverywhere ? Appearance.aurora.colPopupBorder
-        : Appearance.colors.colLayer0Border
+    readonly property color groupColor: "transparent"
+    readonly property color groupBorderColor: Qt.alpha(Appearance.colors.colOutlineVariant, isDarkSurface ? 0.22 : 0.28)
 
     // ── Header hover ──
     readonly property color headerHoverColor: waffle ? Qt.alpha(Waffle.Looks.colors.fg, 0.04) : Appearance.angelEverywhere

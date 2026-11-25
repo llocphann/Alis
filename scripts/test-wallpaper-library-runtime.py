@@ -18,8 +18,32 @@ def create_catalog(folder):
     catalog.mkdir()
     still = folder / "still.png"
     animated = folder / "animated.gif"
+    magick_bin = shutil.which("magick")
     for path, color in ((still, "#76549c"), (animated, "#894c65")):
-        subprocess.run(["magick", "-size", "30x20", "xc:" + color, str(path)], check=True)
+        if magick_bin:
+            subprocess.run([magick_bin, "-size", "30x20", "xc:" + color, str(path)], check=True)
+            continue
+        try:
+            from PIL import Image
+            Image.new("RGB", (30, 20), color).save(path)
+        except ImportError:
+            subprocess.run(
+                [
+                    "ffmpeg",
+                    "-nostdin",
+                    "-y",
+                    "-loglevel",
+                    "error",
+                    "-f",
+                    "lavfi",
+                    "-i",
+                    f"color=c={color}:s=30x20:d=0.1",
+                    "-frames:v",
+                    "1",
+                    str(path),
+                ],
+                check=True,
+            )
     for i in range(320):
         os.link(still, catalog / f"frame {i:03d}.png")
     os.link(still, catalog / "Ảnh\nblue 'trăng' #1.png")

@@ -246,6 +246,28 @@ fn tint_light_surfaces(palette: &mut Palette, scheme_name: &str, theme_seed: Arg
     }
 }
 
+pub fn primary_theme_color(seed: Argb, scheme_name: &str, dark: bool) -> Argb {
+    let scheme = create_scheme(seed, variant_from_name(scheme_name), dark);
+    let mut argb = MaterialDynamicColors::new_with_spec(MATERIAL_SPEC)
+        .primary()
+        .get_argb(&scheme);
+    if scheme_name != "scheme-monochrome" {
+        let hct = Hct::from_argb(argb);
+        if dark && !(70.0..=85.0).contains(&hct.tone()) {
+            argb = scheme.primary_palette.tone(80);
+        } else if !dark && !(25.0..=50.0).contains(&hct.tone()) {
+            argb = scheme.primary_palette.tone(40);
+        }
+        let hct = Hct::from_argb(argb);
+        if hct.chroma() > 60.0 {
+            argb = Hct::new(hct.hue(), 60.0, hct.tone()).to_argb();
+        } else if (4.0..36.0).contains(&hct.chroma()) {
+            argb = Hct::new(hct.hue(), 36.0, hct.tone()).to_argb();
+        }
+    }
+    argb
+}
+
 pub fn material_palette(
     seed: Argb,
     scheme_name: &str,
@@ -1119,5 +1141,11 @@ mod tests {
         ] {
             assert!(material.contains_key(key), "missing {key}");
         }
+        let fast_primary = primary_theme_color(
+            Argb::from_rgb(0x41, 0x81, 0xEE),
+            "scheme-tonal-spot",
+            true,
+        );
+        assert_eq!(fast_primary.to_hex(), material["primary"]);
     }
 }

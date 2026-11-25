@@ -150,7 +150,13 @@ sync_integrated_companion() {
 }
 
 sync_optional_integration_helpers() {
-    python3 "${REPO_ROOT}/scripts/alis-intergration-manager.py" install --shell-root "${REPO_ROOT}" >/dev/null 2>&1 || true
+    python3 "${REPO_ROOT}/scripts/alis-intergration-manager.py" install-base --shell-root "${REPO_ROOT}" >/dev/null 2>&1 || true
+    tui_info "Synchronizing built-in Alis plugins (Alis Files, Nexus, Exercises Tracker, Spaced Repetition)..."
+    if ! python3 "${REPO_ROOT}/scripts/alis-intergration-manager.py" install-builtins --shell-root "${REPO_ROOT}" >/dev/null; then
+        tui_warn "Built-in plugin sync encountered an error; you can retry from Settings -> Integrations."
+    else
+        tui_success "Built-in Alis plugins installed (Alis Files built locally)"
+    fi
     [[ "$ALIS_SETUP_INTEGRATION_HELPERS" == 1 ]] || return 0
     local action="${COMMAND:-install}"
     [[ "$action" == update || "$action" == reinstall ]] || action=install

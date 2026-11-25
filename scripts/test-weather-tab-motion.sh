@@ -27,45 +27,34 @@ ShellRoot {
  function check(ok,message):bool {
   if(ok)return true
   console.error("WEATHER_TABS_FAIL",message,JSON.stringify({
-   frame:root.frame,currentTab:weather.currentTab,tabPosition:weather.tabPosition,
-   height:weather.height,viewportHeight:weather.children[0]?.height,
-   orbitY:weather.children[0]?.children[0]?.y,detailY:weather.children[0]?.children[1]?.y,
-   animations:Appearance.animationsEnabled,slideDuration:weather.slideDuration
+   frame:root.frame,verticalLayout:weather.verticalLayout,
+   width:weather.width,height:weather.height,viewportWidth:weather.children[0]?.width,viewportHeight:weather.children[0]?.height,
+   orbit:weather.children[0]?.children[0] ? {x:weather.children[0].children[0].x,y:weather.children[0].children[0].y,w:weather.children[0].children[0].width,h:weather.children[0].children[0].height} : null,
+   detail:weather.children[0]?.children[2] ? {x:weather.children[0].children[2].x,y:weather.children[0].children[2].y,w:weather.children[0].children[2].width,h:weather.children[0].children[2].height} : null
   }));root.finished=true;return false
  }
  FloatingWindow {
      color: "#111820"
-  visible:true;implicitWidth:700;implicitHeight:500
-  WeatherPopupContent { id:weather;width:390;height:root.bodyHeight }
+  visible:true;implicitWidth:900;implicitHeight:700
+  WeatherPopupContent { id:weather;width:implicitWidth;height:implicitHeight }
  }
  Timer {
   interval:16;running:!root.finished;repeat:true
   onTriggered:{
    if(!Config.ready)return
-   const panels=weather.children[0].children, orbit=panels[0],detail=panels[1]
-   if(root.frame===0){console.info("WEATHER_TABS_START",weather.slideDuration,root.settledFrame);Config.setNestedValue("performance.reduceAnimations",false);root.settledFrame=10+Math.ceil(weather.slideDuration/16)+6;root.bodyHeight=300}
-   if(root.frame<8 && !root.check(orbit.y===0 && detail.y===weather.height,"initial reveal paints only the selected tab"))return
-   if(root.frame===10)weather.selectTab(1)
-   if(root.frame>10 && root.frame<28 && detail.y>0 && detail.y<weather.height)root.inBetween++
-   if(root.frame>=10 && root.frame<30 && !root.check(Math.abs(detail.y-orbit.y-weather.height)<.01,"both tabs share one animation position"))return
-   if(root.frame===root.settledFrame){
-    console.info("WEATHER_TABS_SETTLED",root.frame,detail.y,root.inBetween)
-    if(!root.check(detail.y===0 && orbit.y===-weather.height && root.inBetween>0,"selection slides and settles: "+JSON.stringify({duration:weather.slideDuration,y:detail.y,frames:root.inBetween})))return
-    root.bodyHeight=270
-    if(!root.check(detail.y===0 && orbit.y===-270,"responsive resize does not replay a tab slide"))return
+   const vp=weather.children[0], orbit=vp.children[0], divider=vp.children[1], detail=vp.children[2]
+   if(root.frame===0){
+    Config.setNestedValue("performance.reduceAnimations",false)
+    weather.verticalLayout=false
    }
-   if(root.frame===root.settledFrame+3)root.bodyHeight=0
-   if(root.frame===root.settledFrame+5){
-    root.bodyHeight=300
-    if(!root.check(detail.y===0 && orbit.y===-300,"rehost/reopen retains the selected tab without overlap"))return
-    weather.selectTab(0)
+   if(root.frame===4){
+    if(!root.check(orbit.x===0 && orbit.y===0 && detail.x>=orbit.width+10 && divider.width===1,"horizontal mode must place Orbital left and Detailed right"))return
+    if(!root.check(Math.abs(orbit.y-detail.y)<0.5 && weather.implicitWidth>700,"horizontal panels misaligned or narrow"))return
+    weather.verticalLayout=true
    }
-   if(root.frame===2*root.settledFrame+5){
-    if(!root.check(orbit.y===0 && detail.y===300,"return to orbit"))return
-    Config.setNestedValue("performance.reduceAnimations",true);weather.selectTab(1)
-   }
-   if(root.frame===2*root.settledFrame+7){
-    if(!root.check(detail.y===0 && orbit.y===-300,"reduced motion selects without animation"))return
+   if(root.frame===8){
+    if(!root.check(orbit.x===0 && orbit.y===0 && detail.x===0 && detail.y>=orbit.height+10 && divider.height===1,"vertical mode must place Orbital top and Detailed bottom"))return
+    if(!root.check(weather.implicitWidth<420 && weather.implicitHeight>orbit.height+detail.height,"vertical dimensions incorrect"))return
     console.info("WEATHER_TABS_PASS");root.finished=true
    }
    root.frame++

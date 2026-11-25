@@ -33,7 +33,7 @@ depends=(
   mission-center
   mpd
   mpv
-  nautilus
+  gtk4
   nm-connection-editor
   otf-space-grotesk
   papirus-icon-theme

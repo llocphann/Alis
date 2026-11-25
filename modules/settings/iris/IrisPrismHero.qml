@@ -25,21 +25,7 @@ Item {
     signal homeClicked()
     signal railToggleClicked()
 
-    readonly property bool showingCustomTab: SettingsLayoutManager.activeCustomTabId.length > 0
-    readonly property var activeCustomTabObj: {
-        if (!root.showingCustomTab)
-            return null
-        const tabs = SettingsLayoutManager.customTabs ?? []
-        for (let i = 0; i < tabs.length; i++) {
-            if (tabs[i] && tabs[i].id === SettingsLayoutManager.activeCustomTabId)
-                return tabs[i]
-        }
-        return null
-    }
-
     readonly property string clusterLabel: {
-        if (root.showingCustomTab)
-            return Translation.tr("CUSTOM")
         const clusters = SettingsPageRegistryData.irisClusters ?? []
         for (let i = 0; i < clusters.length; i++) {
             const cl = clusters[i]
@@ -49,21 +35,13 @@ Item {
         return Translation.tr("SETTINGS")
     }
 
-    readonly property string areaTitle: root.showingCustomTab
-        ? String(root.activeCustomTabObj?.label ?? root.activeCustomTabObj?.name ?? Translation.tr("Custom Tab"))
-        : String(root.pageSpec?.name ?? Translation.tr("Settings"))
+    readonly property string areaTitle: String(root.pageSpec?.name ?? Translation.tr("Settings"))
 
-    readonly property string areaSubtitle: root.showingCustomTab
-        ? Translation.tr("Custom settings workspace")
-        : String(root.pageSpec?.desc ?? "")
+    readonly property string areaSubtitle: String(root.pageSpec?.desc ?? "")
 
-    readonly property string areaIcon: root.showingCustomTab
-        ? String(root.activeCustomTabObj?.icon ?? "dashboard_customize")
-        : String(root.pageSpec?.icon ?? "settings")
+    readonly property string areaIcon: String(root.pageSpec?.icon ?? "settings")
 
     readonly property string statusSummary: {
-        if (root.showingCustomTab)
-            return ""
         const key = String(root.pageSpec?.key ?? "")
         switch (key) {
         case "abyss":
@@ -101,13 +79,6 @@ Item {
     }
 
     readonly property var primaryAction: {
-        if (root.showingCustomTab) {
-            return {
-                icon: SettingsLayoutManager.editMode ? "check" : "dashboard_customize",
-                label: SettingsLayoutManager.editMode ? Translation.tr("Done") : Translation.tr("Edit layout"),
-                kind: "editLayout"
-            }
-        }
         const key = String(root.pageSpec?.key ?? "")
         switch (key) {
         case "wallpaper":
@@ -121,7 +92,9 @@ Item {
         case "abyss":
         case "bar":
         case "shell-layout":
-            return { icon: "edit", label: Config.options?.panelFamily === "abyss" ? Translation.tr("Edit Abyss layout") : Translation.tr("Edit layout"), kind: "abyssEdit" }
+            return Config.options?.panelFamily === "abyss"
+                ? { icon: "edit", label: Translation.tr("Edit Abyss layout"), kind: "abyssEdit" }
+                : null
         case "system":
             return { icon: "lock", label: Translation.tr("Lock now"), kind: "lock" }
         case "companion":
@@ -131,11 +104,7 @@ Item {
                 kind: "toggleCompanion"
             }
         default:
-            return {
-                icon: SettingsLayoutManager.editMode ? "check" : "dashboard_customize",
-                label: SettingsLayoutManager.editMode ? Translation.tr("Done") : Translation.tr("Edit layout"),
-                kind: "editLayout"
-            }
+            return null
         }
     }
 
@@ -153,10 +122,6 @@ Item {
         case "abyssEdit":
             if (Config.options?.panelFamily === "abyss" && typeof GlobalStates.startAbyssEditing === "function")
                 GlobalStates.startAbyssEditing()
-            else if (SettingsLayoutManager.editMode)
-                SettingsLayoutManager.commitEditMode()
-            else
-                SettingsLayoutManager.beginEditMode()
             break
         case "lock":
             GlobalStates.settingsOverlayOpen = false
@@ -166,10 +131,6 @@ Item {
             IrisState.triggerTile("companion")
             break
         default:
-            if (SettingsLayoutManager.editMode)
-                SettingsLayoutManager.commitEditMode()
-            else
-                SettingsLayoutManager.beginEditMode()
             break
         }
     }

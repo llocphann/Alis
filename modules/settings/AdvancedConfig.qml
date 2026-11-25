@@ -69,12 +69,10 @@ ContentPage {
         id: advancedTwoColumnGrid
         objectName: "advancedTwoColumnGrid"
         Layout.fillWidth: true
-        readonly property real cavaCardWidth: cavaSwitch.implicitWidth + resetCavaButton.implicitWidth + cavaActionRow.spacing
-            + 2 * (SettingsMaterialPreset.cardPadding + SettingsMaterialPreset.groupPadding)
-        columns: width >= (Config.options?.panelFamily === "abyss" ? 2 * cavaCardWidth + columnSpacing : 620) ? 2 : 1
-        uniformCellWidths: columns === 2
+        columns: 1
+        uniformCellWidths: true
         columnSpacing: 14
-        rowSpacing: 14
+        rowSpacing: SettingsMaterialPreset.pageSpacing
 
         SettingsCardSection {
             id: appColorGenCard
@@ -90,12 +88,13 @@ ContentPage {
 
             SettingsGroup {
                 GridLayout {
+                    id: appColorSwitchGrid
                     Layout.fillWidth: true
                     Layout.minimumWidth: 0
-                    columns: width >= 430 ? 2 : 1
-                    uniformCellWidths: false
-                    columnSpacing: 10
-                    rowSpacing: 4
+                    columns: width >= 460 ? 2 : 1
+                    uniformCellWidths: columns === 2
+                    columnSpacing: 16
+                    rowSpacing: 6
 
                     SettingsSwitch {
                         Layout.fillWidth: true
@@ -170,7 +169,6 @@ ContentPage {
                         Layout.fillWidth: true
                         Layout.preferredWidth: 1
                         Layout.minimumWidth: 0
-                        Layout.columnSpan: (parent.columns > 1 && parent.width < Math.round(580 * Appearance.fontSizeScale)) ? 2 : 1
                         buttonIcon: "music_note"
                         text: Translation.tr("Pear Desktop (YouTube Music)")
                         checked: Config.options?.appearance?.wallpaperTheming?.enablePearDesktop ?? true
@@ -302,7 +300,9 @@ ContentPage {
                         }
                     }
                     SettingsSwitch {
+                        Layout.columnSpan: appColorSwitchGrid.columns
                         Layout.fillWidth: true
+                        Layout.minimumWidth: 0
                         buttonIcon: "code"
                         text: Translation.tr("Neovim / LazyVim")
                         checked: Config.options?.appearance?.wallpaperTheming?.enableNeovim ?? false
@@ -322,6 +322,7 @@ ContentPage {
                     tooltip: Translation.tr("Choose the Spicetify layout while keeping Alis wallpaper colors")
 
                     ConfigSelectionArray {
+                        fillWidthSegments: true
                         currentValue: Config.options?.appearance?.wallpaperTheming?.spicetifyTheme ?? "Alis"
                         onSelected: newValue => {
                             Config.setNestedValue("appearance.wallpaperTheming.spicetifyTheme", newValue)
@@ -398,6 +399,7 @@ ContentPage {
                 }
 
                 ConfigSelectionArray {
+                    fillWidthSegments: true
                     currentValue: Config.options?.appearance?.cava?.colorSource ?? "theme"
                     onSelected: newValue => root.setCavaValue(
                         "appearance.cava.colorSource", newValue, true)
@@ -442,10 +444,10 @@ ContentPage {
 
                 GridLayout {
                     Layout.fillWidth: true
-                    columns: width >= 560 * Appearance.fontSizeScale ? 2 : 1
-                    uniformCellWidths: false
-                    columnSpacing: 8
-                    rowSpacing: 6
+                    columns: width >= 540 * Appearance.fontSizeScale ? 2 : 1
+                    uniformCellWidths: columns === 2
+                    columnSpacing: 14
+                    rowSpacing: 8
 
                     ConfigSpinBox {
                         Layout.fillWidth: true

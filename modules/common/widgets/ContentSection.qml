@@ -81,34 +81,33 @@ ColumnLayout {
 
     RowLayout {
         Layout.fillWidth: true
-        spacing: 8
+        spacing: 9
 
         Rectangle {
-            visible: !SettingsMaterialPreset.waffle && root.irisNumberText.length > 0
+            visible: !SettingsMaterialPreset.waffle && root.icon && root.icon.length > 0
             Layout.alignment: Qt.AlignVCenter
-            implicitWidth: secNumLabel.implicitWidth + 12
-            implicitHeight: Math.round(20 * Appearance.fontSizeScale)
-            radius: Math.round(implicitHeight / 2)
-            color: Qt.alpha(Appearance.colors.colPrimary, 0.12)
+            implicitWidth: Math.round(26 * Appearance.fontSizeScale)
+            implicitHeight: implicitWidth
+            radius: 8
+            color: SettingsMaterialPreset.accentTint
             border.width: 1
-            border.color: Qt.alpha(Appearance.colors.colPrimary, 0.24)
+            border.color: SettingsMaterialPreset.accentBorder
 
-            StyledText {
-                id: secNumLabel
+            MaterialSymbol {
                 anchors.centerIn: parent
-                text: root.irisNumberText
-                font.pixelSize: Appearance.font.pixelSize.smallest
-                font.weight: Font.DemiBold
-                font.letterSpacing: 0.4
-                font.features: ({ "tnum": 1 })
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                text: root.icon
+                iconSize: Math.round(15 * Appearance.fontSizeScale)
                 color: Appearance.colors.colPrimary
             }
         }
 
         OptionalMaterialSymbol {
+            visible: SettingsMaterialPreset.waffle && root.icon && root.icon.length > 0
             icon: root.icon
             iconSize: Appearance.font.pixelSize.larger
-            color: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.iconExpandedColor : Appearance.colors.colPrimary
+            color: SettingsMaterialPreset.iconExpandedColor
         }
         StyledText {
             Layout.fillWidth: true

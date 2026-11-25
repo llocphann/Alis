@@ -75,6 +75,7 @@ Singleton {
     }
     function chat(): void { if (session) session.chat() }
     function pocket(): void { if (session?.pocket) session.pocket() }
+    function sendFiles(pathsJson): void { if (session?.sendFiles) session.sendFiles(pathsJson) }
     function prop(kind): void { if (session?.previewProp) session.previewProp(kind) }
     function status(): string {
         if (session) return JSON.stringify(Object.assign(
@@ -114,6 +115,7 @@ Singleton {
         target: "aqua"
         function chat(): void {root.chat()}
         function pocket(): void {root.pocket()}
+        function sendFiles(pathsJson: string): void {root.sendFiles(pathsJson)}
         function prop(kind: string): void {root.prop(kind)}
         function previewProp(kind: string): void {root.prop(kind)}
         function status(): string {return root.status()}
@@ -122,6 +124,7 @@ Singleton {
         target: "alisCompanion"
         function refresh(): void {root.refresh()}
         function pocket(): void {root.pocket()}
+        function sendFiles(pathsJson: string): void {root.sendFiles(pathsJson)}
         function prop(kind: string): void {root.prop(kind)}
         function previewProp(kind: string): void {root.prop(kind)}
         function status(): string {return root.status()}

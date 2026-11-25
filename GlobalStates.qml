@@ -122,6 +122,7 @@ Singleton {
     property var toastManager: null
 
     property string abyssPopupKind: ""
+    property bool abyssPopupTransient: false
     property string abyssPopupTargetOutput: ""
     property string abyssPopupEdge: ""
     property real abyssPopupAlong: 0
@@ -160,6 +161,7 @@ Singleton {
         root.closeSidebarRight()
         root.closeNotificationCenter()
         root.abyssPopupKind = ""
+        root.abyssPopupTransient = false
         root.mediaControlsOpen = false
         root.abyssEditing = true
     }

@@ -279,4 +279,4 @@ for(const edge of ['top','right','bottom','left']) {
 }
 console.log('PASS: normalized module packing, corner-safe content endpoints/snaps, all edges/scales, output profiles, disabled state and bounded malformed input');
 """
-subprocess.run(["node", "-e", program], cwd=root, check=True)
+subprocess.run(["node"], input=program, text=True, cwd=root, check=True)

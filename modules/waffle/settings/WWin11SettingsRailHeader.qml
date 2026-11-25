@@ -20,6 +20,7 @@ ColumnLayout {
     signal focusResultsRequested()
     signal acceptCurrentResultRequested()
     signal clearSearchRequested()
+    signal escapeEmptySearchRequested()
 
     function focusSearch(): void {
         searchInput.forceActiveFocus()
@@ -173,6 +174,7 @@ ColumnLayout {
                                 root.clearSearchRequested()
                             } else {
                                 searchInput.focus = false
+                                root.escapeEmptySearchRequested()
                             }
                             event.accepted = true
                         }

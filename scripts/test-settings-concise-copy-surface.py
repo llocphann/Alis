@@ -185,7 +185,7 @@ AI_AND_INTEGRATION_HELP = {
         "Typed tools preview changes; raw commands require Advanced mode.",
         "No local models. Start Ollama or LM Studio to chat privately without an account or key.",
     ),
-    "modules/settings/IntegrationsConfig.qml": (
+    "modules/dashboard/PlannerCalendarSyncPanel.qml": (
         "Paste a compatible ICS/iCal feed URL; no account sign-in within Alis.",
     ),
     "modules/settings/GeneralConfigCore.qml": (
@@ -410,9 +410,10 @@ for osd_key in ("Keyboard OSD popup", "Caps Lock OSD", "Num Lock OSD", "Layout s
     assert EN_US.get(osd_key) == osd_key, osd_key
 
 interface_src = (ROOT / "modules" / "settings" / "InterfaceConfig.qml").read_text(encoding="utf-8")
-for notif_key in ("Notification center", "Collapse empty history", "Notification chime"):
+for notif_key in ("Notification center", "Notification chime"):
     assert f"Translation.tr({json.dumps(notif_key, ensure_ascii=False)})" in interface_src, notif_key
     assert EN_US.get(notif_key) == notif_key, notif_key
+assert "sidebar.collapseEmptyNotifications" not in interface_src, "Retired collapseEmptyNotifications should stay removed"
 
 for new_page, concise_keys in (
     ("AboutConfig.qml", ("Alis Desktop Shell", "System & Session", "Quick Links")),

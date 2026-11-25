@@ -84,7 +84,8 @@ for (const [edge, pos, expectedCorner, hEdge, vEdge] of cornerCases) {
         assert.equal(paintInsets[hEdge], bareEdge, 'cornerWrap does not bloat bare painted horizontal edge');
         assert.equal(paintInsets[vEdge], bareEdge, 'cornerWrap does not bloat bare painted vertical edge');
         const resInsets = edgeInsetsForModules(solo, opts, 1, bareEdge, 48, true);
-        assert.ok(resInsets[hEdge] >= 48 && resInsets[vEdge] >= 48, 'Wayland reservation protects both corner arms');
+        assert.ok(resInsets[hEdge] >= 26 && resInsets[vEdge] >= 26 && resInsets[hEdge] <= 34,
+            `cornerWrap Cava exclusiveZone must match slim band depth without 48px bloat: ${resInsets[hEdge]}x${resInsets[vEdge]}`);
     }
 }
 
@@ -452,8 +453,12 @@ upd_ind = (ROOT / "modules/bar/ShellUpdateIndicator.qml").read_text(encoding="ut
 assert "abyssMicMeterEnabled: true" in bar_mod, "concurrent Mic Meter WIP line must remain intact"
 assert 'objectName: "abyssDetachedPillSurface"' in bar_mod
 assert 'objectName: "abyssCornerWrapContentLoader"' in bar_mod
-assert "AbyssStyle.surface" in bar_mod and "AbyssStyle.surfaceDeep" in bar_mod
-assert "colLayer1Base" not in bar_mod.split("detachedPillBg")[1].split("Rectangle {")[0], "detachedPillBg must match Screen Edge surface color rather than washing out to colLayer1Base"
+assert "AbyssStyle.surface" in bar_mod
+detached_bg_block = bar_mod.split("id: detachedPillBg", 1)[1].split("Loader {", 1)[0]
+assert "colLayer1Base" not in detached_bg_block, "detachedPillBg must match Screen Edge surface color rather than washing out to colLayer1Base"
+assert "color: AbyssStyle.surface" in detached_bg_block, "detachedPillBg must keep Screen Edge surface color on hover"
+assert "border.width: 0" in detached_bg_block, "detachedPillBg must remain borderless (soft shadow only)"
+assert "StyledRectangularShadow {" in bar_mod, "detachedPillBg must keep its soft StyledRectangularShadow"
 assert "Config.options?.bar?.cava?.width" in cw_qml and "Config.options?.bar?.cava?.height" in cw_qml
 assert "Config.options?.bar?.cava?.barSpacing" in cw_qml and "Config.options?.bar?.cava?.barRadius" in cw_qml
 assert "Config.options?.bar?.cava?.mirror" in cw_qml and "Config.options?.appearance?.cava?.bars" in cw_qml

@@ -58,7 +58,7 @@ Rectangle {
 
     property real _animatedTrayHeight: root.trayExpanded ? Math.max(0, root.trayHeight) : 0
     Behavior on _animatedTrayHeight {
-        enabled: Appearance.animationsEnabled
+        enabled: Appearance.animationsEnabled && !root.embeddedSurface
         NumberAnimation {
             duration: AbyssStyle.motionFast > 0 ? AbyssStyle.motionFast : 160
             easing.type: Easing.OutCubic
@@ -634,25 +634,33 @@ Rectangle {
             }
         }
 
+        readonly property real _embeddedAvailableTrayHeight: Math.max(
+            0,
+            root.height - root.verticalPadding * 2 - root.topBarHeight - root.trayGap - 1
+        )
+        readonly property real _displayTrayHeight: root.embeddedSurface
+            ? (root.trayExpanded
+                ? Math.max(root._animatedTrayHeight, dockColumn._embeddedAvailableTrayHeight)
+                : (dockColumn._embeddedAvailableTrayHeight > 12 ? dockColumn._embeddedAvailableTrayHeight : 0))
+            : Math.max(0, root._animatedTrayHeight)
+
         // Hairline Separator between Top Strip and Gallery/Control Tray
         Rectangle {
             id: traySeparator
-            visible: root._animatedTrayHeight > 0.5
+            visible: dockColumn._displayTrayHeight > 0.5
             width: parent.width
             height: 1
-            opacity: Math.min(1, root._animatedTrayHeight / 24)
+            opacity: Math.min(1, dockColumn._displayTrayHeight / 24)
             color: Qt.alpha(Appearance.colors.colOutlineVariant, 0.22)
         }
 
         // Tier 2: Expandable Horizontal Tile Gallery / Control Tray
         Item {
             id: trayContentHost
-            visible: root._animatedTrayHeight > 0.5
+            visible: dockColumn._displayTrayHeight > 0.5
             width: parent.width
-            height: (root.embeddedSurface && root.trayExpanded && root._animatedTrayHeight >= root.trayHeight - 1 && root.height > root.implicitHeight)
-                ? Math.max(0, root.height - root.verticalPadding * 2 - root.topBarHeight - root.trayGap - 1)
-                : Math.max(0, root._animatedTrayHeight)
-            opacity: Math.min(1, root._animatedTrayHeight / Math.max(1, root.trayHeight * 0.55))
+            height: dockColumn._displayTrayHeight
+            opacity: Math.min(1, dockColumn._displayTrayHeight / Math.max(1, root.trayHeight * 0.55))
             clip: true
         }
     }

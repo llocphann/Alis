@@ -1217,6 +1217,80 @@ fn cache_dir() -> PathBuf {
         .join("music-covers")
 }
 
+fn parse_mpd_conf_music_directory(contents: &str) -> Option<PathBuf> {
+    for raw_line in contents.lines() {
+        let trimmed = raw_line.trim();
+        if trimmed.is_empty() || trimmed.starts_with('#') {
+            continue;
+        }
+        let Some(rest) = trimmed.strip_prefix("music_directory") else {
+            continue;
+        };
+        if !rest.chars().next().is_some_and(char::is_whitespace) {
+            continue;
+        }
+        let val = rest.trim_start();
+        let extracted =
+            if let Some(quote_char) = val.chars().next().filter(|&c| c == '"' || c == '\'') {
+                let mut out = String::new();
+                let mut escaped = false;
+                let mut closed = false;
+                for ch in val[quote_char.len_utf8()..].chars() {
+                    if escaped {
+                        out.push(ch);
+                        escaped = false;
+                    } else if ch == '\\' && quote_char == '"' {
+                        escaped = true;
+                    } else if ch == quote_char {
+                        closed = true;
+                        break;
+                    } else {
+                        out.push(ch);
+                    }
+                }
+                if !closed { None } else { Some(out) }
+            } else {
+                val.split(|c: char| c.is_whitespace() || c == '#')
+                    .next()
+                    .map(str::to_owned)
+            };
+        let Some(raw_path) = extracted.map(|s| s.trim().to_owned()).filter(|s| !s.is_empty())
+        else {
+            continue;
+        };
+        let path = expand_home(&raw_path);
+        if path.is_absolute() {
+            return Some(path);
+        }
+    }
+    None
+}
+
+pub(crate) fn configured_mpd_music_dir() -> Option<PathBuf> {
+    let config_home = std::env::var_os("XDG_CONFIG_HOME")
+        .filter(|s| !s.is_empty())
+        .map(PathBuf::from)
+        .unwrap_or_else(|| home_dir().join(".config"));
+    let home = home_dir();
+    let candidates = [
+        config_home.join("mpd").join("mpd.conf"),
+        home.join(".mpdconf"),
+        home.join(".mpd").join("mpd.conf"),
+        PathBuf::from("/etc/mpd.conf"),
+    ];
+    for conf_path in candidates {
+        let Ok(contents) = fs::read_to_string(&conf_path) else {
+            continue;
+        };
+        if let Some(dir) = parse_mpd_conf_music_directory(&contents)
+            && dir.is_dir()
+        {
+            return Some(dir);
+        }
+    }
+    None
+}
+
 fn local_path(uri: &str, music_root: &str) -> String {
     if uri.contains("://") {
         return uri.to_owned();
@@ -1380,7 +1454,24 @@ impl ArtLookup {
         if let Some(art) = self.cached.get(&key) {
             return art.clone();
         }
-        self.cached.insert(key, String::new());
+        String::new()
+    }
+
+    fn probe_cached_art_on_disk(&mut self, track: &Map<String, Value>) -> String {
+        let key = art_cache_key(track);
+        if let Some(art) = self.cached.get(&key)
+            && !art.is_empty()
+        {
+            return art.clone();
+        }
+        for ext in CACHE_ART_EXTENSIONS {
+            let path = self.cache.join(format!("{key}{ext}"));
+            if fs::metadata(&path).is_ok_and(|meta| meta.len() > 0) {
+                let url = file_url(&path);
+                self.cached.insert(key, url.clone());
+                return url;
+            }
+        }
         String::new()
     }
 
@@ -1599,6 +1690,37 @@ fn is_stale_missing_file_error(error_text: &str, current: &Value) -> bool {
     false
 }
 
+pub(crate) fn resolve_current_mpd_art(
+    client: &mut MpdClient,
+    current: &mut Value,
+    art_lookup: &mut ArtLookup,
+) {
+    let Value::Object(obj) = current else {
+        return;
+    };
+    if !track_str(obj, "art").is_empty() {
+        return;
+    }
+    let uri = track_value(obj, "uri");
+    if uri.is_empty() || uri.contains("://") {
+        return;
+    }
+    let key = art_cache_key(obj);
+    if art_lookup.missing_embedded.contains(&key) {
+        return;
+    }
+    if let Some((data, mime)) = fetch_mpd_art(client, &uri) {
+        if let Ok(written) = write_cached_art(&art_lookup.cache, obj, &data, &mime)
+            && !written.is_empty()
+        {
+            art_lookup.cached.insert(key, written.clone());
+            obj.insert("art".into(), json!(written));
+            return;
+        }
+    }
+    art_lookup.missing_embedded.insert(key);
+}
+
 fn status_payload_mode_with_art(
     client: &mut MpdClient,
     root: &str,
@@ -1640,6 +1762,34 @@ fn status_payload_mode_with_art(
             let probed = art_lookup.probe_duration(&path);
             if probed > 0.0 {
                 obj.insert("duration".into(), json!(probed));
+            }
+        }
+        if track_str(obj, "art").is_empty() {
+            let mut art = art_lookup.probe_cached_art_on_disk(obj);
+            let uri = track_value(obj, "uri");
+            if art.is_empty()
+                && root.is_empty()
+                && !uri.is_empty()
+                && !uri.contains("://")
+                && !Path::new(&uri)
+                    .components()
+                    .any(|c| matches!(c, std::path::Component::ParentDir))
+            {
+                for dir in [configured_mpd_music_dir(), mpris::resolve_xdg_music_dir()]
+                    .into_iter()
+                    .flatten()
+                {
+                    let candidate = dir.join(&uri);
+                    if candidate.is_file() {
+                        art = art_lookup.folder_art(&candidate.to_string_lossy());
+                        if !art.is_empty() {
+                            break;
+                        }
+                    }
+                }
+            }
+            if !art.is_empty() {
+                obj.insert("art".into(), json!(art));
             }
         }
     }
@@ -3539,5 +3689,57 @@ mod tests {
         assert_eq!(payload["current"]["title"], "StoppedTrack");
         assert_eq!(payload["current"]["duration"], 215.42);
         assert_eq!(payload["status"]["duration"], "215.420");
+    }
+
+    #[test]
+    fn parses_mpd_conf_music_directory_comments_quotes_and_tilde() {
+        assert_eq!(
+            crate::parse_mpd_conf_music_directory(
+                "# music_directory \"/ignored/comment\"\n  music_directory   \"~/Music/Library\" # trailing\n"
+            ),
+            Some(crate::home_dir().join("Music/Library"))
+        );
+        assert_eq!(
+            crate::parse_mpd_conf_music_directory("music_directory_extra \"/nope\"\nmusic_directory '/srv/audio'\n"),
+            Some(std::path::PathBuf::from("/srv/audio"))
+        );
+        assert_eq!(
+            crate::parse_mpd_conf_music_directory("music_directory /opt/mpd-music # bare\n"),
+            Some(std::path::PathBuf::from("/opt/mpd-music"))
+        );
+        assert_eq!(
+            crate::parse_mpd_conf_music_directory("music_directory \"relative/only\"\n"),
+            None
+        );
+    }
+
+    #[test]
+    fn cached_art_does_not_poison_misses_when_file_appears_later() {
+        let dir = std::env::temp_dir().join(format!("alis-mpd-cache-probe-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).expect("create temp cache dir");
+
+        let mut art_lookup = crate::ArtLookup {
+            cache: dir.clone(),
+            ..crate::ArtLookup::default()
+        };
+        let track = serde_json::json!({
+            "albumArtist": "Probe Artist",
+            "artist": "Probe Artist",
+            "album": "Probe Album",
+            "folder": "Probe/Album",
+            "uri": "Probe/Album/song.flac"
+        });
+        let obj = track.as_object().expect("track map");
+        assert!(art_lookup.cached_art(obj).is_empty());
+        assert!(art_lookup.probe_cached_art_on_disk(obj).is_empty());
+
+        let written = crate::write_cached_art(&dir, obj, b"\xFF\xD8\xFF\xE0mock", "image/jpeg")
+            .expect("write cached cover");
+        assert!(art_lookup.cached_art(obj).is_empty());
+        assert_eq!(art_lookup.probe_cached_art_on_disk(obj), written);
+        assert_eq!(art_lookup.cached_art(obj), written);
+
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }

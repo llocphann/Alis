@@ -21,6 +21,11 @@ for req in (
     "yearRangeMode:yearRangeMode",
 ):
     assert req in weekly_src, f"DashboardWeeklyPlanner missing yearly integration contract: {req}"
+assert 'objectName:"plannerExercisesAction"' not in weekly_src, "plannerExercisesAction must stay removed"
+
+yearly_src = (ROOT / "modules" / "dashboard" / "DashboardYearlyPlanner.qml").read_text()
+for removed_chip in ('Translation.tr("Next")', 'Translation.tr("Up next")', 'Translation.tr("Last")', 'label: "/"'):
+    assert removed_chip not in yearly_src, f"DashboardYearlyPlanner retained removed UI element: {removed_chip}"
 
 # 2. Live QML runtime test against real Events singleton in pure offscreen mode
 QML = r'''
@@ -229,7 +234,25 @@ Window {
                 check(!!reloadedKyoto && reloadedKyoto.checklist[0].done === true, "Checklist toggle persisted")
                 check(Events.getEventsForDate(new Date(2026, 7, 5, 12, 0, 0)).some(e => e.id === kyoto.id), "Rescheduled Aug 5 active")
 
-                // Rolling 12 + Search + Jump-to-week signal
+                // Rolling 12 + Search icon-only toggle + Linked events + Jump-to-week signal
+                const searchToggle = findChildByObjectName(yp, "yearlySearchToggle")
+                check(!!searchToggle && searchToggle.symbol === "search" && searchToggle.label === "",
+                    "yearlySearchToggle must be icon-only without '/' label")
+
+                yp.linkedEvents = [{
+                    id: "nexus-task:demo-1",
+                    uid: "nexus-task:demo-1",
+                    title: "Linked Nexus Session",
+                    startDate: "2026-07-15T10:00:00",
+                    endDate: "2026-07-15T11:00:00",
+                    allDay: false,
+                    sourceColor: "#7F7796"
+                }]
+                root.externalRev++
+                wait(30)
+                check(yp.boardData.spans.some(s => s.title === "Linked Nexus Session"),
+                    "linkedEvents must project onto Yearly Planner spans")
+
                 const rollingBtn = findChildByObjectName(yp, "yearlyModeRolling")
                 rollingBtn.clicked()
                 wait(30)

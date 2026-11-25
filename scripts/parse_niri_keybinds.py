@@ -229,7 +229,7 @@ IPC_MAP = {
 
 # App detection
 TERMINALS = ['foot', 'kitty', 'alacritty', 'wezterm', 'ghostty', 'konsole', 'gnome-terminal']
-FILE_MANAGERS = ['dolphin', 'nautilus', 'thunar', 'nemo', 'pcmanfm', 'ranger', 'yazi']
+FILE_MANAGERS = ['alis-files', 'dolphin', 'nautilus', 'thunar', 'nemo', 'pcmanfm', 'ranger', 'yazi']
 BROWSERS = ['firefox', 'zen-browser', 'chromium', 'brave', 'vivaldi']
 
 

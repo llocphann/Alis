@@ -56,7 +56,6 @@ def flow_sections(begin):
     return "".join(root), "".join(complete)
 
 
-action_flow_found = False
 for i, match in enumerate(flows):
     outer, inside = flow_sections(match.end())
     assert re.search(r"\bLayout\.fillWidth\s*:\s*true\b", outer), (
@@ -69,10 +68,27 @@ for i, match in enumerate(flows):
     assert not re.search(r"\bwidth\s*:\s*parent\.width\b", outer), (
         f"Flow #{i + 1} bypasses Layout width management"
     )
-    if "Install all" in inside:
-        action_flow_found = True
-        assert "Use Alis tasks" in inside and "Check updates" in inside
-assert action_flow_found, "expected package action Flow with Install all"
+    assert "Install all" not in inside and "Reinstall all" not in inside and "Remove all" not in inside, (
+        "bulk plugin actions must stay removed from IntegrationsConfig.qml"
+    )
+
+for forbidden in (
+    '"Install all"',
+    '"Reinstall all"',
+    '"Remove all"',
+    'objectName: "integrationPluginModal"',
+    'objectName: "integrationSystemHelpersCard"',
+    'objectName: "integrationCalendarSyncCard"',
+    'objectName: "integrationWorkflowsCard"',
+    'objectName: "integrationNexusTodoSettings"',
+    'AlisIntergration.manage("install-all")',
+    'AlisIntergration.manage("install")',
+    'AlisIntergration.manage("helpers-',
+    'AlisIntergration.manage("gateway-',
+    "khal",
+    "curl",
+):
+    assert forbidden not in qml, f"deprecated token {forbidden!r} returned to IntegrationsConfig.qml"
 
 assert '"Refresh"' in qml
 assert 'AlisIntergration.refreshSystemStatus()' in qml
@@ -80,23 +96,33 @@ assert '"Check status"' not in qml
 assert 'Reinstall helpers' not in qml and 'Install gateway' not in qml
 assert './setup integrations' in qml
 assert './setup install-deps' in qml
-assert 'AlisIntergration.manage("helpers-' not in qml and 'AlisIntergration.manage("gateway-' not in qml
-assert 'integrationPrimaryTabs' not in qml, "top primary tab bar should be removed in Management-only rework"
+assert 'integrationPrimaryTabs' not in qml, "top primary tab bar should be removed"
 assert 'objectName: "integrationOptionalPluginsCard"' in qml
 assert 'objectName: "integrationPluginCard_" + pluginCard.modelData.id' in qml
-assert 'objectName: "integrationPluginModal"' in qml
+assert 'objectName: "integrationDrillDownViewport"' in qml
+assert 'objectName: "integrationDetailView"' in qml
+assert 'objectName: "integrationPluginDependenciesCard"' in qml
 assert 'function handleEscape(): bool' in qml
 assert 'AlisIntergration.installPlugin(' in qml and 'AlisIntergration.removePlugin(' in qml
-assert 'AlisIntergration.manage("install-all")' in qml and 'AlisIntergration.manage("install")' in qml
+assert 'AlisIntergration.managePlugin(' not in qml
+assert 'root.selectedDependencies.helpersCommand' in qml and 'root.copyCommand(' in qml
+assert 'readonly property string activeSubViewTitle:' in qml
+assert 'item.handleEscape()' in qml
+assert 'openPluginSettings(' in qml
+assert 'if (pluginCard.isInstalled)\n                                                    root.openPluginSettings(' in qml
 assert 'Enable this plugin above to configure it.' in qml
 assert 'readonly property var primaryTabs:' in qml and 'integrationCapabilityTabs' in qml
 assert 'bentoEqualizeToTarget: !root.embedded' in qml
 assert "settingsPageIndex: 38" in qml
-assert 'objectName: "integrationSystemHelpersCard"' in qml
-assert 'objectName: "integrationCalendarSyncCard"' in qml
-assert 'objectName: "integrationWorkflowsCard"' in qml
-assert qml.count("_consumesBentoExtraHeight: false") >= 4
+assert qml.count("_consumesBentoExtraHeight: false") >= 2
 assert not re.search(r"\bItem\s*\{\s*Layout\.fillHeight\s*:\s*true\s*\}", qml)
+
+# Verify relocated surfaces live in their target files without old dependencies.
+planner_cal = (ROOT / "modules/dashboard/PlannerCalendarSyncPanel.qml").read_text(encoding="utf-8")
+assert "Holiday Presets" in planner_cal and "CalendarSync.addSource(" in planner_cal
+services_qml = (ROOT / "modules/settings/ServicesConfig.qml").read_text(encoding="utf-8")
+for key in ("enablePackages", "enableSetup", "enableCustom", "nonAppResultDelay"):
+    assert key in services_qml, f"ServicesConfig.qml missing relocated search option {key}"
 
 # Verify per-plugin install/remove + legacy full-install compatibility in Python status & manager.
 def load_mod(name, path):
@@ -119,8 +145,8 @@ manifest_base = {
     "integrations": catalog_doc["integrations"],
     "settings": catalog_doc["settings"],
     "backends": {
-        "managedTodo": "services/NexusTodoBackend.qml",
-        "dailyTodo": "services/DailyNoteTodoBackend.qml",
+        "managedTodo": "plugins/nexus/services/NexusTodoBackend.qml",
+        "dailyTodo": "plugins/nexus/services/DailyNoteTodoBackend.qml",
     },
     "plugins": catalog_doc["plugins"],
 }
@@ -160,54 +186,86 @@ with tempfile.TemporaryDirectory(prefix="alis-plugin-flow-") as tmp:
     insp = status_mod.inspect(shell, data_home)
     assert insp["available"] and insp["installedPluginIds"] == ["nexus"]
     assert [p["id"] for p in insp["plugins"]] == ["nexus"]
-    assert len(insp["catalog"]) == 5
+    assert len(insp["catalog"]) == 6
+    assert insp["dependencies"]["alis_files"]["userSpace"] is True
     assert insp["dependencies"]["nexus"]["userSpace"] is True
     assert insp["dependencies"]["spaced_repetition"]["userSpace"] is True
+    assert insp["dependencies"]["spaced_repetition"]["packages"] == ["python3"]
+    assert [b["name"] for b in insp["dependencies"]["spaced_repetition"]["binaries"]] == ["python3"]
     assert insp["dependencies"]["exercises_tracker"]["userSpace"] is True
     assert insp["dependencies"]["tlp"]["requiresSystemHelpers"] is True
     assert insp["dependencies"]["tlp"]["setupCommand"] == "./setup install-deps"
-    assert insp["dependencies"]["thinkfan"]["helpersCommand"] == "./setup integrations"
+    assert insp["dependencies"]["tlp"]["helpersCommand"] == "./setup integrations install tlp"
+    assert insp["dependencies"]["thinkfan"]["helpersCommand"] == "./setup integrations install thinkfan"
+
+    # Only nexus should be materialized under base-v2; sibling plugins stay absent until downloaded.
+    assert (home / "plugins" / "nexus").is_dir()
+    assert not (home / "plugins" / "spaced_repetition").exists()
+    assert not (home / "plugins" / "exercises_tracker").exists()
+    assert not (home / "current" / "plugins").exists()
+    assert insp["layout"] == "base-v2"
 
     # Add second and third user-space plugins independently.
-    res2 = manager_mod.operate("install-plugin", home, shell, plugin_id="spaced_repetition")
+    res2 = manager_mod.operate(
+        "install-plugin", home, shell,
+        revision_fetch=lambda: rev,
+        archive_fetch=lambda _u, _l: archive_bytes,
+        plugin_id="spaced_repetition",
+    )
     assert res2["installedPluginIds"] == ["nexus", "spaced_repetition"]
-    res2b = manager_mod.operate("install-plugin", home, shell, plugin_id="exercises_tracker")
+    res2b = manager_mod.operate(
+        "install-plugin", home, shell,
+        revision_fetch=lambda: rev,
+        archive_fetch=lambda _u, _l: archive_bytes,
+        plugin_id="exercises_tracker",
+    )
     assert res2b["installedPluginIds"] == ["nexus", "spaced_repetition", "exercises_tracker"]
     insp2 = status_mod.inspect(shell, data_home)
     assert insp2["installedPluginIds"] == ["nexus", "spaced_repetition", "exercises_tracker"]
 
-    # Remove one plugin keeps the others installed.
+    # Remove one plugin removes only its isolated dir and keeps the others installed.
     res3 = manager_mod.operate("remove-plugin", home, shell, plugin_id="nexus")
     assert res3["installedPluginIds"] == ["spaced_repetition", "exercises_tracker"]
+    assert not (home / "plugins" / "nexus").exists()
+    assert (home / "plugins" / "spaced_repetition").is_dir()
     insp3 = status_mod.inspect(shell, data_home)
     assert [p["id"] for p in insp3["plugins"]] == ["spaced_repetition", "exercises_tracker"]
 
-    # Legacy compatibility: removing installed-plugins.json while current symlink exists treats all 5 installed.
+    # Base-v2 without installed-plugins.json only recognizes plugins actually extracted under plugins/.
+    (home / "installed-plugins.json").unlink()
+    base_no_list = status_mod.inspect(shell, data_home)
+    assert [p["id"] for p in base_no_list["plugins"]] == ["spaced_repetition", "exercises_tracker"]
+
+    # Monolithic install-all installs all 6 plugins cleanly.
+    all_from_partial = manager_mod.operate(
+        "install-all", home, shell,
+        revision_fetch=lambda: rev,
+        archive_fetch=lambda _u, _l: archive_bytes,
+    )
+    assert all_from_partial["ok"] and all_from_partial["installedPluginIds"] == ["tlp", "thinkfan", "nexus", "spaced_repetition", "exercises_tracker", "alis_files"]
+    assert [p["id"] for p in status_mod.inspect(shell, data_home)["plugins"]] == ["tlp", "thinkfan", "nexus", "spaced_repetition", "exercises_tracker", "alis_files"]
+
+    # Legacy compatibility on split-v2/legacy monolithic install: deleting installed-plugins.json treats all 6 present.
     (home / "installed-plugins.json").unlink()
     legacy_insp = status_mod.inspect(shell, data_home)
-    assert [p["id"] for p in legacy_insp["plugins"]] == ["tlp", "thinkfan", "nexus", "spaced_repetition", "exercises_tracker"]
+    assert [p["id"] for p in legacy_insp["plugins"]] == ["tlp", "thinkfan", "nexus", "spaced_repetition", "exercises_tracker", "alis_files"]
     assert legacy_insp["pluginSelectionExplicit"] is False
 
-    # Removing one plugin from legacy setup migrates remaining 4 into installed-plugins.json.
+    # Removing one plugin from legacy setup migrates remaining 5 into installed-plugins.json.
     rem_legacy = manager_mod.operate("remove-plugin", home, shell, plugin_id="tlp")
-    assert rem_legacy["installedPluginIds"] == ["thinkfan", "nexus", "spaced_repetition", "exercises_tracker"]
+    assert rem_legacy["installedPluginIds"] == ["thinkfan", "nexus", "spaced_repetition", "exercises_tracker", "alis_files"]
 
-    # Partial selection -> install-all on the SAME revision restores all 5 plugins.
-    all_from_partial = manager_mod.operate(
+    # Empty selection [] while current symlink exists -> install-all restores all 6 plugins.
+    for pid in ("tlp", "thinkfan", "nexus", "spaced_repetition", "exercises_tracker", "alis_files"):
+        manager_mod.operate("remove-plugin", home, shell, plugin_id=pid)
+    assert status_mod.inspect(shell, data_home)["installedPluginIds"] == []
+    all_from_empty = manager_mod.operate(
         "install-all", home, shell,
         revision_fetch=lambda: rev,
         archive_fetch=lambda _u, _l: (_ for _ in ()).throw(AssertionError("should reuse already-current release")),
     )
-    assert all_from_partial["ok"] and all_from_partial["installedPluginIds"] == ["tlp", "thinkfan", "nexus", "spaced_repetition", "exercises_tracker"]
-    assert [p["id"] for p in status_mod.inspect(shell, data_home)["plugins"]] == ["tlp", "thinkfan", "nexus", "spaced_repetition", "exercises_tracker"]
-
-    # Empty selection [] while current symlink exists -> install-all restores all 5 plugins.
-    for pid in ("tlp", "thinkfan", "nexus", "spaced_repetition", "exercises_tracker"):
-        manager_mod.operate("remove-plugin", home, shell, plugin_id=pid)
-    assert status_mod.inspect(shell, data_home)["installedPluginIds"] == []
-    all_from_empty = manager_mod.operate("install-all", home, shell, revision_fetch=lambda: rev)
-    assert all_from_empty["ok"] and all_from_empty["installedPluginIds"] == ["tlp", "thinkfan", "nexus", "spaced_repetition", "exercises_tracker"]
-    assert [p["id"] for p in status_mod.inspect(shell, data_home)["plugins"]] == ["tlp", "thinkfan", "nexus", "spaced_repetition", "exercises_tracker"]
+    assert all_from_empty["ok"] and all_from_empty["installedPluginIds"] == ["tlp", "thinkfan", "nexus", "spaced_repetition", "exercises_tracker", "alis_files"]
+    assert [p["id"] for p in status_mod.inspect(shell, data_home)["plugins"]] == ["tlp", "thinkfan", "nexus", "spaced_repetition", "exercises_tracker", "alis_files"]
 
     # Legacy /usr/libexec/<legacy>-thinkfan helper fallback:
     # satisfies thinkfan dependency when canonical alis-thinkfan is absent,
@@ -251,4 +309,4 @@ with tempfile.TemporaryDirectory(prefix="alis-plugin-flow-") as tmp:
     dep_symlink = status_mod.inspect_plugin_dependencies(dep_override)["thinkfan"]
     assert not dep_symlink["satisfied"] and not dep_symlink["helpersReady"]
 
-print("ALIS_INTERGRATION_SETTINGS_FLOW_PASS Management-only Bento view, modal/Escape, per-plugin lifecycle, install-all & legacy fallback")
+print("ALIS_INTERGRATION_SETTINGS_FLOW_PASS Management view, slide drill-down/Escape, per-plugin lifecycle, install-all & legacy fallback")

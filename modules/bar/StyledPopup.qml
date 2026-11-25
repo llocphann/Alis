@@ -112,6 +112,10 @@ LazyLoader {
     // Preserve dismissal while the user-requested slide is still running.
     property bool _gracefulDismissal: false
     property bool _liquidSemanticHold: false
+    // True while Abyss's surface allocator has temporarily hidden this popup
+    // behind a higher-priority body (explicit/focused popups stay open and
+    // auto-restore once space returns).
+    property bool _placementEvicted: false
     // Aqua borrows this exact mature popup. Hover/focus takes the same content
     // over, and revokes the lease so its later departure cannot close user UI.
     property var companionLease: null
@@ -168,8 +172,10 @@ LazyLoader {
         _gracefulDismissal = true
         _liquidDismissed = true
         _liquidSemanticHold = false
+        _placementEvicted = false
         _bodyHovered = false
         _contentHovered = false
+        _interactionHold = false
         hoverTransferTimer.stop()
         if (_liquidController) {
             const fid = root._liquidFifoId()
@@ -179,9 +185,13 @@ LazyLoader {
         }
         if (_lingerVisible)
             _beginRetract()
-        else
+        else {
             offsetScale = 1
+            _finishGracefulDismissal()
+        }
         requestClose()
+        if (!root._gracefulDismissal && !root._rawVisibleRequest)
+            root._liquidDismissed = false
     }
 
     function dismissPresentation(): void {
@@ -189,7 +199,8 @@ LazyLoader {
         _gracefulDismissal = false
         _liquidDismissed = true
         _liquidSemanticHold = false
-        _bodyHovered = false; _contentHovered = false
+        _placementEvicted = false
+        _bodyHovered = false; _contentHovered = false; _interactionHold = false
         _lingerVisible = false
         offsetScale = 1
         if (_liquidController) {
@@ -199,10 +210,21 @@ LazyLoader {
             _liquidController.releasePopupHover(root)
         }
         requestClose()
+        if (!root._rawVisibleRequest)
+            root._liquidDismissed = false
     }
     property QtObject _liquidPresentationConnections: Connections {
         target: root
-        function onPresentationActiveChanged() { root.syncLiquidPresentation(); Qt.callLater(root._syncBarAutoHideLease) }
+        function onPresentationActiveChanged() {
+            if (!root.presentationActive) {
+                root._bodyHovered = false
+                root._contentHovered = false
+                root._interactionHold = false
+                root._placementEvicted = false
+            }
+            root.syncLiquidPresentation()
+            Qt.callLater(root._syncBarAutoHideLease)
+        }
         function onContentItemChanged() { root.syncLiquidPresentation() }
         function on_LiquidControllerChanged() {
             if (root._liquidController) {
@@ -283,7 +305,8 @@ LazyLoader {
     property bool exclusiveKeyboardFocus: false
     property bool _bodyHovered: false
     property bool _contentHovered: false
-    readonly property bool popupHovered: root._bodyHovered || root._contentHovered
+    property bool _interactionHold: false
+    readonly property bool popupHovered: root._bodyHovered || root._contentHovered || root._interactionHold
     default property Item contentItem
     property real popupBackgroundMargin: 0
     // Compatibility knob retained for old callers. Placement is now authoritative:
@@ -425,6 +448,13 @@ LazyLoader {
         if (!root._rawVisibleRequest && !root._gracefulDismissal)
             root._liquidDismissed = false
     }
+    onHoverActivatesChanged: {
+        if (!root.hoverActivates && !root._rawVisibleRequest && !root._gracefulDismissal)
+            root._liquidDismissed = false
+        else if (root.hoverActivates && root._hoverRequested && !root._liquidDismissed
+                && root._liquidController && root._liquidController.hoveredPopup === null)
+            root._liquidController.claimPopupHover(root)
+    }
     function _finishGracefulDismissal(): void {
         if (!root._gracefulDismissal)
             return
@@ -481,6 +511,7 @@ LazyLoader {
         }
         root._bodyHovered = false
         root._contentHovered = false
+        root._interactionHold = false
         root._liquidSemanticHold = false
         root._lingerVisible = false
         root.offsetScale = 1
@@ -494,6 +525,7 @@ LazyLoader {
         root._liquidSemanticHold = false
         root._bodyHovered = false
         root._contentHovered = false
+        root._interactionHold = false
         Qt.callLater(root._syncBarAutoHideLease)
     }
 
@@ -702,6 +734,7 @@ LazyLoader {
     property QtObject _clickOutsideBackdropObject: PanelWindow {
         id: clickOutsideBackdrop
         visible: root._anchorReady && root.requestedVisible && root.closeOnOutsideClick
+            && !root._placementEvicted
         screen: root._anchorScreen
         color: Qt.rgba(0, 0, 0, 1/255)
         exclusiveZone: 0

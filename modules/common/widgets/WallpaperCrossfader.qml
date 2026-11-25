@@ -57,6 +57,28 @@ Item {
             shaderFrameSwapCount: root._shaderFrameSwapCount}
     }
 
+    function activeTransitionDescriptor(): var {
+        const shader = String(root._activeShader ?? "")
+        const geom = String(root._effectiveGeometricType ?? "")
+        const resolved = shader === "wallfx" ? "wallfx"
+            : shader === "alisMelt" ? "alisMelt"
+            : shader === "alisTransitions" ? geom
+            : String(root._effectiveType ?? "crossfade")
+        return {
+            source: FileUtils.trimFileProtocol(String(internal.pendingSource || root.source)),
+            type: resolved,
+            direction: root._resolvedTransitionDirection(),
+            originX: Number(root._shaderOrigin.x),
+            originY: Number(root._shaderOrigin.y),
+            angleRad: root._geometricTransitionAngleRad(),
+            wallfxActive: shader === "wallfx",
+            wallfxMode: Number(root._wallfxMode),
+            durationMs: shader === "wallfx"
+                ? Math.max(root.transitionDuration, Appearance.calcEffectiveDuration(root._wallfxMode > 0.5 ? 1850 : 1650))
+                : root.transitionDuration
+        }
+    }
+
     // ── Internal state ─────────────────────────────────────────────────
     property bool _transitioning: false
     // Liquid is a real shader transition by default, not a disguised fade.

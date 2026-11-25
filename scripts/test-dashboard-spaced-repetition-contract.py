@@ -10,6 +10,8 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+INTERGRATION_ROOT = ROOT.parent / "Alis-Intergration"
+PLUGIN_SR = INTERGRATION_ROOT / "plugins" / "spaced_repetition"
 
 
 def run_node_engine_tests() -> None:
@@ -18,14 +20,14 @@ const fs = require("fs");
 const vm = require("vm");
 const assert = require("assert");
 
-const essentialCode = fs.readFileSync("services/SpacedRepetitionEssential4000.js", "utf8")
+const essentialCode = fs.readFileSync("plugins/spaced_repetition/services/SpacedRepetitionEssential4000.js", "utf8")
     .replace(/^\.pragma\s+library\s*$/m, "");
-const promptsCode = fs.readFileSync("services/SpacedRepetitionPrompts.js", "utf8")
+const promptsCode = fs.readFileSync("plugins/spaced_repetition/services/SpacedRepetitionPrompts.js", "utf8")
     .replace(/^\.pragma\s+library\s*$/m, "");
-const lexiconCode = fs.readFileSync("services/SpacedRepetitionLexicon.js", "utf8")
+const lexiconCode = fs.readFileSync("plugins/spaced_repetition/services/SpacedRepetitionLexicon.js", "utf8")
     .replace(/^\.pragma\s+library\s*$/m, "")
     .replace(/^\.import\s+"SpacedRepetitionEssential4000\.js"\s+as\s+Essential4000\s*$/m, "");
-const engineCode = fs.readFileSync("services/SpacedRepetitionEngine.js", "utf8")
+const engineCode = fs.readFileSync("plugins/spaced_repetition/services/SpacedRepetitionEngine.js", "utf8")
     .replace(/^\.pragma\s+library\s*$/m, "")
     .replace(/^\.import\s+"SpacedRepetitionPrompts\.js"\s+as\s+Prompts\s*$/m, "")
     .replace(/^\.import\s+"SpacedRepetitionEssential4000\.js"\s+as\s+Essential4000\s*$/m, "")
@@ -728,7 +730,7 @@ assert.strictEqual(repairedStaleV5.cards[0].notes, "keep my note");
 
 console.log("SR_ENGINE_UNIT_PASS");
 """
-    res = subprocess.run(["node", "-e", node_script], cwd=ROOT, capture_output=True, text=True, check=False)
+    res = subprocess.run(["node", "-e", node_script], cwd=INTERGRATION_ROOT, capture_output=True, text=True, check=False)
     if res.returncode != 0 or "SR_ENGINE_UNIT_PASS" not in res.stdout:
         print(res.stdout, file=sys.stderr)
         print(res.stderr, file=sys.stderr)
@@ -736,7 +738,7 @@ console.log("SR_ENGINE_UNIT_PASS");
 
 
 def run_cli_lookup_tests() -> None:
-    cli = ROOT / "scripts" / "spaced-repetition" / "lookup_word_level.py"
+    cli = PLUGIN_SR / "scripts" / "integrations" / "lookup_word_level.py"
     assert cli.exists(), "lookup_word_level.py missing"
 
     # Single-word offline lookup
@@ -792,7 +794,7 @@ def run_cli_lookup_tests() -> None:
         '<span class="pos">adjective</span><span class="phon">/təˈneɪʃəs/</span>'
         '<span class="def">determined</span><span class="x">a tenacious grip</span>'
     )
-    assert ox_parsed["pos"] == "adj"
+    assert ox_parsed["pos"] == "adjective"
     assert ox_parsed["phonetic"] == "/təˈneɪʃəs/"
     assert ox_parsed["meaning"] == "determined"
     assert ox_parsed["example"] == "a tenacious grip"
@@ -833,19 +835,25 @@ def verify_qml_and_config_contracts() -> None:
     defaults_json = json.loads((ROOT / "defaults" / "config.json").read_text(encoding="utf-8"))
     dash_content = (ROOT / "modules" / "dashboard" / "DashboardContent.qml").read_text(encoding="utf-8")
     dash_header = (ROOT / "modules" / "dashboard" / "DashboardHeader.qml").read_text(encoding="utf-8")
-    sr_qml = (ROOT / "modules" / "dashboard" / "DashboardSpacedRepetition.qml").read_text(encoding="utf-8")
-    sr_settings = (ROOT / "modules" / "settings" / "DashboardSpacedRepetitionSettings.qml").read_text(encoding="utf-8")
+    sr_qml = (PLUGIN_SR / "modules" / "dashboard" / "DashboardSpacedRepetition.qml").read_text(encoding="utf-8")
+    sr_settings = (PLUGIN_SR / "modules" / "settings" / "DashboardSpacedRepetitionSettings.qml").read_text(encoding="utf-8")
     dash_config = (ROOT / "modules" / "settings" / "DashboardConfig.qml").read_text(encoding="utf-8")
 
+    # Core Alis must not keep un-pluginized SR UI/JS/script fallback copies.
+    assert not (ROOT / "modules" / "dashboard" / "DashboardSpacedRepetition.qml").exists()
+    assert not (ROOT / "modules" / "settings" / "DashboardSpacedRepetitionSettings.qml").exists()
+    assert not (ROOT / "services" / "SpacedRepetitionEngine.js").exists()
+    assert not (ROOT / "scripts" / "spaced-repetition").exists()
     assert "singleton SpacedRepetition 1.0 SpacedRepetition.qml" in services_qmldir
-    assert "DashboardSpacedRepetition 1.0 DashboardSpacedRepetition.qml" in dash_qmldir
-    assert "DashboardSpacedRepetitionSettings 1.0 DashboardSpacedRepetitionSettings.qml" in settings_qmldir
+    assert "DashboardSpacedRepetition 1.0 DashboardSpacedRepetition.qml" not in dash_qmldir
+    assert "DashboardSpacedRepetitionSettings 1.0 DashboardSpacedRepetitionSettings.qml" not in settings_qmldir
 
     assert "property JsonObject spacedRepetition: JsonObject {" in config_qml
-    assert "spacedRepetition" in defaults_json["dashboard"]["pageOrder"]
+    assert "spacedRepetition" not in defaults_json["dashboard"]["pageOrder"]
     assert defaults_json["dashboard"]["spacedRepetition"]["enable"] is True
     assert defaults_json["dashboard"]["spacedRepetition"]["boostMultiplier"] == 100
     assert defaults_json["dashboard"]["spacedRepetition"]["lapseMultiplier"] == 50
+    assert "AlisIntergration.spacedRepetitionEnabled" in dash_content
 
     assert 'id: spacedRepetitionPage' in dash_content
     assert 'objectName: "dashboardSpacedRepetitionPageLoader"' in dash_content
@@ -934,6 +942,7 @@ def verify_qml_and_config_contracts() -> None:
     integration_plugins = json.loads((ROOT / "defaults" / "integration-plugins.json").read_text(encoding="utf-8"))
     alis_intergration_qml = (ROOT / "services" / "AlisIntergration.qml").read_text(encoding="utf-8")
     assert "DashboardSpacedRepetitionSettings {" not in dock_config
+    assert "AlisIntergration.spacedRepetitionEnabled" in dock_config
     assert 'value:"spacedRepetition"' in dock_config
     assert 'section: Translation.tr("Spaced Repetition")' in registry_data
     assert "spaced_repetition" in integration_plugins["integrations"]

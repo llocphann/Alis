@@ -224,46 +224,59 @@ ContentPage {
                     }
                 }
 
-                Row {
-                    spacing: 4
+                Rectangle {
+                    implicitWidth: schemeButtonsRow.implicitWidth + 6
+                    implicitHeight: 34
+                    radius: 10
+                    color: SettingsMaterialPreset.controlSurface
+                    border.width: 1
+                    border.color: SettingsMaterialPreset.controlBorderColor
 
-                    Repeater {
-                        model: [
-                            { icon: "dark_mode", label: "Dark", tabIndex: 1 },
-                            { icon: "light_mode", label: "Light", tabIndex: 2 },
-                            { icon: "auto_awesome", label: "Auto", tabIndex: 0 }
-                        ]
+                    Row {
+                        id: schemeButtonsRow
+                        anchors.centerIn: parent
+                        spacing: 3
 
-                        RippleButton {
-                            required property var modelData
-                            readonly property bool chosen: themesGroup.selectedTab === modelData.tabIndex
-                            implicitWidth: schemeSegRow.implicitWidth + 18
-                            implicitHeight: 30
-                            buttonRadius: Appearance.rounding.small
-                            toggled: chosen
-                            colBackground: chosen ? Appearance.colors.colPrimaryContainer : Appearance.colors.colLayer1
-                            colBackgroundHover: chosen ? Appearance.colors.colPrimaryContainerHover : Appearance.colors.colLayer1Hover
-                            onClicked: themesGroup.selectedTab = modelData.tabIndex
+                        Repeater {
+                            model: [
+                                { icon: "dark_mode", label: "Dark", tabIndex: 1 },
+                                { icon: "light_mode", label: "Light", tabIndex: 2 },
+                                { icon: "auto_awesome", label: "Auto", tabIndex: 0 }
+                            ]
 
-                            contentItem: Item {
-                                implicitWidth: schemeSegRow.implicitWidth
-                                implicitHeight: schemeSegRow.implicitHeight
-                                Row {
-                                    id: schemeSegRow
-                                    anchors.centerIn: parent
-                                    spacing: 5
-                                    MaterialSymbol {
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        text: modelData.icon
-                                        iconSize: 14
-                                        color: chosen ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnLayer1
-                                    }
-                                    StyledText {
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        text: modelData.label
-                                        font.pixelSize: Appearance.font.pixelSize.smaller
-                                        font.weight: chosen ? Font.DemiBold : Font.Normal
-                                        color: chosen ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnLayer1
+                            RippleButton {
+                                required property var modelData
+                                readonly property bool chosen: themesGroup.selectedTab === modelData.tabIndex
+                                implicitWidth: schemeSegRow.implicitWidth + 18
+                                implicitHeight: 28
+                                buttonRadius: 7
+                                toggled: chosen
+                                colBackground: "transparent"
+                                colBackgroundHover: SettingsMaterialPreset.controlSurfaceHover
+                                colBackgroundToggled: SettingsMaterialPreset.pillSelectedColor
+                                colBackgroundToggledHover: SettingsMaterialPreset.pillSelectedHoverColor
+                                onClicked: themesGroup.selectedTab = modelData.tabIndex
+
+                                contentItem: Item {
+                                    implicitWidth: schemeSegRow.implicitWidth
+                                    implicitHeight: schemeSegRow.implicitHeight
+                                    Row {
+                                        id: schemeSegRow
+                                        anchors.centerIn: parent
+                                        spacing: 5
+                                        MaterialSymbol {
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            text: modelData.icon
+                                            iconSize: 14
+                                            color: chosen ? SettingsMaterialPreset.pillSelectedTextColor : SettingsMaterialPreset.textColor
+                                        }
+                                        StyledText {
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            text: modelData.label
+                                            font.pixelSize: Appearance.font.pixelSize.smaller
+                                            font.weight: chosen ? Font.DemiBold : Font.Medium
+                                            color: chosen ? SettingsMaterialPreset.pillSelectedTextColor : SettingsMaterialPreset.textColor
+                                        }
                                     }
                                 }
                             }
@@ -282,10 +295,10 @@ ContentPage {
                 Rectangle {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 34
-                    radius: Appearance.rounding.small
-                    color: Appearance.colors.colLayer1
+                    radius: 10
+                    color: SettingsMaterialPreset.controlSurface
                     border.width: searchField.activeFocus ? 1.5 : 1
-                    border.color: searchField.activeFocus ? Appearance.colors.colPrimary : SettingsMaterialPreset.groupBorderColor
+                    border.color: searchField.activeFocus ? Appearance.colors.colPrimary : SettingsMaterialPreset.controlBorderColor
 
                     RowLayout {
                         anchors.fill: parent
@@ -305,7 +318,7 @@ ContentPage {
                             Layout.alignment: Qt.AlignVCenter
                             font.pixelSize: Appearance.font.pixelSize.smaller
                             font.family: Appearance.font.family.main
-                            color: Appearance.colors.colOnLayer1
+                            color: SettingsMaterialPreset.textColor
                             clip: true
                             onTextChanged: themesGroup.searchQuery = text
 
@@ -336,16 +349,27 @@ ContentPage {
                 }
 
                 RippleButton {
-                    implicitWidth: softenBtnRow.implicitWidth + 18
+                    id: softenBtn
+                    implicitWidth: softenBtnRow.implicitWidth + 20
                     implicitHeight: 34
-                    buttonRadius: Appearance.rounding.small
+                    buttonRadius: 10
                     toggled: Config.options?.appearance?.softenColors ?? true
-                    colBackground: toggled ? Appearance.colors.colPrimaryContainer : Appearance.colors.colLayer1
-                    colBackgroundHover: toggled ? Appearance.colors.colPrimaryContainerHover : Appearance.colors.colLayer1Hover
+                    colBackground: SettingsMaterialPreset.controlSurface
+                    colBackgroundHover: SettingsMaterialPreset.controlSurfaceHover
+                    colBackgroundToggled: SettingsMaterialPreset.pillSelectedColor
+                    colBackgroundToggledHover: SettingsMaterialPreset.pillSelectedHoverColor
                     onClicked: {
                         const val = !(Config.options?.appearance?.softenColors ?? true)
                         Config.setNestedValue("appearance.softenColors", val)
                         ThemeService.regenerateAutoTheme()
+                    }
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: softenBtn.buttonEffectiveRadius
+                        color: "transparent"
+                        border.width: 1
+                        border.color: softenBtn.toggled ? SettingsMaterialPreset.accentBorder : SettingsMaterialPreset.controlBorderColor
+                        z: 1
                     }
                     contentItem: Item {
                         implicitWidth: softenBtnRow.implicitWidth
@@ -358,17 +382,18 @@ ContentPage {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: "opacity"
                                 iconSize: 15
-                                color: (Config.options?.appearance?.softenColors ?? true)
-                                    ? Appearance.colors.colOnPrimaryContainer
-                                    : Appearance.colors.colOnLayer1
+                                color: softenBtn.toggled
+                                    ? SettingsMaterialPreset.pillSelectedTextColor
+                                    : SettingsMaterialPreset.textColor
                             }
                             StyledText {
                                 anchors.verticalCenter: parent.verticalCenter
-                                text: "Soften"
+                                text: Translation.tr("Soften")
                                 font.pixelSize: Appearance.font.pixelSize.smaller
-                                color: (Config.options?.appearance?.softenColors ?? true)
-                                    ? Appearance.colors.colOnPrimaryContainer
-                                    : Appearance.colors.colOnLayer1
+                                font.weight: softenBtn.toggled ? Font.DemiBold : Font.Medium
+                                color: softenBtn.toggled
+                                    ? SettingsMaterialPreset.pillSelectedTextColor
+                                    : SettingsMaterialPreset.textColor
                             }
                         }
                     }
@@ -376,76 +401,132 @@ ContentPage {
                 }
             }
 
-            Flow {
-                id: tagFlow
+            Rectangle {
+                id: tagTrack
                 Layout.fillWidth: true
-                spacing: 6
+                Layout.minimumWidth: 0
+                implicitHeight: tagFlow.implicitHeight + 6
+                radius: 10
+                color: SettingsMaterialPreset.controlSurface
+                border.width: 1
+                border.color: SettingsMaterialPreset.controlBorderColor
 
-                Repeater {
-                    model: ThemePresets.availableTags.filter(t => t.id !== "dark" && t.id !== "light")
+                readonly property var filterTags: [
+                    { id: "", name: Translation.tr("All"), icon: "apps" }
+                ].concat(ThemePresets.availableTags.filter(t => t.id !== "dark" && t.id !== "light"))
 
-                    Rectangle {
-                        required property var modelData
-                        readonly property bool isActive: themesGroup.selectedTag === modelData.id
-
-                        width: tagRow.implicitWidth + 14
-                        height: 26
-                        radius: 13
-                        color: isActive ? Appearance.colors.colPrimaryContainer
-                            : tagMouse.containsMouse ? Appearance.colors.colLayer1Hover
-                            : Appearance.colors.colLayer1
-
-                        RowLayout {
-                            id: tagRow
-                            anchors.centerIn: parent
-                            spacing: 4
-
-                            MaterialSymbol {
-                                text: modelData.icon
-                                iconSize: 13
-                                color: parent.parent.isActive ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnLayer1
-                            }
-
-                            StyledText {
-                                text: modelData.name
-                                font.pixelSize: Appearance.font.pixelSize.smallest
-                                color: parent.parent.isActive ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnLayer1
-                            }
+                TextMetrics {
+                    id: tagMetrics
+                    font.family: Appearance.font.family.main
+                    font.pixelSize: Appearance.font.pixelSize.smallest
+                    font.weight: Font.DemiBold
+                    text: {
+                        let longest = ""
+                        const items = tagTrack.filterTags
+                        for (let i = 0; i < items.length; ++i) {
+                            const lbl = String(items[i]?.name ?? "")
+                            if (lbl.length > longest.length)
+                                longest = lbl
                         }
-
-                        MouseArea {
-                            id: tagMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: themesGroup.toggleTag(modelData.id)
-                        }
+                        return longest
                     }
                 }
 
-                Rectangle {
-                    visible: themesGroup.selectedTag.length > 0
-                    width: 26
-                    height: 26
-                    radius: 13
-                    color: clearMouse.containsMouse ? Appearance.colors.colLayer1Hover : Appearance.colors.colLayer1
+                Flow {
+                    id: tagFlow
+                    anchors {
+                        left: parent.left
+                        right: parent.right
+                        verticalCenter: parent.verticalCenter
+                        margins: 3
+                    }
+                    spacing: 3
 
-                    MaterialSymbol {
-                        anchors.centerIn: parent
-                        text: "close"
-                        iconSize: 13
-                        color: Appearance.colors.colSubtext
+                    readonly property int tagCount: Math.max(1, tagTrack.filterTags.length)
+                    readonly property int availWidth: Math.max(tagCount, Math.floor(width))
+                    readonly property real minTagWidth: Math.max(
+                        Math.round(58 * Appearance.fontSizeScale),
+                        Math.ceil(tagMetrics.advanceWidth) + 13 + 4 + 16
+                    )
+                    readonly property int rowCount: {
+                        const maxFit = Math.max(1, Math.floor((availWidth + spacing) / (minTagWidth + spacing)))
+                        return Math.max(1, Math.ceil(tagCount / maxFit))
                     }
 
-                    MouseArea {
-                        id: clearMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: themesGroup.selectedTag = ""
-                    }
+                    Repeater {
+                        model: tagTrack.filterTags
 
-                    StyledToolTip { text: Translation.tr("Clear filter"); visible: clearMouse.containsMouse }
+                        RippleButton {
+                            id: tagBtn
+                            required property var modelData
+                            required property int index
+                            readonly property bool isActive: modelData.id === ""
+                                ? themesGroup.selectedTag.length === 0
+                                : themesGroup.selectedTag === modelData.id
+
+                            width: {
+                                const count = tagFlow.tagCount
+                                const rows = tagFlow.rowCount
+                                const basePerRow = Math.floor(count / rows)
+                                const extraRows = count % rows
+                                const cutoff = extraRows * (basePerRow + 1)
+                                let itemsInRow = basePerRow
+                                let posInRow = 0
+                                if (index < cutoff) {
+                                    itemsInRow = basePerRow + 1
+                                    posInRow = index % itemsInRow
+                                } else {
+                                    itemsInRow = Math.max(1, basePerRow)
+                                    posInRow = (index - cutoff) % itemsInRow
+                                }
+                                const avail = Math.max(itemsInRow, tagFlow.availWidth - tagFlow.spacing * (itemsInRow - 1))
+                                const base = Math.floor(avail / itemsInRow)
+                                return posInRow === itemsInRow - 1
+                                    ? Math.max(1, avail - base * (itemsInRow - 1))
+                                    : Math.max(1, base)
+                            }
+                            implicitHeight: Math.round(28 * Appearance.fontSizeScale)
+                            buttonRadius: 7
+                            toggled: isActive
+                            colBackground: "transparent"
+                            colBackgroundHover: SettingsMaterialPreset.controlSurfaceHover
+                            colBackgroundToggled: SettingsMaterialPreset.pillSelectedColor
+                            colBackgroundToggledHover: SettingsMaterialPreset.pillSelectedHoverColor
+                            onClicked: {
+                                if (modelData.id === "")
+                                    themesGroup.selectedTag = ""
+                                else
+                                    themesGroup.toggleTag(modelData.id)
+                            }
+
+                            contentItem: Item {
+                                implicitWidth: tagRow.implicitWidth
+                                implicitHeight: tagRow.implicitHeight
+                                Row {
+                                    id: tagRow
+                                    anchors.centerIn: parent
+                                    spacing: 4
+
+                                    MaterialSymbol {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: tagBtn.modelData.icon
+                                        iconSize: 13
+                                        color: tagBtn.isActive ? SettingsMaterialPreset.pillSelectedTextColor : SettingsMaterialPreset.textColor
+                                    }
+
+                                    StyledText {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: tagBtn.modelData.name
+                                        font.pixelSize: Appearance.font.pixelSize.smallest
+                                        font.weight: tagBtn.isActive ? Font.DemiBold : Font.Medium
+                                        color: tagBtn.isActive ? SettingsMaterialPreset.pillSelectedTextColor : SettingsMaterialPreset.textColor
+                                        elide: Text.ElideRight
+                                        width: Math.min(implicitWidth, Math.max(20, tagBtn.width - 28))
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -524,7 +605,11 @@ ContentPage {
 
                         ThemePresetCard {
                             required property var modelData
-                            width: Math.floor((quickAccessGrid.width - quickAccessGrid.columnSpacing * (quickAccessGrid.columns - 1)) / quickAccessGrid.columns)
+                            required property int index
+                            readonly property real _baseW: Math.floor((quickAccessGrid.width - quickAccessGrid.columnSpacing * (quickAccessGrid.columns - 1)) / quickAccessGrid.columns)
+                            width: (index % quickAccessGrid.columns === quickAccessGrid.columns - 1)
+                                ? Math.max(_baseW, Math.floor(quickAccessGrid.width) - quickAccessGrid.columnSpacing * (quickAccessGrid.columns - 1) - _baseW * (quickAccessGrid.columns - 1))
+                                : _baseW
                             preset: modelData
                             onClicked: ThemeService.setTheme(modelData.id)
                         }
@@ -652,7 +737,11 @@ ContentPage {
 
                         ThemePresetCard {
                             required property var modelData
-                            width: Math.floor((savedThemesGrid.width - savedThemesGrid.columnSpacing * (savedThemesGrid.columns - 1)) / savedThemesGrid.columns)
+                            required property int index
+                            readonly property real _baseW: Math.floor((savedThemesGrid.width - savedThemesGrid.columnSpacing * (savedThemesGrid.columns - 1)) / savedThemesGrid.columns)
+                            width: (index % savedThemesGrid.columns === savedThemesGrid.columns - 1)
+                                ? Math.max(_baseW, Math.floor(savedThemesGrid.width) - savedThemesGrid.columnSpacing * (savedThemesGrid.columns - 1) - _baseW * (savedThemesGrid.columns - 1))
+                                : _baseW
                             preset: modelData
                             forceActive: themesGroup.activeSavedTheme === modelData.id
                             onClicked: root.applyThemeChoice(modelData)
@@ -688,7 +777,11 @@ ContentPage {
 
                         ThemePresetCard {
                             required property var modelData
-                            width: Math.floor((themeGridContent.width - themeGridContent.columnSpacing * (themeGridContent.columns - 1)) / themeGridContent.columns)
+                            required property int index
+                            readonly property real _baseW: Math.floor((themeGridContent.width - themeGridContent.columnSpacing * (themeGridContent.columns - 1)) / themeGridContent.columns)
+                            width: (index % themeGridContent.columns === themeGridContent.columns - 1)
+                                ? Math.max(_baseW, Math.floor(themeGridContent.width) - themeGridContent.columnSpacing * (themeGridContent.columns - 1) - _baseW * (themeGridContent.columns - 1))
+                                : _baseW
                             preset: modelData
                             forceActive: modelData.saved === true && themesGroup.activeSavedTheme === modelData.id
                             onClicked: root.applyThemeChoice(modelData)
@@ -761,6 +854,7 @@ ContentPage {
                 title: Translation.tr("Palette generation")
 
                 ConfigSelectionArray {
+                    fillWidthSegments: true
                     optionHorizontalPadding: 6
                     optionIconSize: Appearance.font.pixelSize.smaller
                     optionIconSpacing: 4
@@ -876,8 +970,12 @@ ContentPage {
 
                     RippleButton {
                         required property var modelData
+                        required property int index
                         readonly property bool targetEnabled: Config.options?.appearance?.wallpaperTheming?.terminals?.[modelData.key] ?? true
-                        width: Math.floor((terminalTargetsGrid.width - terminalTargetsGrid.columnSpacing * (terminalTargetsGrid.columns - 1)) / terminalTargetsGrid.columns)
+                        readonly property real _baseW: Math.floor((terminalTargetsGrid.width - terminalTargetsGrid.columnSpacing * (terminalTargetsGrid.columns - 1)) / terminalTargetsGrid.columns)
+                        width: (index % terminalTargetsGrid.columns === terminalTargetsGrid.columns - 1)
+                            ? Math.max(_baseW, Math.floor(terminalTargetsGrid.width) - terminalTargetsGrid.columnSpacing * (terminalTargetsGrid.columns - 1) - _baseW * (terminalTargetsGrid.columns - 1))
+                            : _baseW
                         implicitHeight: 32
                         buttonRadius: Appearance.rounding.verysmall
                         toggled: targetEnabled
@@ -1100,6 +1198,7 @@ ContentPage {
 
                 ConfigSelectionArray {
                     Layout.fillWidth: true
+                    fillWidthSegments: true
                     currentValue: Config.options?.appearance?.iiMotionProfile ?? "classic"
                     onSelected: newValue => Config.setNestedValue("appearance.iiMotionProfile", newValue)
                     options: [
@@ -1121,14 +1220,22 @@ ContentPage {
 
             SettingsDivider {}
 
-            SettingsSliderRow {
+            SettingsPresetRow {
                 icon: "speed"
                 text: Translation.tr("Global animation speed")
                 from: 0.5
                 to: 2.0
                 stepSize: 0.05
                 value: Config.options?.appearance?.animationSpeed?.movement ?? 1.0
-                displayValue: (Config.options?.appearance?.animationSpeed?.movement ?? 1.0).toFixed(2) + "x"
+                displayValue: Number(liveValue).toFixed(2) + "×"
+                presets: [
+                    { label: "0.5×", value: 0.5 },
+                    { label: "0.75×", value: 0.75 },
+                    { label: "1.0×", value: 1.0 },
+                    { label: "1.25×", value: 1.25 },
+                    { label: "1.5×", value: 1.5 },
+                    { label: "2.0×", value: 2.0 }
+                ]
                 onMoved: nextVal => {
                     const rounded = Math.round(nextVal * 100) / 100
                     for (const key of ["movement", "enterExit", "clickBounce", "scroll"])

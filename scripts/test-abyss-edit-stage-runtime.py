@@ -177,7 +177,9 @@ ShellRoot {
         onStageDockWChanged: if (editStageMode.length > 0) syncStage()
         onStageDockHChanged: if (editStageMode.length > 0) syncStage()
         onRawStageLeftWChanged: if (editStageMode.length > 0) syncStage()
+        onRawStageLeftHChanged: if (editStageMode.length > 0) syncStage()
         onRawStageRightWChanged: if (editStageMode.length > 0) syncStage()
+        onRawStageRightHChanged: if (editStageMode.length > 0) syncStage()
         Component.onCompleted: DesktopEditStage.setHost(outputName, true)
 
         readonly property var editCard: DesktopEditStage.cardFor(outputName, width, height)
@@ -680,6 +682,17 @@ ShellRoot {
                         && stageRightEditDock.x >= win.editCard.right - 1,
                         "Abyss Layout Screen Edge dock mounts centered on RIGHT outside shrunk Desktop Stage"))
                     return;
+                const preFeedbackDockH = stageEditDock.height;
+                editor.feedback = "Unlock this module before moving it";
+                if (!root.check(editor.desiredDockHeight > preFeedbackDockH + 16
+                        && stageEditDock.height >= Math.round(editor.desiredDockHeight) - 1,
+                        "Abyss Layout bottom dock dynamically expands to fit feedback banner without clipping (before="
+                            + preFeedbackDockH + ", after=" + stageEditDock.height + ")"))
+                    return;
+                editor.feedback = "";
+                if (!root.check(Math.abs(stageEditDock.height - preFeedbackDockH) <= 2,
+                        "Abyss Layout bottom dock contracts smoothly once feedback banner clears"))
+                    return;
                 GlobalStates.abyssEditing = false;
             } else if (root.step === 4) {
                 if (!root.check(!win.editCard.active && win.editCard.s === 1,
@@ -739,21 +752,14 @@ ShellRoot {
                     return;
                 SettingsLayoutManager.beginEditMode();
             } else if (root.step === 9) {
-                const settingsPopup = root.findByObjectName(stageSettingsDockContainer, "abyssSettingsEditPopup");
-                if (!root.check(settingsBody.contentItem.item.bottomControlReserve === 0,
-                        "stage-hosted Settings uses 0 bottomControlReserve"))
+                // Settings Edit Layout was intentionally removed; verify the inert facade never triggers Edit Stage.
+                if (!root.check(!SettingsLayoutManager.editMode && !win.editCard.active && win.editCard.s === 1,
+                        "SettingsLayoutManager.beginEditMode remains inert and leaves Settings at 1:1 scale"))
                     return;
-                if (!root.assertStageAndOuterDock("settings", settingsPopup))
-                    return;
-                if (!root.check(stageEditDock.width >= 320 && stageEditDock.height >= 48
-                        && stageEditDock.y >= win.editCard.bottom,
-                        "Edit Settings bottom dock sizes flexibly outside Desktop Stage"))
-                    return;
-                SettingsLayoutManager.cancelEditMode();
                 GlobalStates.settingsOverlayOpen = false;
             } else if (root.step === 10) {
                 if (!root.check(!win.editCard.active && win.editCard.s === 1 && !editStageFrame.visible && !stageEditDock.visible,
-                        "exiting Settings edit mode restores 1:1 desktop"))
+                        "closing Settings keeps 1:1 desktop"))
                     return;
                 GlobalStates.wallpaperLauncherOpen = true;
             } else if (root.step === 11) {
@@ -841,7 +847,7 @@ with tempfile.TemporaryDirectory(prefix="alis-stage-edit-") as folder:
         "is not a type",
     )
     unexpected_loop = any(
-        "Binding loop" in line and "AbyssBarModule.qml[73:9]" not in line
+        "Binding loop" in line and not ("AbyssBarModule.qml" in line and 'property "width"' in line)
         for line in result.stdout.splitlines()
     )
     if result.returncode or "STAGE_EDIT_PASS" not in result.stdout or unexpected_loop or any(tok in result.stdout for tok in bad_tokens):

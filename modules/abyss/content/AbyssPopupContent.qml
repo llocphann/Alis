@@ -20,6 +20,10 @@ FocusScope {
     property string kind: ""
     property string outputName: ""
     property var participant: null
+    readonly property string attachedEdge: String(
+        root.participant?.edge ?? root.participant?.geometry?.edge ?? "top")
+    readonly property bool attachedVertical:
+        attachedEdge === "left" || attachedEdge === "right"
     // Wi-Fi, Bluetooth and Utilities share one hover/focus lease. This keeps
     // icon→popup hand-off timing consistent and avoids a second dismissal timer.
     property bool autoDismissOnIdle: true
@@ -119,7 +123,13 @@ FocusScope {
     Component { id: calendar; ClockCalendarPopup { embeddedHost: root } }
     Component { id: battery; BatteryPopup { embeddedHost: root } }
     Component { id: resources; ResourcesPopup { embeddedHost: root } }
-    Component { id: weather; WeatherPopupContent { compact: (root.participant?.width ?? 1920)<compactBreakpoint } }
+    Component {
+        id: weather
+        WeatherPopupContent {
+            compact: (root.participant?.width ?? 1920) < compactBreakpoint
+            verticalLayout: root.attachedVertical
+        }
+    }
     Component { id: media; BarMediaPopup { onCloseRequested: root.closeRequested() } }
     Component { id: utilities; AbyssUtilitiesPopup { outputName: root.outputName; onCloseRequested: root.closeRequested() } }
     Component { id: launcher; AbyssLauncherControlsPopup {} }

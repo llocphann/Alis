@@ -1022,6 +1022,7 @@ Scope {
 
                     onTransitionStarted: {
                         const state = wallpaper.renderState()
+                        Wallpapers.publishTransitionMeta(wallpaper.activeTransitionDescriptor())
                         Wallpapers.liquidWallpaperTransitionFinished(state.pendingSource || state.source)
                     }
 

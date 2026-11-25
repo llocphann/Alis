@@ -26,6 +26,7 @@ FocusScope {
     property string activeTab: GlobalStates.wallpaperLauncherMode === "animated" ? "animated" : "static"
     property string initialWallpaperPath: ""
     property var undoStack: []
+    property double _folderDialogClosedAtMs: 0
 
     readonly property var colorPalette: [
         { id: "", label: "All", swatch: "transparent" },
@@ -72,6 +73,9 @@ FocusScope {
     readonly property int count: carousel.count
     readonly property string selectedPath: carousel.selectedPath
     readonly property bool loading: library.scanning
+    readonly property bool colorTagsPending: root.selectedColor.length > 0
+        && library.colorTagsLoading
+        && !library.hasColorTagsForCurrentScan
 
     readonly property real desiredDockWidth: Math.round(Math.min(1080, Math.max(820, dock.implicitWidth + 32)))
     readonly property real desiredDockHeight: Math.round(dock.implicitHeight + 4)
@@ -183,12 +187,7 @@ FocusScope {
         let chosenIndex = Math.floor(Math.random() * list.length)
         if (list.length > 1 && chosenIndex === carousel.currentIndex)
             chosenIndex = (chosenIndex + 1) % list.length
-        const chosen = list[chosenIndex]
-        if (chosen?.path) {
-            carousel.currentIndex = chosenIndex
-            carousel.positionViewAtIndex(chosenIndex, ListView.Contain)
-            root.applyPathLive(chosen.path)
-        }
+        carousel.previewIndexNow(chosenIndex)
     }
 
     function previewPath(path: string): void {
@@ -224,6 +223,16 @@ FocusScope {
     }
 
     function handleEscape(): bool {
+        if (folderPicker.visible) {
+            folderPicker.close()
+            root._folderDialogClosedAtMs = Date.now()
+            root.focusPrimarySurface()
+            return true
+        }
+        if ((Date.now() - root._folderDialogClosedAtMs) < 300) {
+            root.focusPrimarySurface()
+            return true
+        }
         const searchField = dock.searchInputItem
         if (searchField && searchField.activeFocus && searchField.text.length > 0) {
             searchField.text = ""
@@ -295,8 +304,11 @@ FocusScope {
         interval: 1500
         repeat: false
         onTriggered: {
-            if (GlobalStates.wallpaperLauncherOpen && root.visible)
+            if (GlobalStates.wallpaperLauncherOpen && root.visible) {
                 library.silentSync(browseFolder || Directories.wallpapersPath, root._extraScanRoots())
+                if (Directories.scriptPath === Quickshell.shellPath("scripts") && !library.hasColorTagsForCurrentScan)
+                    library.ensureColorTags()
+            }
         }
     }
 
@@ -330,6 +342,8 @@ FocusScope {
             root.activeTab = "static"
         }
         root.refreshLibrary(false)
+        if (root.selectedColor.length > 0 && Directories.scriptPath === Quickshell.shellPath("scripts"))
+            library.ensureColorTags()
         deferredSyncTimer.restart()
         carousel._needsInitialCenter = true
         carousel.syncCurrentIndex()
@@ -354,6 +368,7 @@ FocusScope {
         target: GlobalStates
         function onWallpaperLauncherOpenChanged(): void {
             if (GlobalStates.wallpaperLauncherOpen) {
+                root._folderDialogClosedAtMs = 0
                 root._beginSession()
             } else {
                 deferredSyncTimer.stop()
@@ -376,8 +391,20 @@ FocusScope {
             const chosen = FileUtils.trimFileProtocol(String(selectedFolder))
             root.browseFolder = chosen
             Config.setNestedValue("wallpapers.directory", chosen)
+            root._folderDialogClosedAtMs = Date.now()
+            focusDeferTimer.restart()
         }
-        onVisibleChanged: GlobalStates.setSettingsNativeDialogVisible("wallpaperLauncherFolder", visible)
+        onRejected: {
+            root._folderDialogClosedAtMs = Date.now()
+            focusDeferTimer.restart()
+        }
+        onVisibleChanged: {
+            GlobalStates.setSettingsNativeDialogVisible("wallpaperLauncherFolder", visible)
+            if (!visible) {
+                root._folderDialogClosedAtMs = Date.now()
+                focusDeferTimer.restart()
+            }
+        }
     }
 
     WallpaperLibrary {
@@ -624,7 +651,9 @@ FocusScope {
                             }
                         }
                         if (color) {
-                            const tags = tagMap[entry.path] ?? []
+                            const tags = tagMap[entry.path]
+                                ?? tagMap[String(entry.path ?? "").replace(/\/+/g, "/")]
+                                ?? []
                             if (!Array.isArray(tags) || !tags.includes(color))
                                 return false
                         }
@@ -711,6 +740,19 @@ FocusScope {
                     const entry = carousel.filteredEntries?.[carousel.currentIndex]
                     if (entry?.path)
                         root.applyPath(entry.path)
+                }
+
+                function previewIndexNow(index: int): void {
+                    const list = carousel.filteredEntries ?? []
+                    if (index < 0 || index >= list.length)
+                        return
+                    const chosen = list[index]
+                    if (!chosen?.path)
+                        return
+                    carousel.currentIndex = index
+                    carousel.positionViewAtIndex(index, ListView.Center)
+                    previewDebounce.stop()
+                    root.previewPath(chosen.path)
                 }
 
                 function previewCurrent(): void {
@@ -959,13 +1001,13 @@ FocusScope {
 
             LoadingText {
                 anchors.centerIn: parent
-                visible: carousel.count === 0 && root.loading
+                visible: carousel.count === 0 && (root.loading || root.colorTagsPending)
             }
 
             Row {
                 anchors.centerIn: parent
                 spacing: 8
-                visible: carousel.count === 0 && !root.loading
+                visible: carousel.count === 0 && !root.loading && !root.colorTagsPending
 
                 StyledText {
                     anchors.verticalCenter: parent.verticalCenter
@@ -1067,8 +1109,10 @@ FocusScope {
 
                 QuickActionPill {
                     visible: root.selectedColor.length > 0
-                    icon: "visibility"
-                    label: Translation.tr("Show %1 matches").arg(carousel.count)
+                    icon: root.colorTagsPending ? "hourglass_top" : "visibility"
+                    label: root.colorTagsPending
+                        ? Translation.tr("Indexing colors…")
+                        : Translation.tr("Show %1 matches").arg(carousel.count)
                     active: true
                     onClicked: {
                         root.activeTab = GlobalStates.wallpaperLauncherMode === "animated" ? "animated" : "static"

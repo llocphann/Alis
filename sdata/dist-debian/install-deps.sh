@@ -337,8 +337,8 @@ DEBIAN_CORE_PKGS=(
   network-manager
   gnome-keyring
 
-  # File manager
-  nautilus
+  # File manager runtime/build dep (Alis Files built locally via GTK4-rs)
+  libgtk-4-dev
 
   # Terminal
   kitty

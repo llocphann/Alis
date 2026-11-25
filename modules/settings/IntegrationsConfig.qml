@@ -15,68 +15,38 @@ ContentPage {
     settingsPageIndex: 38
     settingsPageName: Translation.tr("Integrations")
     bentoEqualizeToTarget: !root.embedded
+
     property string activePlugin: "management"
-    property string modalPluginId: ""
-    readonly property bool modalOpen: root.modalPluginId.length > 0
-    property string activeSection: "calendar"
-    property var capabilitySelections: ({})
-    readonly property bool gatewayReadyInUi: AlisIntergration.systemProvisionerAvailable
-        || AlisIntergration.pluginDependencies("thinkfan").provisionerReady === true
-        || AlisIntergration.pluginDependencies("tlp").provisionerReady === true
-    readonly property bool helpersReadyInUi: AlisIntergration.systemHelpersInstalled
-        || AlisIntergration.hardwareHelpersSatisfied
-    readonly property var helperStatusItems: [
-        {
-            icon: "admin_panel_settings",
-            label: Translation.tr("System Gateway"),
-            ready: root.gatewayReadyInUi,
-            optional: false
-        },
-        {
-            icon: "bolt",
-            label: Translation.tr("TLP Power Daemon"),
-            ready: (AlisIntergration.runtimeTools?.tlp ?? AlisIntergration.pluginDependencies("tlp").binariesReady) === true,
-            optional: false
-        },
-        {
-            icon: "battery_charging_full",
-            label: Translation.tr("TLP Charge Helper"),
-            ready: AlisIntergration.pluginDependencies("tlp").helpersReady === true,
-            optional: false
-        },
-        {
-            icon: "airwave",
-            label: Translation.tr("ThinkFan Daemon"),
-            ready: (AlisIntergration.runtimeTools?.thinkfan ?? AlisIntergration.pluginDependencies("thinkfan").binariesReady) === true,
-            optional: false
-        },
-        {
-            icon: "mode_fan",
-            label: Translation.tr("ThinkFan Helper"),
-            ready: AlisIntergration.pluginDependencies("thinkfan").helpersReady === true,
-            optional: false
-        },
-        {
-            icon: "terminal",
-            label: Translation.tr("Python 3 Runtime"),
-            ready: (AlisIntergration.runtimeTools?.python3 ?? AlisIntergration.pluginDependencies("nexus").binariesReady) === true,
-            optional: false
-        },
-        {
-            icon: "cloud_download",
-            label: Translation.tr("Curl Feed Fetcher"),
-            ready: (AlisIntergration.runtimeTools?.curl ?? true) === true,
-            optional: false
-        },
-        {
-            icon: "calendar_today",
-            label: Translation.tr("Khal Calendar CLI"),
-            ready: (AlisIntergration.runtimeTools?.khal ?? false) === true,
-            optional: true
+    property string selectedPluginId: ""
+    onActivePluginChanged: {
+        if (root.activePlugin === "management" || root.activePlugin.length === 0) {
+            if (root.selectedPluginId.length > 0)
+                root.selectedPluginId = ""
+            return
         }
-    ]
+        if (AlisIntergration.isPluginInstalled(root.activePlugin) && root.selectedPluginId !== root.activePlugin)
+            root.selectedPluginId = root.activePlugin
+    }
+    readonly property bool detailOpen: root.selectedPluginId.length > 0
+        && AlisIntergration.isPluginInstalled(root.selectedPluginId)
+    property real slideProgress: root.detailOpen ? 1.0 : 0.0
+    property string activeSection: "management"
+    property var capabilitySelections: ({})
+    property string copiedText: ""
+    property bool showDiagnostics: false
+    property bool helpersDrawerOpen: false
+
+    Behavior on slideProgress {
+        enabled: Appearance.animationsEnabled && !(Config.options?.performance?.reduceAnimations ?? false)
+        NumberAnimation {
+            duration: Appearance.animation.elementMove.duration
+            easing.type: Appearance.animation.elementMove.type
+            easing.bezierCurve: Appearance.animation.elementMove.bezierCurve
+        }
+    }
+
     readonly property var primaryTabs: [{
-        displayName: Translation.tr("Management & Calendar"),
+        displayName: Translation.tr("Management"),
         icon: "extension",
         value: "management"
     }].concat(AlisIntergration.installedPlugins.map(plugin => ({
@@ -84,8 +54,9 @@ ContentPage {
         icon: plugin.id === "nexus" ? "hub" : plugin.icon,
         value: plugin.id
     })))
+
     readonly property var catalog: {
-        const order = ["nexus", "spaced_repetition", "exercises_tracker", "tlp", "thinkfan"]
+        const order = ["alis_files", "nexus", "spaced_repetition", "exercises_tracker", "tlp", "thinkfan"]
         const merged = []
         const sources = AlisIntergration.pluginCatalog.concat(AlisIntergration.installedPlugins)
         for (const item of sources) {
@@ -99,340 +70,346 @@ ContentPage {
         })
         return merged
     }
-    readonly property var selectedPlugin: AlisIntergration.installedPlugins.find(plugin => plugin.id === root.activePlugin) ?? null
-    readonly property var modalCatalogPlugin: root.catalog.find(plugin => plugin.id === root.modalPluginId)
-        ?? root.selectedPlugin
-        ?? null
-    readonly property bool isModalPluginInstalled: root.modalPluginId.length > 0
-        && AlisIntergration.isPluginInstalled(root.modalPluginId)
-    readonly property var modalDependencies: root.modalPluginId.length > 0
-        ? AlisIntergration.pluginDependencies(root.modalPluginId)
-        : ({ userSpace: true, requiresSystemHelpers: false, satisfied: true, binariesReady: true, helpersReady: true, binaries: [], helpers: [], missing: [], setupCommand: "", helpersCommand: "", note: "" })
-    readonly property var capabilityTabs: (selectedPlugin?.capabilities ?? []).map(capability => ({
-        displayName: (selectedPlugin?.id === "nexus" && capability.id === "theming") ? "Nexus & Vault" : capability.name,
-        value: capability.id
-    }))
-    readonly property var selectedCapability: selectedPlugin?.capabilities.find(capability =>
-        capability.id === root.capabilitySelections[root.activePlugin]) ?? selectedPlugin?.capabilities[0] ?? null
-    Component.onCompleted: {
-        if (root.visible) {
-            AlisIntergration.ensureSystemStatusLoaded()
+
+    readonly property var selectedPlugin: AlisIntergration.installedPlugins.find(
+        plugin => plugin.id === root.selectedPluginId
+    ) ?? null
+    readonly property var selectedCatalogPlugin: root.catalog.find(
+        plugin => plugin.id === root.selectedPluginId
+    ) ?? root.selectedPlugin ?? null
+    readonly property var selectedDependencies: root.selectedPluginId.length > 0
+        ? AlisIntergration.pluginDependencies(root.selectedPluginId)
+        : ({ userSpace: true, requiresSystemHelpers: false, satisfied: true, binariesReady: true, helpersReady: true, binaries: [], helpers: [], missing: [], setupCommand: "", helpersCommand: "", removeHelpersCommand: "", note: "" })
+    readonly property var selectedHelperStatus: root.selectedPluginId.length > 0
+        ? AlisIntergration.pluginSystemHelpersStatus(root.selectedPluginId)
+        : ({ managed: false, installed: false, diagnostic: "not-installed" })
+    readonly property var capabilityTabs: selectedPlugin?.id === "nexus"
+        ? []
+        : (selectedPlugin?.capabilities ?? []).map(capability => ({
+            displayName: capability.name,
+            value: capability.id
+        }))
+    readonly property var selectedCapability: selectedPlugin?.id === "nexus"
+        ? (selectedPlugin?.capabilities.find(capability => capability.settings === "nexus") ?? selectedPlugin?.capabilities[0] ?? null)
+        : (selectedPlugin?.capabilities.find(capability =>
+            capability.id === root.capabilitySelections[root.selectedPluginId]) ?? selectedPlugin?.capabilities[0] ?? null)
+
+    Timer {
+        id: copyResetTimer
+        interval: 1800
+        onTriggered: root.copiedText = ""
+    }
+
+    function copyCommand(cmd): void {
+        const text = String(cmd ?? "").trim()
+        if (!text) return
+        Quickshell.clipboardText = text
+        root.copiedText = text
+        copyResetTimer.restart()
+    }
+
+    readonly property bool isSubViewActive: root.detailOpen
+    readonly property string activeSubViewTitle: root.detailOpen
+        ? root.pluginDisplayName(root.selectedCatalogPlugin)
+        : ""
+
+    function _demandActivePluginWorker(): void {
+        if (root.selectedPluginId === "spaced_repetition" && AlisIntergration.spacedRepetitionEnabled)
             AlisIntergration.demandSpacedRepetition()
+        else if (root.selectedPluginId === "exercises_tracker" && AlisIntergration.exercisesTrackerEnabled)
             AlisIntergration.demandExercisesTracker()
-        }
+    }
+
+    onSelectedPluginIdChanged: {
+        root.helpersDrawerOpen = false
+        root.showDiagnostics = false
+        root._demandActivePluginWorker()
+    }
+
+    Connections {
+        target: AlisIntergration
+        function onSpacedRepetitionEnabledChanged(): void { root._demandActivePluginWorker() }
+        function onExercisesTrackerEnabledChanged(): void { root._demandActivePluginWorker() }
+    }
+
+    Component.onCompleted: {
+        if (root.visible)
+            AlisIntergration.ensureSystemStatusLoaded()
     }
     onVisibleChanged: {
         if (root.visible) {
             AlisIntergration.ensureSystemStatusLoaded()
-            AlisIntergration.demandSpacedRepetition()
-            AlisIntergration.demandExercisesTracker()
             if (!AlisIntergration.managerBusy && AlisIntergration.managerError.length > 0)
                 AlisIntergration.clearFeedback()
         }
     }
-    onActivePluginChanged: {
-        if (root.activePlugin === "management") {
-            if (root.modalPluginId !== "")
-                root.modalPluginId = ""
-        } else if (root.modalPluginId !== root.activePlugin) {
-            root.modalPluginId = root.activePlugin
-        }
-    }
     onPrimaryTabsChanged: {
-        if (root.modalPluginId.length > 0) {
-            if (!root.catalog.some(plugin => plugin.id === root.modalPluginId))
-                root.closePluginModal()
+        if (root.selectedPluginId.length > 0 && !AlisIntergration.isPluginInstalled(root.selectedPluginId)) {
+            root.closePluginDetail()
             return
         }
         if (!primaryTabs.some(tab => tab.value === activePlugin))
             activePlugin = "management"
     }
-    function openPluginModal(pluginId, capabilityId = ""): void {
+
+    function openPluginSettings(pluginId, capabilityId = ""): void {
         if (typeof pluginId !== "string" || pluginId.length === 0)
+            return
+        // Uninstalled plugins must NOT slide into Settings.
+        if (!AlisIntergration.isPluginInstalled(pluginId))
             return
         if (capabilityId && capabilityId.length > 0)
             root.selectCapability(capabilityId, pluginId)
-        root.modalPluginId = pluginId
+        root.selectedPluginId = pluginId
         root.activePlugin = pluginId
-        Qt.callLater(() => {
-            if (root.modalOpen)
-                pluginModalCard.forceActiveFocus()
-        })
+        root.showDiagnostics = false
+        root.helpersDrawerOpen = false
+        root.contentY = 0
     }
-    function closePluginModal(): void {
-        root.modalPluginId = ""
+
+    function closePluginDetail(): void {
+        root.selectedPluginId = ""
         root.activePlugin = "management"
+        root.showDiagnostics = false
+        root.helpersDrawerOpen = false
+        root.contentY = 0
     }
+
+    function exitSubView(): void {
+        root.closePluginDetail()
+    }
+
     function handleEscape(): bool {
-        if (root.modalOpen) {
-            root.closePluginModal()
+        if (root.detailOpen) {
+            const item = pluginSettings.item
+            if (item && typeof item.handleEscape === "function" && item.handleEscape())
+                return true
+            if (item && item.shortcutsTabOpen === true) {
+                item.shortcutsTabOpen = false
+                return true
+            }
+            root.closePluginDetail()
             return true
         }
         return false
     }
+
     function activateSettingsSearchSection(section: string): bool {
         const label = String(section ?? "").toLowerCase()
-        if (/calendar/.test(label)) {
-            root.closePluginModal()
-            root.activeSection = "calendar"
-            return true
-        }
-        const wanted = /nexus|vault|outliner|graph|to-do|todo|quick note|zettelkasten/.test(label) ? "nexus"
+        const wanted = /alis[\s_-]*files|file[\s_-]*manager|explorer/.test(label) ? "alis_files"
+            : /nexus|vault|outliner|graph|to-do|todo|quick note|zettelkasten/.test(label) ? "nexus"
             : /fan|cooling|thermal/.test(label) ? "thinkfan"
             : /spaced repetition|vocabulary|flashcard|cefr|sm-2/.test(label) ? "spaced_repetition"
             : /exercises?[\s_-]*tracker|workout|body tracker|fitness/.test(label) ? "exercises_tracker"
             : /\btlp\b|power|battery/.test(label) ? "tlp" : label
         const plugin = root.catalog.find(item => wanted === item.id || wanted.includes(item.id) || wanted.includes(item.name.toLowerCase()))
             ?? AlisIntergration.installedPlugins.find(item => wanted.includes(item.id) || wanted.includes(item.name.toLowerCase()))
-        if (plugin) {
-            const capability = /todo|to-do/.test(label) ? "todo"
+        if (plugin && AlisIntergration.isPluginInstalled(plugin.id)) {
+            const capability = plugin.id === "nexus" ? ""
+                : /todo|to-do/.test(label) ? "todo"
                 : /quick note|zettelkasten/.test(label) ? "quicknotes"
-                : plugin.id === "nexus" ? "theming" : ""
-            root.openPluginModal(plugin.id, capability)
+                : ""
+            root.openPluginSettings(plugin.id, capability)
             return true
         }
-        root.closePluginModal()
-        root.activeSection = "calendar"
+        root.closePluginDetail()
+        root.activeSection = "management"
         return true
     }
+
     function selectCapability(value, pluginId = ""): void {
-        const target = (typeof pluginId === "string" && pluginId.length > 0) ? pluginId : root.activePlugin
+        const target = (typeof pluginId === "string" && pluginId.length > 0) ? pluginId : root.selectedPluginId
         const next = Object.assign({}, capabilitySelections)
         next[target] = value
         capabilitySelections = next
     }
+
     function pluginDisplayName(plugin): string {
         if (!plugin) return ""
         if (plugin.id === "nexus") return Translation.tr("Alis Nexus")
         return String(plugin.name ?? plugin.id ?? "")
     }
+
     function pluginIconName(plugin): string {
         if (!plugin) return "extension"
         return plugin.id === "nexus" ? "hub" : String(plugin.icon ?? "extension")
     }
+
+    function pluginSubtitle(plugin): string {
+        if (!plugin) return ""
+        if (plugin.id === "alis_files") return Translation.tr("Native GTK4 file manager synced with Alis themes and tools")
+        if (plugin.id === "nexus") return Translation.tr("Vault workspace, To-do tasks, and Quick Notes")
+        if (plugin.id === "spaced_repetition") return Translation.tr("Vocabulary flashcards, SM-2+ scheduling and CEFR study")
+        if (plugin.id === "exercises_tracker") return Translation.tr("Workouts, set logs and body progress tracking")
+        if (plugin.id === "tlp") return Translation.tr("Battery charge thresholds, CPU and power profile rules")
+        if (plugin.id === "thinkfan") return Translation.tr("ThinkPad fan levels, thermal curves and ThinkFan service")
+        return ""
+    }
+
     function pluginState(plugin): string {
         if (!plugin) return Translation.tr("Unavailable")
         if (AlisIntergration.managerBusy && AlisIntergration.managerPluginId === plugin.id)
-            return Translation.tr("Working…")
+            return Translation.tr("Downloading & installing…")
         const installed = AlisIntergration.isPluginInstalled(plugin.id)
+        if (!installed)
+            return Translation.tr("Not installed")
         const deps = AlisIntergration.pluginDependencies(plugin.id)
-        if (!installed) {
-            if (deps.userSpace)
-                return Translation.tr("Not installed · User-space")
-            if (!deps.satisfied && Array.isArray(deps.missing) && deps.missing.length > 0)
-                return Translation.tr("Not installed · Missing:") + " " + deps.missing.map(m => String(m).split("/").pop()).join(", ")
-            return Translation.tr("Not installed · System helpers")
+        if (!deps.userSpace && !AlisIntergration.pluginHelpersReady(plugin.id)) {
+            const missing = Array.isArray(deps.missing) ? deps.missing : []
+            if (missing.length > 0)
+                return Translation.tr("Installed · Setup needed:") + " " + missing.map(m => String(m).split("/").pop()).join(", ")
+            return Translation.tr("Installed · Helper setup required")
         }
-        if (!deps.satisfied && Array.isArray(deps.missing) && deps.missing.length > 0)
-            return Translation.tr("Installed · Missing:") + " " + deps.missing.map(m => String(m).split("/").pop()).join(", ")
         if (AlisIntergration.updateAvailable)
             return Translation.tr("Installed · Update available")
-        return AlisIntergration.pluginEnabled(plugin.id) ? Translation.tr("Installed · Enabled") : Translation.tr("Installed · Disabled")
+        return AlisIntergration.pluginEnabled(plugin.id)
+            ? Translation.tr("Installed · Enabled")
+            : Translation.tr("Installed · Disabled")
     }
 
-    SettingsCardSection {
-        id: packageSection
-        objectName: "integrationOptionalPluginsCard"
-        _consumesBentoExtraHeight: false
-        visible: true
-        title: Translation.tr("Optional Plugins")
-        icon: "extension"
-        expanded: true
-        property bool confirmRemoval: false
+    function detailHelperStateText(): string {
+        const st = root.selectedHelperStatus
+        if (!root.selectedDependencies.requiresSystemHelpers)
+            return Translation.tr("User-space plugin")
+        if (!AlisIntergration.systemProvisionerAvailable && !AlisIntergration.gatewayPackageInstalled)
+            return Translation.tr("Gateway & helper setup required")
+        if (st?.installed === true || root.selectedDependencies.helpersReady === true)
+            return Translation.tr("Ready")
+        if (st?.diagnostic === "modified")
+            return Translation.tr("Modified externally")
+        if (st?.diagnostic === "partial")
+            return Translation.tr("Partially installed")
+        return Translation.tr("Not installed")
+    }
 
-        SettingsGroup {
-            spacing: 8
+    component IntegrationActionButton: RippleButton {
+        id: actionBtn
+        property string iconName: ""
+        property bool destructive: false
+        implicitHeight: Math.round(32 * Appearance.fontSizeScale)
+        implicitWidth: actionBtnRow.implicitWidth + 20
+        buttonRadius: 10
+        colBackground: actionBtn.destructive
+            ? Qt.alpha(Appearance.colors.colError, 0.12)
+            : SettingsMaterialPreset.controlSurface
+        colBackgroundHover: actionBtn.destructive
+            ? Qt.alpha(Appearance.colors.colError, 0.20)
+            : SettingsMaterialPreset.controlSurfaceHover
 
-            StyledText {
-                Layout.fillWidth: true
-                Layout.minimumWidth: 0
-                wrapMode: Text.WordWrap
-                text: AlisIntergration.managerBusy ? Translation.tr("Working…")
-                    : AlisIntergration.available
-                        ? "Alis-Intergration " + AlisIntergration.version + " · " + AlisIntergration.installedPlugins.length + " / " + Math.max(4, root.catalog.length) + " " + Translation.tr("installed")
-                    : AlisIntergration.diagnostic === "not-installed"
-                        ? Translation.tr("No plugins installed. Install individual plugins below.")
-                        : Translation.tr("Integration package unavailable") + " · " + AlisIntergration.diagnostic
-            }
+        Rectangle {
+            anchors.fill: parent
+            radius: actionBtn.buttonEffectiveRadius
+            color: "transparent"
+            border.width: 1
+            border.color: actionBtn.destructive
+                ? Qt.alpha(Appearance.colors.colError, 0.30)
+                : SettingsMaterialPreset.controlBorderColor
+            z: 1
+        }
 
-            Flow {
-                Layout.fillWidth: true
-                Layout.minimumWidth: 0
-                spacing: 8
-                DialogButton {
-                    buttonText: AlisIntergration.available ? Translation.tr("Reinstall all") : Translation.tr("Install all")
-                    enabled: !AlisIntergration.managerBusy
-                    onClicked: AlisIntergration.manage("install-all")
-                }
-                DialogButton {
-                    visible: AlisIntergration.available
-                    buttonText: Translation.tr("Check updates")
-                    enabled: !AlisIntergration.managerBusy
-                    onClicked: AlisIntergration.manage("check")
-                }
-                DialogButton {
-                    visible: AlisIntergration.updateAvailable
-                    buttonText: Translation.tr("Update")
-                    enabled: !AlisIntergration.managerBusy
-                    onClicked: AlisIntergration.manage("install")
-                }
-                DialogButton {
-                    buttonText: Translation.tr("Refresh")
-                    enabled: !AlisIntergration.managerBusy
-                    onClicked: { AlisIntergration.clearFeedback(); AlisIntergration.refresh(); AlisIntergration.refreshSystemStatus() }
-                }
-                DialogButton {
-                    objectName: "integrationHeaderDiagnosticsToggle"
-                    buttonText: Translation.tr("Diagnostics")
-                    onClicked: helpersSection.showDiagnostics = !helpersSection.showDiagnostics
-                }
-                DialogButton {
-                    objectName: "integrationRestoreInternalTodos"
-                    visible: Todo.backend === "nexus" && !AlisIntergration.nexusEnabled
-                    enabled: !Todo.internalPersistenceBusy
-                    buttonText: Translation.tr("Use Alis tasks")
-                    onClicked: Todo.reactivateInternal()
-                }
-                DialogButton {
-                    visible: AlisIntergration.available && !packageSection.confirmRemoval
-                    buttonText: Translation.tr("Remove all")
-                    enabled: !AlisIntergration.managerBusy
-                    onClicked: packageSection.confirmRemoval = true
-                }
-                DialogButton {
-                    visible: packageSection.confirmRemoval
-                    buttonText: Translation.tr("Confirm removal")
-                    enabled: !AlisIntergration.managerBusy
-                    onClicked: { packageSection.confirmRemoval = false; AlisIntergration.manage("remove") }
-                }
-                DialogButton {
-                    visible: packageSection.confirmRemoval
-                    buttonText: Translation.tr("Cancel")
-                    onClicked: packageSection.confirmRemoval = false
-                }
-            }
+        contentItem: Item {
+            implicitWidth: actionBtnRow.implicitWidth
+            implicitHeight: actionBtnRow.implicitHeight
 
-            RowLayout {
-                Layout.fillWidth: true
-                Layout.minimumWidth: 0
-                spacing: 8
-                visible: AlisIntergration.managerError.length > 0 || AlisIntergration.managerMessage.length > 0
+            Row {
+                id: actionBtnRow
+                anchors.centerIn: parent
+                spacing: actionBtn.iconName.length > 0 ? 6 : 0
+
+                MaterialSymbol {
+                    visible: actionBtn.iconName.length > 0
+                    anchors.verticalCenter: parent.verticalCenter
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    text: actionBtn.iconName
+                    iconSize: 15
+                    color: actionBtn.destructive
+                        ? Appearance.colors.colError
+                        : SettingsMaterialPreset.secondaryTextColor
+                }
 
                 StyledText {
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    wrapMode: Text.WordWrap
-                    color: AlisIntergration.managerError.length > 0 ? Appearance.colors.colError : Appearance.colors.colSubtext
-                    text: AlisIntergration.managerError || AlisIntergration.managerMessage
-                }
-
-                RippleButton {
-                    objectName: "integrationDismissManagerFeedback"
-                    implicitWidth: 24
-                    implicitHeight: 24
-                    buttonRadius: 12
-                    colBackground: "transparent"
-                    colBackgroundHover: Appearance.colors.colLayer2Hover
-                    onClicked: AlisIntergration.clearFeedback()
-
-                    contentItem: Item {
-                        MaterialSymbol {
-                            anchors.centerIn: parent
-                            text: "close"
-                            iconSize: 14
-                            color: Appearance.colors.colSubtext
-                        }
-                    }
+                    anchors.verticalCenter: parent.verticalCenter
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    text: actionBtn.buttonText
+                    font.family: SettingsMaterialPreset.fontFamily
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    font.weight: Font.Medium
+                    color: actionBtn.destructive
+                        ? Appearance.colors.colError
+                        : SettingsMaterialPreset.textColor
                 }
             }
+        }
+    }
 
-            StyledText {
-                Layout.fillWidth: true
-                Layout.minimumWidth: 0
-                wrapMode: Text.WordWrap
-                visible: AlisIntergration.available && !AlisIntergration.pluginMetadataAvailable
-                text: Translation.tr("Update the optional package to show plugin settings.")
-            }
+    Item {
+        id: drillDownViewport
+        objectName: "integrationDrillDownViewport"
+        property bool _preventBentoReparent: true
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        clip: true
+        implicitHeight: Math.max(
+            120,
+            Math.round(listView.implicitHeight * (1 - root.slideProgress) + detailView.implicitHeight * root.slideProgress)
+        )
+        height: implicitHeight
 
-            SettingsDivider {}
+        // Page 0: Integrations Plugin Catalog (slides left out on drill-down)
+        Item {
+            id: listView
+            objectName: "integrationListView"
+            width: drillDownViewport.width
+            implicitHeight: listCol.implicitHeight
+            height: implicitHeight
+            x: -root.slideProgress * drillDownViewport.width
+            opacity: 1 - root.slideProgress * 0.35
+            visible: !root.detailOpen || root.slideProgress < 0.999
+            enabled: !root.detailOpen
 
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.minimumWidth: 0
-                implicitHeight: pluginsListColumn.implicitHeight
-                radius: Appearance.rounding.normal
-                color: Appearance.colors.colLayer1
-                border.width: 1
-                border.color: SettingsMaterialPreset.groupBorderColor
-                clip: true
+            ColumnLayout {
+                id: listCol
+                width: listView.width
+                spacing: 12
 
-                ColumnLayout {
-                    id: pluginsListColumn
-                    width: parent.width
-                    spacing: 0
+                SettingsCardSection {
+                    id: packageSection
+                    objectName: "integrationOptionalPluginsCard"
+                    property bool _preventBentoReparent: true
+                    _consumesBentoExtraHeight: false
+                    visible: true
+                    expanded: true
+                    icon: "extension"
+                    title: Translation.tr("Optional Plugins")
 
-                    Repeater {
-                        model: root.catalog
-                        delegate: Rectangle {
-                            id: pluginCard
-                            required property var modelData
-                            required property int index
-                            readonly property bool isInstalled: AlisIntergration.isPluginInstalled(pluginCard.modelData.id)
-                            readonly property bool isEnabled: AlisIntergration.pluginEnabled(pluginCard.modelData.id)
-                            readonly property var deps: AlisIntergration.pluginDependencies(pluginCard.modelData.id)
-                            readonly property bool isWorking: AlisIntergration.managerBusy && AlisIntergration.managerPluginId === pluginCard.modelData.id
-                            objectName: "integrationPluginCard_" + pluginCard.modelData.id
+                    SettingsGroup {
+                        spacing: 10
+
+                        GridLayout {
+                            id: packageHeaderGrid
                             Layout.fillWidth: true
                             Layout.minimumWidth: 0
-                            clip: true
-                            implicitHeight: Math.max(60, pluginCardRow.implicitHeight + 18)
-                            color: pluginCardMouse.containsMouse ? Appearance.colors.colLayer2Hover : "transparent"
-
-                            Behavior on color {
-                                enabled: Appearance.animationsEnabled
-                                ColorAnimation { duration: 120; easing.type: Easing.OutCubic }
-                            }
-
-                            Rectangle {
-                                visible: pluginCard.index > 0
-                                anchors.top: parent.top
-                                anchors.left: parent.left
-                                anchors.right: parent.right
-                                anchors.leftMargin: 12
-                                anchors.rightMargin: 12
-                                height: 1
-                                color: Appearance.colors.colOutlineVariant
-                                opacity: 0.45
-                            }
-
-                            MouseArea {
-                                id: pluginCardMouse
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: root.openPluginModal(pluginCard.modelData.id)
-                            }
+                            readonly property bool stacked: width < Math.round(540 * Appearance.fontSizeScale)
+                            columns: stacked ? 1 : 2
+                            columnSpacing: 12
+                            rowSpacing: 8
 
                             RowLayout {
-                                id: pluginCardRow
-                                anchors.fill: parent
-                                anchors.leftMargin: 14
-                                anchors.rightMargin: 12
-                                spacing: 12
+                                Layout.fillWidth: true
+                                Layout.minimumWidth: 0
+                                Layout.alignment: Qt.AlignVCenter
+                                spacing: 10
 
-                                Rectangle {
-                                    Layout.preferredWidth: 36
-                                    Layout.preferredHeight: 36
-                                    radius: Appearance.rounding.small
-                                    color: ColorUtils.transparentize(Appearance.colors.colPrimary, 0.88)
-                                    border.width: 1
-                                    border.color: ColorUtils.transparentize(Appearance.colors.colPrimary, 0.65)
-                                    MaterialSymbol {
-                                        anchors.centerIn: parent
-                                        text: root.pluginIconName(pluginCard.modelData)
-                                        iconSize: 18
-                                        color: Appearance.colors.colPrimary
-                                    }
+                                MaterialSymbol {
+                                    text: AlisIntergration.available
+                                        ? (AlisIntergration.loadFailed ? "error" : "check_circle")
+                                        : "extension"
+                                    iconSize: 20
+                                    color: AlisIntergration.available
+                                        ? (AlisIntergration.loadFailed ? Appearance.colors.colError : Appearance.colors.colPrimary)
+                                        : Appearance.colors.colSubtext
                                 }
 
                                 ColumnLayout {
@@ -443,530 +420,678 @@ ContentPage {
                                     StyledText {
                                         Layout.fillWidth: true
                                         Layout.minimumWidth: 0
-                                        text: root.pluginDisplayName(pluginCard.modelData)
+                                        elide: Text.ElideRight
                                         font.pixelSize: Appearance.font.pixelSize.small
                                         font.weight: Font.DemiBold
                                         color: Appearance.colors.colOnLayer1
-                                        elide: Text.ElideRight
+                                        text: AlisIntergration.available && AlisIntergration.version.length > 0 && !AlisIntergration.loadFailed
+                                            ? ("Alis-Intergration " + AlisIntergration.version + " · "
+                                                + AlisIntergration.installedPluginIds.length + " / " + root.catalog.length + " " + Translation.tr("installed"))
+                                            : ((AlisIntergration.loadFailed || !AlisIntergration.available)
+                                                ? (AlisIntergration.diagnostic === "not-installed"
+                                                    ? Translation.tr("Alis-Intergration base package not installed")
+                                                    : Translation.tr("Alis-Intergration package unavailable") + " (" + AlisIntergration.diagnostic + ")")
+                                                : (AlisIntergration.installedPluginIds.length === 0
+                                                    ? Translation.tr("Integrations ready — download individual plugins below.")
+                                                    : (AlisIntergration.installedPluginIds.length + " / " + root.catalog.length + " " + Translation.tr("installed"))))
                                     }
 
                                     StyledText {
+                                        visible: AlisIntergration.managerError.length > 0 || AlisIntergration.managerMessage.length > 0
                                         Layout.fillWidth: true
                                         Layout.minimumWidth: 0
-                                        text: root.pluginState(pluginCard.modelData)
+                                        wrapMode: Text.WordWrap
                                         font.pixelSize: Appearance.font.pixelSize.smallest
-                                        color: !pluginCard.deps.satisfied && !pluginCard.deps.userSpace
+                                        color: AlisIntergration.managerError.length > 0
                                             ? Appearance.colors.colError
-                                            : pluginCard.isEnabled
-                                                ? Appearance.colors.colPrimary
-                                                : Appearance.colors.colSubtext
-                                        elide: Text.ElideRight
-                                    }
-                                }
-
-                                RowLayout {
-                                    z: 2
-                                    spacing: 8
-                                    Layout.alignment: Qt.AlignVCenter
-
-                                    RippleButton {
-                                        visible: !pluginCard.isInstalled
-                                        objectName: "integrationInstall_" + pluginCard.modelData.id
-                                        enabled: !AlisIntergration.managerBusy
-                                        implicitWidth: cardInstallRow.implicitWidth + 20
-                                        implicitHeight: 30
-                                        buttonRadius: 15
-                                        colBackground: Appearance.colors.colPrimary
-                                        colBackgroundHover: Appearance.colors.colPrimaryHover
-                                        onClicked: {
-                                            AlisIntergration.installPlugin(pluginCard.modelData.id)
-                                            if (!pluginCard.deps.userSpace && !pluginCard.deps.satisfied)
-                                                root.openPluginModal(pluginCard.modelData.id)
-                                        }
-
-                                        contentItem: Item {
-                                            Row {
-                                                id: cardInstallRow
-                                                anchors.centerIn: parent
-                                                spacing: 5
-
-                                                MaterialSymbol {
-                                                    anchors.verticalCenter: parent.verticalCenter
-                                                    text: pluginCard.isWorking ? "sync" : "download"
-                                                    iconSize: 14
-                                                    color: Appearance.colors.colOnPrimary
-                                                }
-
-                                                StyledText {
-                                                    anchors.verticalCenter: parent.verticalCenter
-                                                    text: pluginCard.isWorking ? Translation.tr("Working…") : Translation.tr("Install")
-                                                    font.pixelSize: Appearance.font.pixelSize.smallest
-                                                    font.weight: Font.DemiBold
-                                                    color: Appearance.colors.colOnPrimary
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    StyledSwitch {
-                                        visible: pluginCard.isInstalled
-                                        objectName: "integrationToggle_" + pluginCard.modelData.id
-                                        enabled: !AlisIntergration.managerBusy && pluginCard.isInstalled
-                                        checked: AlisIntergration.options?.[pluginCard.modelData.id] === true
-                                        onClicked: {
-                                            const nextValue = !(AlisIntergration.options?.[pluginCard.modelData.id] === true)
-                                            AlisIntergration.setPluginEnabled(pluginCard.modelData.id, nextValue)
-                                            checked = Qt.binding(() => AlisIntergration.options?.[pluginCard.modelData.id] === true)
-                                        }
-                                    }
-
-                                    RippleButton {
-                                        visible: pluginCard.isInstalled
-                                        objectName: "integrationOpenModal_" + pluginCard.modelData.id
-                                        implicitWidth: cardSettingsRow.implicitWidth + 16
-                                        implicitHeight: 28
-                                        buttonRadius: 14
-                                        colBackground: Appearance.colors.colSecondaryContainer
-                                        colBackgroundHover: Appearance.colors.colLayer2Hover
-                                        onClicked: root.openPluginModal(pluginCard.modelData.id)
-
-                                        contentItem: Item {
-                                            Row {
-                                                id: cardSettingsRow
-                                                anchors.centerIn: parent
-                                                spacing: 4
-
-                                                StyledText {
-                                                    anchors.verticalCenter: parent.verticalCenter
-                                                    visible: pluginCard.width >= 260
-                                                    text: Translation.tr("Settings")
-                                                    font.pixelSize: Appearance.font.pixelSize.smallest
-                                                    font.weight: Font.Medium
-                                                    color: Appearance.colors.colOnSecondaryContainer
-                                                }
-
-                                                MaterialSymbol {
-                                                    anchors.verticalCenter: parent.verticalCenter
-                                                    text: "arrow_forward"
-                                                    iconSize: 13
-                                                    color: Appearance.colors.colOnSecondaryContainer
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    MaterialSymbol {
-                                        visible: !pluginCard.isInstalled
-                                        text: "chevron_right"
-                                        iconSize: 18
-                                        color: Appearance.colors.colSubtext
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    SettingsCardSection {
-        id: helpersSection
-        objectName: "integrationSystemHelpersCard"
-        _consumesBentoExtraHeight: false
-        visible: true
-        title: Translation.tr("System Helpers & Diagnostics")
-        icon: "verified_user"
-        expanded: true
-        property bool showDiagnostics: false
-
-        SettingsGroup {
-            spacing: 6
-
-            StyledText {
-                Layout.fillWidth: true
-                Layout.minimumWidth: 0
-                wrapMode: Text.WordWrap
-                font.pixelSize: Appearance.font.pixelSize.small
-                color: Appearance.colors.colSubtext
-                text: "Gateway: " + (root.gatewayReadyInUi ? Translation.tr("Ready") : Translation.tr("Not installed"))
-                    + " · Helpers: " + (root.helpersReadyInUi ? Translation.tr("Ready")
-                        : AlisIntergration.systemHelpersDiagnostic === "unchecked" ? Translation.tr("Not checked")
-                        : AlisIntergration.systemHelpersDiagnostic.includes("not-installed") ? Translation.tr("Not installed")
-                        : Translation.tr("Needs attention"))
-            }
-
-            ColumnLayout {
-                Layout.fillWidth: true
-                Layout.minimumWidth: 0
-                spacing: 6
-
-                Repeater {
-                    model: root.helperStatusItems
-                    delegate: Rectangle {
-                        id: helperItemCard
-                        required property var modelData
-                        Layout.fillWidth: true
-                        Layout.minimumWidth: 0
-                        implicitHeight: 36
-                        radius: Appearance.rounding.small
-                        color: Appearance.colors.colLayer1
-                        border.width: 1
-                        border.color: Appearance.colors.colLayer0Border
-
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.leftMargin: 10
-                            anchors.rightMargin: 10
-                            spacing: 8
-
-                            MaterialSymbol {
-                                text: helperItemCard.modelData.icon
-                                iconSize: 16
-                                color: helperItemCard.modelData.ready
-                                    ? Appearance.colors.colPrimary
-                                    : Appearance.colors.colSubtext
-                            }
-
-                            StyledText {
-                                Layout.fillWidth: true
-                                Layout.minimumWidth: 0
-                                text: helperItemCard.modelData.label
-                                font.pixelSize: Appearance.font.pixelSize.small
-                                color: Appearance.colors.colOnLayer1
-                                elide: Text.ElideRight
-                            }
-
-                            Rectangle {
-                                implicitWidth: helperStateRow.implicitWidth + 14
-                                implicitHeight: 22
-                                radius: 11
-                                color: helperItemCard.modelData.ready
-                                    ? Appearance.colors.colSecondaryContainer
-                                    : Appearance.colors.colLayer2
-
-                                Row {
-                                    id: helperStateRow
-                                    anchors.centerIn: parent
-                                    spacing: 4
-
-                                    MaterialSymbol {
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        text: helperItemCard.modelData.ready ? "check" : (helperItemCard.modelData.optional ? "info" : "schedule")
-                                        iconSize: 12
-                                        color: helperItemCard.modelData.ready
-                                            ? Appearance.colors.colPrimary
                                             : Appearance.colors.colSubtext
+                                        text: AlisIntergration.managerError || AlisIntergration.managerMessage
                                     }
+                                }
+                            }
 
-                                    StyledText {
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        text: helperItemCard.modelData.ready
-                                            ? Translation.tr("Ready")
-                                            : (helperItemCard.modelData.optional ? Translation.tr("Optional") : Translation.tr("Missing"))
-                                        font.pixelSize: Appearance.font.pixelSize.smallest
-                                        font.weight: Font.Medium
-                                        color: helperItemCard.modelData.ready
-                                            ? Appearance.colors.colOnSecondaryContainer
-                                            : Appearance.colors.colSubtext
+                            RowLayout {
+                                Layout.fillWidth: packageHeaderGrid.stacked
+                                Layout.alignment: packageHeaderGrid.stacked ? Qt.AlignLeft : (Qt.AlignRight | Qt.AlignVCenter)
+                                spacing: 8
+
+                                IntegrationActionButton {
+                                    Layout.fillWidth: packageHeaderGrid.stacked
+                                    visible: AlisIntergration.updateAvailable
+                                    iconName: "system_update"
+                                    buttonText: Translation.tr("Update base")
+                                    enabled: !AlisIntergration.managerBusy
+                                    onClicked: AlisIntergration.manage("install-base")
+                                }
+
+                                IntegrationActionButton {
+                                    Layout.fillWidth: packageHeaderGrid.stacked
+                                    visible: AlisIntergration.available
+                                    iconName: "update"
+                                    buttonText: Translation.tr("Check updates")
+                                    enabled: !AlisIntergration.managerBusy
+                                    onClicked: AlisIntergration.manage("check")
+                                }
+
+                                IntegrationActionButton {
+                                    Layout.fillWidth: packageHeaderGrid.stacked
+                                    visible: AlisIntergration.canRollback
+                                    iconName: "undo"
+                                    buttonText: Translation.tr("Undo")
+                                    enabled: !AlisIntergration.managerBusy
+                                    onClicked: AlisIntergration.manage("rollback")
+                                }
+
+                                IntegrationActionButton {
+                                    Layout.fillWidth: packageHeaderGrid.stacked
+                                    iconName: "refresh"
+                                    buttonText: Translation.tr("Refresh")
+                                    enabled: !AlisIntergration.managerBusy
+                                    onClicked: {
+                                        AlisIntergration.refresh()
+                                        AlisIntergration.refreshSystemStatus()
                                     }
                                 }
                             }
                         }
-                    }
-                }
-            }
-        }
 
-        SettingsGroup {
-            spacing: 8
-
-            StyledText {
-                Layout.fillWidth: true
-                Layout.minimumWidth: 0
-                wrapMode: Text.WordWrap
-                font.pixelSize: Appearance.font.pixelSize.smallest
-                color: Appearance.colors.colSubtext
-                text: Translation.tr("Manage system helpers with ./setup integrations.")
-            }
-
-            Flow {
-                Layout.fillWidth: true
-                Layout.minimumWidth: 0
-                spacing: 8
-
-                DialogButton {
-                    id: copySetupBtn
-                    property bool copied: false
-                    buttonText: copySetupBtn.copied ? Translation.tr("Copied") : Translation.tr("Copy ./setup integrations")
-                    onClicked: {
-                        Quickshell.clipboardText = "./setup integrations"
-                        copySetupBtn.copied = true
-                        copySetupReset.restart()
-                    }
-                    Timer {
-                        id: copySetupReset
-                        interval: 1600
-                        repeat: false
-                        onTriggered: copySetupBtn.copied = false
-                    }
-                }
-
-                DialogButton {
-                    buttonText: Translation.tr("Refresh")
-                    enabled: !AlisIntergration.managerBusy
-                    onClicked: { AlisIntergration.clearFeedback(); AlisIntergration.refresh(); AlisIntergration.refreshSystemStatus() }
-                }
-
-                DialogButton {
-                    buttonText: Translation.tr("Diagnostics")
-                    onClicked: helpersSection.showDiagnostics = !helpersSection.showDiagnostics
-                }
-
-                DialogButton {
-                    visible: AlisIntergration.canRollback
-                    buttonText: Translation.tr("Restore package")
-                    enabled: !AlisIntergration.managerBusy
-                    onClicked: AlisIntergration.manage("rollback")
-                }
-            }
-
-            StyledText {
-                Layout.fillWidth: true
-                Layout.minimumWidth: 0
-                wrapMode: Text.WrapAnywhere
-                visible: helpersSection.showDiagnostics
-                text: AlisIntergration.status()
-                font.family: Appearance.font.family.monospace
-                font.pixelSize: Appearance.font.pixelSize.small
-            }
-        }
-    }
-
-    Item {
-        id: pluginModalLayer
-        objectName: "integrationPluginModal"
-        parent: root
-        anchors.fill: parent
-        z: 200
-        visible: root.modalOpen || opacity > 0.001
-        opacity: root.modalOpen ? 1 : 0
-        Behavior on opacity {
-            enabled: Appearance.animationsEnabled
-            NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
-        }
-
-        Rectangle {
-            anchors.fill: parent
-            color: Appearance.colors.m3scrim ?? Qt.rgba(0, 0, 0, 0.55)
-            opacity: 0.72
-
-            MouseArea {
-                anchors.fill: parent
-                hoverEnabled: true
-                acceptedButtons: Qt.AllButtons
-                onClicked: root.closePluginModal()
-                onWheel: wheel => { wheel.accepted = true }
-            }
-        }
-
-        Rectangle {
-            id: pluginModalCard
-            objectName: "integrationPluginModalCard"
-            anchors.centerIn: parent
-            width: Math.max(260, Math.min(820, pluginModalLayer.width - (pluginModalLayer.width < 420 ? 16 : 40)))
-            height: Math.max(300, Math.min(720, pluginModalLayer.height - (pluginModalLayer.height < 420 ? 16 : 40)))
-            scale: root.modalOpen ? 1.0 : 0.96
-            radius: Appearance.rounding.large
-            color: Appearance.colors.colLayer0
-            border.width: 1
-            border.color: Appearance.colors.colLayer0Border
-            clip: true
-            focus: root.modalOpen
-
-            Behavior on scale {
-                enabled: Appearance.animationsEnabled
-                NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
-            }
-
-            Keys.onShortcutOverride: event => {
-                if (event.key === Qt.Key_Escape && root.modalOpen)
-                    event.accepted = true
-            }
-            Keys.onEscapePressed: event => {
-                if (root.modalOpen) {
-                    root.closePluginModal()
-                    event.accepted = true
-                }
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                acceptedButtons: Qt.AllButtons
-                onClicked: {}
-                onWheel: wheel => { wheel.accepted = false }
-            }
-
-            ColumnLayout {
-                anchors.fill: parent
-                anchors.margins: 16
-                spacing: 12
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    spacing: 10
-
-                    Rectangle {
-                        Layout.preferredWidth: 36
-                        Layout.preferredHeight: 36
-                        radius: 8
-                        color: Appearance.colors.colSecondaryContainer
-
-                        MaterialSymbol {
-                            anchors.centerIn: parent
-                            text: root.pluginIconName(root.modalCatalogPlugin)
-                            iconSize: 20
-                            color: Appearance.colors.colPrimary
-                        }
-                    }
-
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        Layout.minimumWidth: 0
-                        spacing: 1
-
-                        StyledText {
+                        // Recovery banner: preserve user's option to restore Alis internal Todo
+                        // whenever Nexus backend was selected but Nexus is uninstalled or disabled.
+                        Rectangle {
+                            visible: Todo.backend === "nexus" && !AlisIntergration.nexusEnabled
                             Layout.fillWidth: true
-                            Layout.minimumWidth: 0
-                            text: root.pluginDisplayName(root.modalCatalogPlugin)
-                            font.pixelSize: Appearance.font.pixelSize.normal
-                            font.weight: Font.DemiBold
-                            color: Appearance.colors.colOnLayer1
-                            elide: Text.ElideRight
-                        }
+                            implicitHeight: recoveryRow.implicitHeight + 16
+                            radius: Appearance.rounding.small
+                            color: Appearance.colors.colLayer1
+                            border.width: 1
+                            border.color: Appearance.colors.colOutlineVariant
 
-                        StyledText {
-                            Layout.fillWidth: true
-                            Layout.minimumWidth: 0
-                            text: root.pluginState(root.modalCatalogPlugin)
-                            font.pixelSize: Appearance.font.pixelSize.smallest
-                            color: Appearance.colors.colSubtext
-                            elide: Text.ElideRight
-                        }
-                    }
-
-                    RippleButton {
-                        objectName: "integrationModalInstallButton"
-                        enabled: !AlisIntergration.managerBusy && root.modalPluginId.length > 0
-                        implicitWidth: modalInstallRow.implicitWidth + 20
-                        implicitHeight: 32
-                        buttonRadius: 16
-                        colBackground: root.isModalPluginInstalled
-                            ? Appearance.colors.colLayer2
-                            : Appearance.colors.colPrimary
-                        colBackgroundHover: root.isModalPluginInstalled
-                            ? Appearance.colors.colLayer2Hover
-                            : ColorUtils.mix(Appearance.colors.colPrimary, "#ffffff", 0.14)
-                        onClicked: {
-                            if (root.isModalPluginInstalled)
-                                AlisIntergration.removePlugin(root.modalPluginId)
-                            else
-                                AlisIntergration.installPlugin(root.modalPluginId)
-                        }
-
-                        contentItem: Item {
-                            Row {
-                                id: modalInstallRow
-                                anchors.centerIn: parent
-                                spacing: 5
+                            RowLayout {
+                                id: recoveryRow
+                                anchors.fill: parent
+                                anchors.margins: 8
+                                spacing: 8
 
                                 MaterialSymbol {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: root.isModalPluginInstalled ? "delete_outline" : "download"
-                                    iconSize: 15
-                                    color: root.isModalPluginInstalled ? Appearance.colors.colOnLayer1 : Appearance.colors.colOnPrimary
+                                    text: "warning"
+                                    iconSize: 18
+                                    color: Appearance.colors.colPrimary
                                 }
 
                                 StyledText {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: (AlisIntergration.managerBusy && AlisIntergration.managerPluginId === root.modalPluginId)
-                                        ? Translation.tr("Working…")
-                                        : (root.isModalPluginInstalled ? Translation.tr("Uninstall") : Translation.tr("Install"))
-                                    font.pixelSize: Appearance.font.pixelSize.small
-                                    font.weight: Font.Medium
-                                    color: root.isModalPluginInstalled ? Appearance.colors.colOnLayer1 : Appearance.colors.colOnPrimary
+                                    Layout.fillWidth: true
+                                    wrapMode: Text.WordWrap
+                                    font.pixelSize: Appearance.font.pixelSize.smallest
+                                    color: Appearance.colors.colOnLayer1
+                                    text: Translation.tr("To-do backend is set to Nexus, but the Nexus plugin is not active.")
+                                }
+
+                                IntegrationActionButton {
+                                    objectName: "integrationRestoreInternalTodos"
+                                    iconName: "restore"
+                                    buttonText: Translation.tr("Restore internal Todo")
+                                    onClicked: Todo.reactivateInternal()
                                 }
                             }
                         }
-                    }
-
-                    StyledSwitch {
-                        objectName: "integrationModalEnableSwitch"
-                        visible: root.isModalPluginInstalled
-                        enabled: !AlisIntergration.managerBusy && root.isModalPluginInstalled
-                        checked: AlisIntergration.options?.[root.modalPluginId] === true
-                        onClicked: {
-                            const nextValue = !(AlisIntergration.options?.[root.modalPluginId] === true)
-                            AlisIntergration.setPluginEnabled(root.modalPluginId, nextValue)
-                            checked = Qt.binding(() => AlisIntergration.options?.[root.modalPluginId] === true)
-                        }
-                    }
-
-                    RippleButton {
-                        objectName: "integrationModalCloseButton"
-                        implicitWidth: 32
-                        implicitHeight: 32
-                        buttonRadius: 16
-                        colBackground: Appearance.colors.colLayer1
-                        colBackgroundHover: Appearance.colors.colLayer2Hover
-                        onClicked: root.closePluginModal()
-
-                        contentItem: Item {
-                            MaterialSymbol {
-                                anchors.centerIn: parent
-                                text: "close"
-                                iconSize: 18
-                                color: Appearance.colors.colOnLayer1
-                            }
-                        }
-                    }
-                }
-
-                SettingsDivider {}
-
-                Flickable {
-                    id: modalScroll
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    clip: true
-                    contentWidth: width
-                    contentHeight: modalBodyCol.implicitHeight
-                    boundsBehavior: Flickable.StopAtBounds
-
-                    ColumnLayout {
-                        id: modalBodyCol
-                        width: modalScroll.width
-                        spacing: SettingsMaterialPreset.pageSpacing
 
                         Rectangle {
-                            id: dependencyCard
-                            objectName: "integrationModalDependencies"
                             Layout.fillWidth: true
                             Layout.minimumWidth: 0
-                            implicitHeight: depCol.implicitHeight + 20
+                            implicitHeight: pluginsListColumn.implicitHeight
                             radius: Appearance.rounding.normal
                             color: Appearance.colors.colLayer1
                             border.width: 1
-                            border.color: root.modalDependencies.satisfied
-                                ? Appearance.colors.colLayer0Border
-                                : Appearance.colors.colError
+                            border.color: Appearance.colors.colLayer0Border
+                            clip: true
 
                             ColumnLayout {
-                                id: depCol
+                                id: pluginsListColumn
+                                width: parent.width
+                                spacing: 0
+
+                                Repeater {
+                                    model: root.catalog
+                                    delegate: Rectangle {
+                                        id: pluginCard
+                                        required property var modelData
+                                        required property int index
+                                        readonly property bool isInstalled: AlisIntergration.isPluginInstalled(pluginCard.modelData.id)
+                                        readonly property bool isEnabled: AlisIntergration.pluginEnabled(pluginCard.modelData.id)
+                                        readonly property var deps: AlisIntergration.pluginDependencies(pluginCard.modelData.id)
+                                        readonly property bool helpersReady: AlisIntergration.pluginHelpersReady(pluginCard.modelData.id)
+                                        readonly property bool isWorking: AlisIntergration.managerBusy && AlisIntergration.managerPluginId === pluginCard.modelData.id
+                                        objectName: "integrationPluginCard_" + pluginCard.modelData.id
+                                        Layout.fillWidth: true
+                                        Layout.minimumWidth: 0
+                                        clip: true
+                                        implicitHeight: Math.max(66, pluginCardRow.implicitHeight + 20)
+                                        color: pluginCard.isInstalled && pluginCardMouse.containsMouse
+                                            ? Appearance.colors.colLayer2Hover
+                                            : "transparent"
+
+                                        Behavior on color {
+                                            enabled: Appearance.animationsEnabled
+                                            ColorAnimation { duration: 120; easing.type: Easing.OutCubic }
+                                        }
+
+                                        Rectangle {
+                                            visible: pluginCard.index > 0
+                                            anchors.top: parent.top
+                                            anchors.left: parent.left
+                                            anchors.right: parent.right
+                                            anchors.leftMargin: 12
+                                            anchors.rightMargin: 12
+                                            height: 1
+                                            color: Appearance.colors.colOutlineVariant
+                                            opacity: 0.45
+                                        }
+
+                                        // Only installed rows may drill down into Settings.
+                                        MouseArea {
+                                            id: pluginCardMouse
+                                            anchors.fill: parent
+                                            enabled: pluginCard.isInstalled
+                                            hoverEnabled: pluginCard.isInstalled
+                                            cursorShape: pluginCard.isInstalled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                            onClicked: {
+                                                if (pluginCard.isInstalled)
+                                                    root.openPluginSettings(pluginCard.modelData.id)
+                                            }
+                                        }
+
+                                        RowLayout {
+                                            id: pluginCardRow
+                                            anchors.fill: parent
+                                            anchors.leftMargin: 14
+                                            anchors.rightMargin: 12
+                                            spacing: 12
+
+                                            Rectangle {
+                                                Layout.preferredWidth: 38
+                                                Layout.preferredHeight: 38
+                                                radius: Appearance.rounding.small
+                                                color: pluginCard.isInstalled
+                                                    ? ColorUtils.transparentize(Appearance.colors.colPrimary, 0.86)
+                                                    : Appearance.colors.colLayer2
+                                                border.width: 1
+                                                border.color: pluginCard.isInstalled
+                                                    ? ColorUtils.transparentize(Appearance.colors.colPrimary, 0.62)
+                                                    : Appearance.colors.colLayer0Border
+
+                                                MaterialSymbol {
+                                                    anchors.centerIn: parent
+                                                    text: root.pluginIconName(pluginCard.modelData)
+                                                    iconSize: 19
+                                                    color: pluginCard.isInstalled
+                                                        ? Appearance.colors.colPrimary
+                                                        : Appearance.colors.colOnSurfaceVariant
+                                                }
+                                            }
+
+                                            ColumnLayout {
+                                                Layout.fillWidth: true
+                                                Layout.minimumWidth: 0
+                                                spacing: 2
+
+                                                StyledText {
+                                                    Layout.fillWidth: true
+                                                    Layout.minimumWidth: 0
+                                                    text: root.pluginDisplayName(pluginCard.modelData)
+                                                    font.pixelSize: Appearance.font.pixelSize.small
+                                                    font.weight: Font.DemiBold
+                                                    color: Appearance.colors.colOnLayer1
+                                                    elide: Text.ElideRight
+                                                }
+
+                                                StyledText {
+                                                    Layout.fillWidth: true
+                                                    Layout.minimumWidth: 0
+                                                    text: root.pluginSubtitle(pluginCard.modelData)
+                                                    font.pixelSize: Appearance.font.pixelSize.smallest
+                                                    color: Appearance.colors.colSubtext
+                                                    elide: Text.ElideRight
+                                                }
+
+                                                StyledText {
+                                                    Layout.fillWidth: true
+                                                    Layout.minimumWidth: 0
+                                                    text: root.pluginState(pluginCard.modelData)
+                                                    font.pixelSize: Appearance.font.pixelSize.smallest
+                                                    color: pluginCard.isInstalled && !pluginCard.deps.userSpace && !pluginCard.helpersReady
+                                                        ? Appearance.colors.colError
+                                                        : pluginCard.isEnabled
+                                                            ? Appearance.colors.colPrimary
+                                                            : Appearance.colors.colSubtext
+                                                    elide: Text.ElideRight
+                                                }
+                                            }
+
+                                            RowLayout {
+                                                z: 2
+                                                spacing: 8
+                                                Layout.alignment: Qt.AlignVCenter
+
+                                                RippleButton {
+                                                    visible: !pluginCard.isInstalled
+                                                    objectName: "integrationInstall_" + pluginCard.modelData.id
+                                                    enabled: !AlisIntergration.managerBusy
+                                                    implicitWidth: cardInstallRow.implicitWidth + 20
+                                                    implicitHeight: 32
+                                                    buttonRadius: Appearance.rounding.small
+                                                    colBackground: Appearance.colors.colPrimary
+                                                    colBackgroundHover: Appearance.colors.colPrimaryHover
+                                                    opacity: enabled ? 1 : 0.6
+                                                    onClicked: AlisIntergration.installPlugin(pluginCard.modelData.id)
+
+                                                    contentItem: Item {
+                                                        Row {
+                                                            id: cardInstallRow
+                                                            anchors.centerIn: parent
+                                                            spacing: 6
+
+                                                            MaterialSymbol {
+                                                                anchors.verticalCenter: parent.verticalCenter
+                                                                text: pluginCard.isWorking ? "hourglass_top" : "download"
+                                                                iconSize: 15
+                                                                color: Appearance.colors.colOnPrimary
+                                                            }
+
+                                                            StyledText {
+                                                                anchors.verticalCenter: parent.verticalCenter
+                                                                text: pluginCard.isWorking
+                                                                    ? Translation.tr("Working…")
+                                                                    : Translation.tr("Download & Install")
+                                                                font.pixelSize: Appearance.font.pixelSize.smallest
+                                                                font.weight: Font.Medium
+                                                                color: Appearance.colors.colOnPrimary
+                                                            }
+                                                        }
+                                                    }
+                                                }
+
+                                                StyledSwitch {
+                                                    visible: pluginCard.isInstalled
+                                                    objectName: "integrationEnable_" + pluginCard.modelData.id
+                                                    enabled: !AlisIntergration.managerBusy
+                                                    checked: pluginCard.isEnabled
+                                                    onToggled: {
+                                                        AlisIntergration.setPluginEnabled(pluginCard.modelData.id, checked)
+                                                        checked = Qt.binding(() => AlisIntergration.pluginEnabled(pluginCard.modelData.id))
+                                                    }
+                                                }
+
+                                                RippleButton {
+                                                    visible: pluginCard.isInstalled
+                                                    objectName: "integrationOpenSettings_" + pluginCard.modelData.id
+                                                    implicitWidth: cardSettingsRow.implicitWidth + 18
+                                                    implicitHeight: 32
+                                                    buttonRadius: Appearance.rounding.small
+                                                    colBackground: Appearance.colors.colLayer2
+                                                    colBackgroundHover: Appearance.colors.colLayer2Hover
+                                                    onClicked: root.openPluginSettings(pluginCard.modelData.id)
+
+                                                    contentItem: Item {
+                                                        Row {
+                                                            id: cardSettingsRow
+                                                            anchors.centerIn: parent
+                                                            spacing: 5
+
+                                                            MaterialSymbol {
+                                                                anchors.verticalCenter: parent.verticalCenter
+                                                                text: "settings"
+                                                                iconSize: 15
+                                                                color: Appearance.colors.colOnLayer1
+                                                            }
+
+                                                            StyledText {
+                                                                anchors.verticalCenter: parent.verticalCenter
+                                                                text: Translation.tr("Settings")
+                                                                font.pixelSize: Appearance.font.pixelSize.smallest
+                                                                font.weight: Font.Medium
+                                                                color: Appearance.colors.colOnLayer1
+                                                            }
+
+                                                            MaterialSymbol {
+                                                                anchors.verticalCenter: parent.verticalCenter
+                                                                text: "chevron_right"
+                                                                iconSize: 16
+                                                                color: Appearance.colors.colOnSurfaceVariant
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Page 1: Per-Plugin Drill-down Settings (slides in from right)
+        Item {
+            id: detailView
+            objectName: "integrationDetailView"
+            width: drillDownViewport.width
+            implicitHeight: detailCol.implicitHeight
+            height: implicitHeight
+            x: (1 - root.slideProgress) * drillDownViewport.width
+            opacity: root.detailOpen ? (0.45 + 0.55 * root.slideProgress) : root.slideProgress
+            visible: root.detailOpen || root.slideProgress > 0.001
+            enabled: root.detailOpen
+
+            ColumnLayout {
+                id: detailCol
+                width: detailView.width
+                spacing: 12
+
+                // Drill-down header bar with Back, enable switch, and Uninstall
+                SettingsCardSection {
+                    id: detailHeaderCard
+                    objectName: "integrationDetailHeaderCard"
+                    property bool _preventBentoReparent: true
+                    _consumesBentoExtraHeight: false
+                    visible: true
+                    expanded: true
+                    showHeader: false
+
+                    SettingsGroup {
+                        spacing: 10
+
+                        Item {
+                            id: detailHeaderRowContainer
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: 0
+                            readonly property bool stackCenterPill: width > 0
+                                && width < (detailLeftGroup.implicitWidth + headerCenterPill.width + detailRightGroup.implicitWidth + 28)
+                            readonly property real topBarHeight: Math.max(
+                                detailLeftGroup.implicitHeight,
+                                detailRightGroup.implicitHeight,
+                                stackCenterPill ? 0 : headerCenterPill.height
+                            )
+                            implicitHeight: stackCenterPill
+                                ? (topBarHeight + 8 + headerCenterPill.height)
+                                : topBarHeight
+
+                            RowLayout {
+                                id: detailLeftGroup
+                                anchors.left: parent.left
+                                y: Math.round((detailHeaderRowContainer.topBarHeight - height) / 2)
+                                width: Math.min(
+                                    implicitWidth,
+                                    detailHeaderRowContainer.stackCenterPill
+                                        ? Math.max(80, detailHeaderRowContainer.width - detailRightGroup.implicitWidth - 12)
+                                        : Math.max(80, Math.round((detailHeaderRowContainer.width - headerCenterPill.width) / 2) - 10)
+                                )
+                                spacing: 8
+
+                                RippleButton {
+                                    objectName: "integrationBackButton"
+                                    implicitWidth: backBtnRow.implicitWidth + 16
+                                    implicitHeight: 32
+                                    buttonRadius: Appearance.rounding.small
+                                    colBackground: Appearance.colors.colLayer1
+                                    colBackgroundHover: Appearance.colors.colLayer1Hover
+                                    onClicked: root.closePluginDetail()
+
+                                    contentItem: Item {
+                                        Row {
+                                            id: backBtnRow
+                                            anchors.centerIn: parent
+                                            spacing: 4
+
+                                            MaterialSymbol {
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                text: "arrow_back"
+                                                iconSize: 16
+                                                color: Appearance.colors.colOnLayer1
+                                            }
+
+                                            StyledText {
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                text: Translation.tr("Back")
+                                                font.pixelSize: Appearance.font.pixelSize.small
+                                                font.weight: Font.Medium
+                                                color: Appearance.colors.colOnLayer1
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Rectangle {
+                                    Layout.preferredWidth: 32
+                                    Layout.preferredHeight: 32
+                                    radius: Appearance.rounding.small
+                                    color: ColorUtils.transparentize(Appearance.colors.colPrimary, 0.86)
+                                    border.width: 1
+                                    border.color: ColorUtils.transparentize(Appearance.colors.colPrimary, 0.62)
+
+                                    MaterialSymbol {
+                                        anchors.centerIn: parent
+                                        text: root.pluginIconName(root.selectedCatalogPlugin)
+                                        iconSize: 17
+                                        color: Appearance.colors.colPrimary
+                                    }
+                                }
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
+                                    spacing: 1
+
+                                    StyledText {
+                                        Layout.fillWidth: true
+                                        Layout.minimumWidth: 0
+                                        text: root.pluginDisplayName(root.selectedCatalogPlugin)
+                                        font.pixelSize: Appearance.font.pixelSize.normal
+                                        font.weight: Font.DemiBold
+                                        color: Appearance.colors.colOnLayer1
+                                        elide: Text.ElideRight
+                                    }
+
+                                    StyledText {
+                                        Layout.fillWidth: true
+                                        Layout.minimumWidth: 0
+                                        text: root.selectedCatalogPlugin ? root.pluginState(root.selectedCatalogPlugin) : ""
+                                        font.pixelSize: Appearance.font.pixelSize.smallest
+                                        color: Appearance.colors.colSubtext
+                                        elide: Text.ElideRight
+                                    }
+                                }
+                            }
+
+                            // Centered compact header pill: hosts TLP status buttons (when applicable) + compact Helpers/Diagnostics toggle
+                            Rectangle {
+                                id: headerCenterPill
+                                objectName: "integrationHeaderCenterPill"
+                                visible: root.detailOpen
+                                readonly property bool depsHealthy: root.selectedDependencies.userSpace
+                                    ? (root.selectedDependencies.binariesReady !== false)
+                                    : AlisIntergration.pluginHelpersReady(root.selectedPluginId)
+                                x: Math.round((detailHeaderRowContainer.width - width) / 2)
+                                y: detailHeaderRowContainer.stackCenterPill
+                                    ? (detailHeaderRowContainer.topBarHeight + 8)
+                                    : Math.round((detailHeaderRowContainer.topBarHeight - height) / 2)
+                                width: centerPillRow.implicitWidth + 12
+                                height: 40
+                                radius: Appearance.rounding.full
+                                color: Appearance.colors.colLayer1
+                                border.width: 1
+                                border.color: root.helpersDrawerOpen
+                                    ? ColorUtils.transparentize(Appearance.colors.colPrimary, 0.45)
+                                    : Appearance.colors.colLayer0Border
+
+                                RowLayout {
+                                    id: centerPillRow
+                                    anchors.centerIn: parent
+                                    spacing: 6
+
+                                    Loader {
+                                        id: pluginHeaderStatusLoader
+                                        objectName: "integrationPluginHeaderStatusSlot"
+                                        active: root.visible && root.detailOpen && pluginSettings.active
+                                            && pluginSettings.status === Loader.Ready
+                                            && Boolean(pluginSettings.item?.headerStatusBar)
+                                        visible: active && item !== null
+                                        sourceComponent: active ? (pluginSettings.item?.headerStatusBar ?? null) : null
+                                    }
+
+                                    Rectangle {
+                                        visible: pluginHeaderStatusLoader.visible
+                                        Layout.preferredWidth: 1
+                                        Layout.preferredHeight: 18
+                                        color: Appearance.colors.colOutlineVariant
+                                        opacity: 0.6
+                                    }
+
+                                    RippleButton {
+                                        id: pluginHelpersButton
+                                        objectName: "integrationPluginHelpersButton"
+                                        implicitWidth: 32
+                                        implicitHeight: 32
+                                        buttonRadius: 16
+                                        colBackground: !headerCenterPill.depsHealthy
+                                            ? Appearance.colors.colErrorContainer
+                                            : (root.helpersDrawerOpen
+                                                ? Appearance.colors.colPrimary
+                                                : Appearance.colors.colPrimaryContainer)
+                                        colBackgroundHover: !headerCenterPill.depsHealthy
+                                            ? Appearance.colors.colErrorContainer
+                                            : (root.helpersDrawerOpen
+                                                ? Appearance.colors.colPrimaryHover
+                                                : Appearance.colors.colPrimaryContainerHover)
+                                        onClicked: root.helpersDrawerOpen = !root.helpersDrawerOpen
+
+                                        contentItem: MaterialSymbol {
+                                            anchors.centerIn: parent
+                                            text: !headerCenterPill.depsHealthy
+                                                ? "warning"
+                                                : (root.selectedDependencies.requiresSystemHelpers ? "verified_user" : "health_and_safety")
+                                            iconSize: Appearance.font.pixelSize.normal
+                                            color: !headerCenterPill.depsHealthy
+                                                ? Appearance.colors.colOnErrorContainer
+                                                : (root.helpersDrawerOpen
+                                                    ? Appearance.colors.colOnPrimary
+                                                    : Appearance.colors.colOnPrimaryContainer)
+                                        }
+
+                                        StyledToolTip {
+                                            text: (root.selectedDependencies.requiresSystemHelpers
+                                                ? Translation.tr("System Helpers & Diagnostics")
+                                                : Translation.tr("Dependencies & Diagnostics"))
+                                                + " · " + root.detailHelperStateText()
+                                        }
+                                    }
+                                }
+                            }
+
+                            RowLayout {
+                                id: detailRightGroup
+                                anchors.right: parent.right
+                                y: Math.round((detailHeaderRowContainer.topBarHeight - height) / 2)
+                                spacing: 10
+
+                                StyledSwitch {
+                                    objectName: "integrationDetailEnableSwitch"
+                                    enabled: !AlisIntergration.managerBusy && root.detailOpen
+                                    checked: root.selectedPluginId.length > 0 && AlisIntergration.pluginEnabled(root.selectedPluginId)
+                                    onToggled: {
+                                        if (!root.selectedPluginId) return
+                                        AlisIntergration.setPluginEnabled(root.selectedPluginId, checked)
+                                        checked = Qt.binding(() => root.selectedPluginId.length > 0 && AlisIntergration.pluginEnabled(root.selectedPluginId))
+                                    }
+                                }
+
+                                IntegrationActionButton {
+                                    objectName: "integrationUninstallPluginButton"
+                                    visible: root.detailOpen
+                                    destructive: true
+                                    iconName: "delete"
+                                    buttonText: Translation.tr("Uninstall")
+                                    enabled: !AlisIntergration.managerBusy
+                                    onClicked: {
+                                        const targetId = root.selectedPluginId
+                                        if (!targetId) return
+                                        root.closePluginDetail()
+                                        AlisIntergration.removePlugin(targetId)
+                                    }
+                                }
+                            }
+                        }
+
+                        // Capability switcher for multi-capability plugins (e.g. Nexus)
+                        Item {
+                            id: capabilityTabsWrapper
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: 0
+                            visible: root.selectedPlugin !== null && root.capabilityTabs.length > 1
+                            readonly property bool abyssStyle: Config.options?.panelFamily === "abyss"
+                            readonly property real railPadding: abyssStyle ? SettingsMaterialPreset.taskTabPadding : 0
+                            readonly property real naturalTabsWidth: {
+                                let total = 0
+                                let count = 0
+                                for (let i = 0; i < capabilityTabsArray.children.length; ++i) {
+                                    const child = capabilityTabsArray.children[i]
+                                    if (child && child.visible && child.hasOwnProperty("modelData")) {
+                                        total += Math.ceil(child.implicitWidth || child.width)
+                                        count++
+                                    }
+                                }
+                                return count > 0 ? total + Math.max(0, count - 1) * capabilityTabsArray.spacing : 0
+                            }
+                            implicitHeight: visible ? (capabilityTabsArray.implicitHeight + railPadding * 2) : 0
+
+                            Rectangle {
+                                id: capabilityTabsRail
+                                objectName: "integrationCapabilityTabs"
+                                x: capabilityTabsWrapper.abyssStyle ? Math.round((parent.width - width) / 2) : 0
+                                y: 0
+                                width: capabilityTabsWrapper.abyssStyle
+                                    ? Math.min(parent.width, capabilityTabsWrapper.naturalTabsWidth + capabilityTabsWrapper.railPadding * 2)
+                                    : parent.width
+                                height: parent.height
+                                color: capabilityTabsWrapper.abyssStyle ? SettingsMaterialPreset.taskRailColor : "transparent"
+                                radius: SettingsMaterialPreset.taskRailRadius
+
+                                ConfigSelectionArray {
+                                    id: capabilityTabsArray
+                                    objectName: "settingsTaskOptions"
+                                    anchors.left: parent.left
+                                    anchors.right: parent.right
+                                    anchors.margins: capabilityTabsWrapper.railPadding
+                                    y: capabilityTabsWrapper.railPadding
+                                    enableSettingsSearch: false
+                                    options: root.capabilityTabs
+                                    currentValue: root.selectedCapability?.id ?? ""
+                                    taskNavigation: true
+                                    useAbyssPillShape: false
+                                    onSelected: value => root.selectCapability(value)
+                                }
+                            }
+                        }
+
+                        // Compact collapsible drawer for System Helpers, Dependencies & Diagnostics (toggled by header icon button)
+                        Rectangle {
+                            id: pluginDepsCard
+                            objectName: "integrationPluginDependenciesCard"
+                            visible: root.detailOpen && root.helpersDrawerOpen
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: 0
+                            implicitHeight: pluginDepsCol.implicitHeight + 16
+                            radius: Appearance.rounding.small
+                            color: Appearance.colors.colLayer1
+                            border.width: 1
+                            border.color: Appearance.colors.colLayer0Border
+
+                            ColumnLayout {
+                                id: pluginDepsCol
                                 anchors.fill: parent
-                                anchors.margins: 10
-                                spacing: 6
+                                anchors.margins: 8
+                                spacing: 8
 
                                 RowLayout {
                                     Layout.fillWidth: true
@@ -974,1013 +1099,387 @@ ContentPage {
                                     spacing: 8
 
                                     MaterialSymbol {
-                                        text: root.modalDependencies.satisfied ? "check_circle" : "warning"
-                                        iconSize: 16
-                                        color: root.modalDependencies.satisfied ? Appearance.colors.colPrimary : Appearance.colors.colError
+                                        text: root.selectedDependencies.userSpace
+                                            ? (root.selectedDependencies.binariesReady ? "check_circle" : "warning")
+                                            : (AlisIntergration.pluginHelpersReady(root.selectedPluginId) ? "verified_user" : "warning")
+                                        iconSize: 18
+                                        color: (root.selectedDependencies.userSpace
+                                            ? root.selectedDependencies.binariesReady
+                                            : AlisIntergration.pluginHelpersReady(root.selectedPluginId))
+                                            ? Appearance.colors.colPrimary
+                                            : Appearance.colors.colError
                                     }
 
-                                    StyledText {
+                                    ColumnLayout {
                                         Layout.fillWidth: true
                                         Layout.minimumWidth: 0
-                                        text: root.modalDependencies.userSpace
-                                            ? Translation.tr("User-space plugin · No root privileges required")
-                                            : Translation.tr("System dependencies & helpers")
-                                        font.pixelSize: Appearance.font.pixelSize.small
-                                        font.weight: Font.DemiBold
-                                        color: Appearance.colors.colOnLayer1
-                                        elide: Text.ElideRight
+                                        spacing: 1
+
+                                        StyledText {
+                                            Layout.fillWidth: true
+                                            Layout.minimumWidth: 0
+                                            font.pixelSize: Appearance.font.pixelSize.small
+                                            font.weight: Font.DemiBold
+                                            color: Appearance.colors.colOnLayer1
+                                            text: (root.selectedDependencies.requiresSystemHelpers
+                                                ? Translation.tr("System Helpers & Diagnostics")
+                                                : Translation.tr("Dependencies & Diagnostics"))
+                                                + " · " + root.detailHelperStateText()
+                                            elide: Text.ElideRight
+                                        }
+
+                                        StyledText {
+                                            visible: (root.selectedDependencies.note ?? "").length > 0
+                                            Layout.fillWidth: true
+                                            Layout.minimumWidth: 0
+                                            wrapMode: Text.WordWrap
+                                            font.pixelSize: Appearance.font.pixelSize.smallest
+                                            color: Appearance.colors.colSubtext
+                                            text: root.selectedDependencies.note ?? ""
+                                        }
+                                    }
+
+                                    IntegrationActionButton {
+                                        objectName: "integrationPluginRefreshDiagnostics"
+                                        iconName: "refresh"
+                                        buttonText: Translation.tr("Refresh")
+                                        enabled: !AlisIntergration.managerBusy
+                                        onClicked: {
+                                            AlisIntergration.refresh()
+                                            AlisIntergration.refreshSystemStatus()
+                                        }
+                                    }
+
+                                    IntegrationActionButton {
+                                        objectName: "integrationPluginDiagnosticsToggle"
+                                        iconName: root.showDiagnostics ? "visibility_off" : "bug_report"
+                                        buttonText: root.showDiagnostics
+                                            ? Translation.tr("Hide diagnostics")
+                                            : Translation.tr("Diagnostics")
+                                        onClicked: root.showDiagnostics = !root.showDiagnostics
                                     }
                                 }
 
-                                StyledText {
-                                    Layout.fillWidth: true
-                                    Layout.minimumWidth: 0
-                                    wrapMode: Text.WordWrap
-                                    visible: (root.modalDependencies.note ?? "").length > 0
-                                    text: String(root.modalDependencies.note ?? "")
-                                    font.pixelSize: Appearance.font.pixelSize.smallest
-                                    color: Appearance.colors.colSubtext
-                                }
-
+                                // Compact inline status chips (binaries, helpers, provisioner)
                                 Flow {
                                     Layout.fillWidth: true
                                     spacing: 6
-                                    visible: (root.modalDependencies.binaries?.length ?? 0) > 0 || (root.modalDependencies.helpers?.length ?? 0) > 0
+                                    visible: (root.selectedDependencies.binaries?.length ?? 0) > 0
+                                        || root.selectedDependencies.requiresSystemHelpers
 
                                     Repeater {
-                                        model: root.modalDependencies.binaries ?? []
+                                        model: root.selectedDependencies.binaries ?? []
                                         delegate: Rectangle {
                                             required property var modelData
-                                            implicitWidth: binRow.implicitWidth + 14
                                             implicitHeight: 24
-                                            radius: 12
-                                            color: modelData.installed ? Appearance.colors.colSecondaryContainer : ColorUtils.transparentize(Appearance.colors.colError, 0.85)
-                                            Row {
-                                                id: binRow
+                                            implicitWidth: binChipRow.implicitWidth + 14
+                                            radius: Appearance.rounding.full
+                                            color: Appearance.colors.colLayer2
+                                            border.width: 1
+                                            border.color: Appearance.colors.colLayer0Border
+
+                                            RowLayout {
+                                                id: binChipRow
                                                 anchors.centerIn: parent
-                                                spacing: 4
+                                                spacing: 5
                                                 MaterialSymbol {
-                                                    anchors.verticalCenter: parent.verticalCenter
-                                                    text: modelData.installed ? "check" : "close"
+                                                    text: modelData.installed ? "check_circle" : "error"
                                                     iconSize: 13
                                                     color: modelData.installed ? Appearance.colors.colPrimary : Appearance.colors.colError
                                                 }
                                                 StyledText {
-                                                    anchors.verticalCenter: parent.verticalCenter
-                                                    text: modelData.name + (modelData.installed ? "" : " (missing)")
                                                     font.pixelSize: Appearance.font.pixelSize.smallest
                                                     color: Appearance.colors.colOnLayer1
+                                                    text: modelData.name + (modelData.installed ? (" · " + Translation.tr("Ready")) : (" · " + Translation.tr("Missing")))
                                                 }
                                             }
                                         }
                                     }
 
                                     Repeater {
-                                        model: root.modalDependencies.helpers ?? []
+                                        model: root.selectedDependencies.helpers ?? []
                                         delegate: Rectangle {
                                             required property var modelData
-                                            implicitWidth: helperRow.implicitWidth + 14
                                             implicitHeight: 24
-                                            radius: 12
-                                            color: modelData.installed ? Appearance.colors.colSecondaryContainer : ColorUtils.transparentize(Appearance.colors.colError, 0.85)
-                                            Row {
-                                                id: helperRow
+                                            implicitWidth: helperChipRow.implicitWidth + 14
+                                            radius: Appearance.rounding.full
+                                            color: Appearance.colors.colLayer2
+                                            border.width: 1
+                                            border.color: Appearance.colors.colLayer0Border
+
+                                            RowLayout {
+                                                id: helperChipRow
                                                 anchors.centerIn: parent
-                                                spacing: 4
+                                                spacing: 5
                                                 MaterialSymbol {
-                                                    anchors.verticalCenter: parent.verticalCenter
-                                                    text: modelData.installed ? "verified_user" : "admin_panel_settings"
+                                                    text: modelData.installed ? "check_circle" : "error"
                                                     iconSize: 13
                                                     color: modelData.installed ? Appearance.colors.colPrimary : Appearance.colors.colError
                                                 }
                                                 StyledText {
-                                                    anchors.verticalCenter: parent.verticalCenter
-                                                    text: String(modelData.path).split("/").pop() + (modelData.installed ? "" : " (missing)")
                                                     font.pixelSize: Appearance.font.pixelSize.smallest
                                                     color: Appearance.colors.colOnLayer1
+                                                    text: String(modelData.path || "").split("/").pop()
+                                                        + (modelData.installed ? (" · " + Translation.tr("Installed")) : (" · " + Translation.tr("Not installed")))
                                                 }
+                                            }
+                                            StyledToolTip { text: String(modelData.path || "") }
+                                        }
+                                    }
+
+                                    Rectangle {
+                                        visible: root.selectedDependencies.requiresSystemHelpers
+                                        implicitHeight: 24
+                                        implicitWidth: provChipRow.implicitWidth + 14
+                                        radius: Appearance.rounding.full
+                                        color: Appearance.colors.colLayer2
+                                        border.width: 1
+                                        border.color: Appearance.colors.colLayer0Border
+
+                                        RowLayout {
+                                            id: provChipRow
+                                            anchors.centerIn: parent
+                                            spacing: 5
+                                            MaterialSymbol {
+                                                text: AlisIntergration.systemProvisionerAvailable ? "verified" : "shield"
+                                                iconSize: 13
+                                                color: AlisIntergration.systemProvisionerAvailable
+                                                    ? Appearance.colors.colPrimary
+                                                    : Appearance.colors.colOnSurfaceVariant
+                                            }
+                                            StyledText {
+                                                font.pixelSize: Appearance.font.pixelSize.smallest
+                                                color: Appearance.colors.colOnLayer1
+                                                text: Translation.tr("Polkit Provisioner:") + " "
+                                                    + (AlisIntergration.systemProvisionerAvailable
+                                                        ? Translation.tr("Available")
+                                                        : Translation.tr("Provisioned by ./setup integrations"))
                                             }
                                         }
                                     }
                                 }
 
-                                StyledText {
+                                // Copyable terminal commands when helpers or binaries need provisioning
+                                Rectangle {
+                                    visible: (!root.selectedDependencies.satisfied || root.selectedDependencies.requiresSystemHelpers)
+                                        && ((root.selectedDependencies.setupCommand ?? "").length > 0
+                                            || (root.selectedDependencies.helpersCommand ?? "").length > 0)
                                     Layout.fillWidth: true
-                                    Layout.minimumWidth: 0
-                                    wrapMode: Text.WordWrap
-                                    visible: !root.modalDependencies.userSpace && !root.modalDependencies.satisfied
-                                    font.pixelSize: Appearance.font.pixelSize.smallest
-                                    color: Appearance.colors.colError
-                                    text: (!root.modalDependencies.binariesReady
-                                            ? Translation.tr("Install packages with: ") + (root.modalDependencies.setupCommand || "./setup install-deps") + " (alis-deps)\n"
-                                            : "")
-                                        + (!root.modalDependencies.helpersReady
-                                            ? Translation.tr("Install system helpers with: ") + (root.modalDependencies.helpersCommand || "./setup integrations")
-                                            : "")
+                                    implicitHeight: commandsCol.implicitHeight + 14
+                                    radius: Appearance.rounding.small
+                                    color: Appearance.colors.colSurfaceContainerLow
+                                    border.width: 1
+                                    border.color: Appearance.colors.colLayer0Border
+
+                                    ColumnLayout {
+                                        id: commandsCol
+                                        anchors.fill: parent
+                                        anchors.margins: 7
+                                        spacing: 5
+
+                                        RowLayout {
+                                            visible: (root.selectedDependencies.setupCommand ?? "").length > 0
+                                                && root.selectedDependencies.binariesReady !== true
+                                            Layout.fillWidth: true
+                                            spacing: 8
+
+                                            StyledText {
+                                                Layout.fillWidth: true
+                                                font.family: Appearance.font.family.monospace
+                                                font.pixelSize: Appearance.font.pixelSize.smallest
+                                                color: Appearance.colors.colOnLayer1
+                                                text: root.selectedDependencies.setupCommand ?? "./setup install-deps"
+                                                elide: Text.ElideRight
+                                            }
+
+                                            IntegrationActionButton {
+                                                iconName: root.copiedText === (root.selectedDependencies.setupCommand ?? "./setup install-deps")
+                                                    ? "check"
+                                                    : "content_copy"
+                                                buttonText: root.copiedText === (root.selectedDependencies.setupCommand ?? "./setup install-deps")
+                                                    ? Translation.tr("Copied")
+                                                    : Translation.tr("Copy")
+                                                onClicked: root.copyCommand(root.selectedDependencies.setupCommand || "./setup install-deps")
+                                            }
+                                        }
+
+                                        RowLayout {
+                                            visible: (root.selectedDependencies.helpersCommand ?? "").length > 0
+                                            Layout.fillWidth: true
+                                            spacing: 8
+
+                                            StyledText {
+                                                Layout.fillWidth: true
+                                                font.family: Appearance.font.family.monospace
+                                                font.pixelSize: Appearance.font.pixelSize.smallest
+                                                color: Appearance.colors.colOnLayer1
+                                                text: root.selectedDependencies.helpersCommand ?? ""
+                                                elide: Text.ElideRight
+                                            }
+
+                                            IntegrationActionButton {
+                                                objectName: "integrationCopyHelpersCommand"
+                                                iconName: root.copiedText === (root.selectedDependencies.helpersCommand ?? "")
+                                                    ? "check"
+                                                    : "content_copy"
+                                                buttonText: root.copiedText === (root.selectedDependencies.helpersCommand ?? "")
+                                                    ? Translation.tr("Copied")
+                                                    : Translation.tr("Copy")
+                                                onClicked: root.copyCommand(root.selectedDependencies.helpersCommand)
+                                            }
+                                        }
+
+                                        RowLayout {
+                                            visible: (root.selectedDependencies.removeHelpersCommand ?? "").length > 0
+                                                && (root.selectedHelperStatus?.managed === true || root.selectedHelperStatus?.installed === true)
+                                            Layout.fillWidth: true
+                                            spacing: 8
+
+                                            StyledText {
+                                                Layout.fillWidth: true
+                                                font.family: Appearance.font.family.monospace
+                                                font.pixelSize: Appearance.font.pixelSize.smallest
+                                                color: Appearance.colors.colSubtext
+                                                text: root.selectedDependencies.removeHelpersCommand ?? ""
+                                                elide: Text.ElideRight
+                                            }
+
+                                            IntegrationActionButton {
+                                                iconName: root.copiedText === (root.selectedDependencies.removeHelpersCommand ?? "")
+                                                    ? "check"
+                                                    : "content_copy"
+                                                buttonText: root.copiedText === (root.selectedDependencies.removeHelpersCommand ?? "")
+                                                    ? Translation.tr("Copied")
+                                                    : Translation.tr("Copy")
+                                                onClicked: root.copyCommand(root.selectedDependencies.removeHelpersCommand)
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // Expandable diagnostics detail box
+                                Rectangle {
+                                    visible: root.showDiagnostics
+                                    Layout.fillWidth: true
+                                    implicitHeight: diagCol.implicitHeight + 14
+                                    radius: Appearance.rounding.small
+                                    color: Appearance.colors.colSurfaceContainerLow
+                                    border.width: 1
+                                    border.color: Appearance.colors.colLayer0Border
+
+                                    ColumnLayout {
+                                        id: diagCol
+                                        anchors.fill: parent
+                                        anchors.margins: 7
+                                        spacing: 3
+
+                                        StyledText {
+                                            Layout.fillWidth: true
+                                            font.family: Appearance.font.family.monospace
+                                            font.pixelSize: Appearance.font.pixelSize.smallest
+                                            color: Appearance.colors.colOnLayer1
+                                            wrapMode: Text.WrapAnywhere
+                                            text: "plugin=" + root.selectedPluginId
+                                                + " · layout=" + (AlisIntergration.packageLayout || "unknown")
+                                                + " · sha=" + (AlisIntergration.sourceSha ? AlisIntergration.sourceSha.slice(0, 12) : "none")
+                                        }
+
+                                        StyledText {
+                                            Layout.fillWidth: true
+                                            font.family: Appearance.font.family.monospace
+                                            font.pixelSize: Appearance.font.pixelSize.smallest
+                                            color: Appearance.colors.colSubtext
+                                            wrapMode: Text.WrapAnywhere
+                                            text: "path=" + (String(AlisIntergration.pluginRoots?.[root.selectedPluginId] ?? "") || AlisIntergration.packageRoot || "not-installed")
+                                        }
+
+                                        StyledText {
+                                            visible: root.selectedDependencies.requiresSystemHelpers
+                                            Layout.fillWidth: true
+                                            font.family: Appearance.font.family.monospace
+                                            font.pixelSize: Appearance.font.pixelSize.smallest
+                                            color: Appearance.colors.colSubtext
+                                            wrapMode: Text.WrapAnywhere
+                                            text: "helperState=" + String(root.selectedHelperStatus?.diagnostic ?? AlisIntergration.systemHelpersDiagnostic ?? "unchecked")
+                                                + " · provisioner=" + (AlisIntergration.systemProvisionerAvailable ? "ready" : "absent")
+                                                + " · gatewayPkg=" + (AlisIntergration.gatewayPackageInstalled ? "installed" : "absent")
+                                        }
+                                    }
                                 }
                             }
                         }
+                    }
+                }
 
-                        ColumnLayout {
+                // Disabled notice when installed plugin isn't enabled yet
+                SettingsCardSection {
+                    property bool _preventBentoReparent: true
+                    _consumesBentoExtraHeight: false
+                    visible: root.detailOpen && !AlisIntergration.pluginEnabled(root.selectedPluginId)
+                    expanded: true
+                    showHeader: false
+
+                    SettingsGroup {
+                        spacing: 6
+
+                        StyledText {
                             Layout.fillWidth: true
                             Layout.minimumWidth: 0
-                            spacing: SettingsMaterialPreset.pageSpacing
-                            visible: root.selectedPlugin !== null || !root.isModalPluginInstalled
-
-                            Item {
-                                id: capabilityTabsWrapper
-                                Layout.fillWidth: true
-                                Layout.minimumWidth: 0
-                                visible: root.selectedPlugin !== null && root.capabilityTabs.length > 1
-                                readonly property bool abyssStyle: Config.options?.panelFamily === "abyss"
-                                readonly property real railPadding: abyssStyle ? SettingsMaterialPreset.taskTabPadding : 0
-                                implicitHeight: capabilityTabsArray.implicitHeight + railPadding * 2
-
-                                Rectangle {
-                                    id: capabilityTabsRail
-                                    objectName: "integrationCapabilityTabs"
-                                    x: capabilityTabsWrapper.abyssStyle ? Math.round((parent.width - width) / 2) : 0
-                                    y: 0
-                                    width: capabilityTabsWrapper.abyssStyle
-                                        ? Math.min(parent.width, Math.ceil(capabilityTabsArray.implicitWidth) + capabilityTabsWrapper.railPadding * 2)
-                                        : parent.width
-                                    height: parent.height
-                                    color: capabilityTabsWrapper.abyssStyle ? SettingsMaterialPreset.taskRailColor : "transparent"
-                                    radius: SettingsMaterialPreset.taskRailRadius
-
-                                    ConfigSelectionArray {
-                                        id: capabilityTabsArray
-                                        objectName: "settingsTaskOptions"
-                                        // Size against the outer wrapper width instead of capabilityTabsRail
-                                        // to break the Flow width <-> implicitWidth feedback loop.
-                                        x: capabilityTabsWrapper.railPadding
-                                        y: capabilityTabsWrapper.railPadding
-                                        width: Math.max(0, capabilityTabsWrapper.width - capabilityTabsWrapper.railPadding * 2)
-                                        enableSettingsSearch: false
-                                        options: root.capabilityTabs
-                                        currentValue: root.selectedCapability?.id ?? ""
-                                        taskNavigation: true
-                                        useAbyssPillShape: false
-                                        onSelected: value => root.selectCapability(value)
-                                    }
-                                }
-                            }
-
-                            StyledText {
-                                Layout.fillWidth: true
-                                Layout.minimumWidth: 0
-                                wrapMode: Text.WordWrap
-                                visible: !root.isModalPluginInstalled || !AlisIntergration.pluginEnabled(root.activePlugin)
-                                color: Appearance.colors.colSubtext
-                                text: !root.isModalPluginInstalled
-                                    ? Translation.tr("Install this plugin above to unlock its settings.")
-                                    : (!AlisIntergration.available || AlisIntergration.loadFailed)
-                                        ? Translation.tr("Plugin unavailable. Refresh or update the optional package.")
-                                        : Translation.tr("Enable this plugin above to configure it.")
-                            }
-
-                            Loader {
-                                id: pluginSettings
-                                objectName: "integrationPluginSettings"
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: item?.implicitHeight ?? 0
-                                active: root.visible && root.selectedPlugin !== null && AlisIntergration.pluginEnabled(root.activePlugin)
-                                property string _loadedKey: ""
-                                property string capabilitySource: root.selectedCapability
-                                    ? AlisIntergration.settingsSource(Config.options?.panelFamily === "waffle"
-                                        ? root.selectedCapability.waffleSettings ?? root.selectedCapability.settings
-                                        : root.selectedCapability.settings) : ""
-                                property string capabilityView: root.selectedCapability?.view ?? ""
-                                function reload(): void {
-                                    const isActive = root.visible && root.selectedPlugin !== null && AlisIntergration.pluginEnabled(root.activePlugin)
-                                    const cap = root.selectedCapability
-                                    const src = cap
-                                        ? AlisIntergration.settingsSource(Config.options?.panelFamily === "waffle"
-                                            ? cap.waffleSettings ?? cap.settings
-                                            : cap.settings)
-                                        : ""
-                                    const view = String(cap?.view ?? "")
-                                    const nextKey = (isActive && src.length > 0) ? (src + "|" + view) : ""
-                                    if (nextKey === _loadedKey)
-                                        return
-                                    _loadedKey = nextKey
-                                    source = ""
-                                    if (nextKey.length > 0)
-                                        setSource(src, view.length ? {settingsView: view} : {})
-                                }
-                                onActiveChanged: reload()
-                                onCapabilitySourceChanged: reload()
-                                onCapabilityViewChanged: reload()
-                            }
-
-                            Loader {
-                                id: nexusCombinedTodoSettings
-                                objectName: "integrationNexusTodoSettings"
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: item?.implicitHeight ?? 0
-                                visible: active
-                                active: root.visible && root.activePlugin === "nexus"
-                                    && AlisIntergration.pluginEnabled("nexus")
-                                    && (root.selectedCapability?.id ?? "theming") === "theming"
-                                source: active ? AlisIntergration.settingsSource("nexusTodo") : ""
-                                onLoaded: {
-                                    if (item && item.hasOwnProperty("settingsView"))
-                                        item.settingsView = "all"
-                                }
-                            }
-
-                            StyledText {
-                                Layout.fillWidth: true
-                                Layout.minimumWidth: 0
-                                wrapMode: Text.WordWrap
-                                visible: pluginSettings.status === Loader.Error
-                                text: Translation.tr("Plugin settings could not be loaded. Refresh or update the optional package.")
-                                color: Appearance.colors.colError
-                            }
+                            wrapMode: Text.WordWrap
+                            color: Appearance.colors.colSubtext
+                            text: (!AlisIntergration.available || AlisIntergration.loadFailed)
+                                ? Translation.tr("Plugin unavailable. Refresh or update the optional package.")
+                                : Translation.tr("Enable this plugin above to configure it.")
                         }
                     }
                 }
-            }
-        }
-    }
 
-    SettingsCardSection {
-        id: calendarSection
-        objectName: "integrationCalendarSyncCard"
-        settingsTaskSection: "calendar"
-        _consumesBentoExtraHeight: false
-        visible: true
-        expanded: true
-        icon: "calendar_month"
-        title: Translation.tr("Calendar Sync")
-
-        SettingsGroup {
-            spacing: 8
-
-            ConfigRow {
-                uniform: true
-                SettingsSwitch {
-                    buttonIcon: "sync"
-                    text: Translation.tr("Enable external calendar sync")
-                    checked: Config.options?.calendar?.externalSync?.enable ?? false
-                    onCheckedChanged: Config.setNestedValue("calendar.externalSync.enable", checked)
-                }
-
-                SettingsSwitch {
-                    buttonIcon: "event"
-                    text: Translation.tr("Show upcoming events")
-                    checked: Config.options?.calendar?.showUpcoming ?? true
-                    onCheckedChanged: Config.setNestedValue("calendar.showUpcoming", checked)
-                }
-            }
-
-            GridLayout {
-                Layout.fillWidth: true
-                columns: !root.abyssTaskStyle || width >= upcomingDays.implicitWidth + eventIndicators.implicitWidth + columnSpacing ? 2 : 1
-                uniformCellWidths: !root.abyssTaskStyle || width >= 2 * Math.max(upcomingDays.implicitWidth, eventIndicators.implicitWidth) + columnSpacing
-                columnSpacing: 4
-                rowSpacing: 4
-                ConfigSpinBox {
-                    id: upcomingDays
-                    icon: "date_range"
-                    text: Translation.tr("Upcoming days to show")
-                    value: Config.options?.calendar?.upcomingDays ?? 3
-                    from: 1
-                    to: 14
-                    stepSize: 1
-                    onValueChanged: Config.setNestedValue("calendar.upcomingDays", value)
-                    enabled: Config.options?.calendar?.showUpcoming ?? true
-                }
-
-                ConfigSpinBox {
-                    id: eventIndicators
-                    icon: "more_horiz"
-                    text: Translation.tr("Maximum indicators per edge")
-                    value: Config.options?.calendar?.maxEventDots ?? 3
-                    from: 0
-                    to: 3
-                    stepSize: 1
-                    onValueChanged: Config.setNestedValue("calendar.maxEventDots", value)
-                }
-            }
-
-            ConfigSpinBox {
-                icon: "update"
-                text: Translation.tr("Refresh interval (minutes)")
-                value: Config.options?.calendar?.externalSync?.refreshMinutes ?? 15
-                from: 5
-                to: 120
-                stepSize: 5
-                onValueChanged: Config.setNestedValue("calendar.externalSync.refreshMinutes", value)
-                enabled: Config.options?.calendar?.externalSync?.enable ?? false
-            }
-        }
-
-        SettingsGroup {
-            spacing: 8
-
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.minimumWidth: 0
-                implicitHeight: 34
-                radius: Appearance.rounding.small
-                color: Appearance.colors.colLayer1
-                border.width: 1
-                border.color: Appearance.colors.colLayer0Border
-
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.leftMargin: 10
-                    anchors.rightMargin: 8
-                    spacing: 8
-
-                    MaterialSymbol {
-                        text: CalendarSync.fetching ? "sync" : "event_available"
-                        iconSize: 16
-                        color: CalendarSync.enabled ? Appearance.colors.colPrimary : Appearance.colors.colSubtext
+                // Active plugin settings card(s)
+                Loader {
+                    id: pluginSettings
+                    objectName: "integrationPluginSettings"
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: item?.implicitHeight ?? 0
+                    visible: active
+                    active: root.visible && root.detailOpen && root.selectedPlugin !== null && AlisIntergration.pluginEnabled(root.activePlugin)
+                    property string _loadedKey: ""
+                    property string capabilitySource: root.selectedCapability
+                        ? AlisIntergration.settingsSource(Config.options?.panelFamily === "waffle"
+                            ? root.selectedCapability.waffleSettings ?? root.selectedCapability.settings
+                            : root.selectedCapability.settings) : ""
+                    property string capabilityView: root.selectedCapability?.view ?? ""
+                    function reload(): void {
+                        const isActive = root.visible && root.detailOpen && root.selectedPlugin !== null && AlisIntergration.pluginEnabled(root.activePlugin)
+                        const cap = root.selectedCapability
+                        const src = cap
+                            ? AlisIntergration.settingsSource(Config.options?.panelFamily === "waffle"
+                                ? cap.waffleSettings ?? cap.settings
+                                : cap.settings)
+                            : ""
+                        const view = String(cap?.view ?? "")
+                        const nextKey = (isActive && src.length > 0) ? (src + "|" + view) : ""
+                        if (nextKey === _loadedKey)
+                            return
+                        _loadedKey = nextKey
+                        source = ""
+                        const props = view.length ? ({ settingsView: view }) : ({})
+                        if (root.selectedPluginId === "tlp")
+                            props.embeddedInIntegrationsHeader = true
+                        if (nextKey.length > 0)
+                            setSource(src, props)
                     }
-
-                    StyledText {
-                        Layout.fillWidth: true
-                        Layout.minimumWidth: 0
-                        text: CalendarSync.fetching
-                            ? Translation.tr("Syncing feeds…")
-                            : (CalendarSync.sources.length + " " + Translation.tr("sources") + " · " + CalendarSync.events.length + " " + Translation.tr("events"))
-                        font.pixelSize: Appearance.font.pixelSize.smallest
-                        color: Appearance.colors.colOnLayer1
-                        elide: Text.ElideRight
-                    }
-
-                    RippleButton {
-                        enabled: CalendarSync.enabled && CalendarSync.sources.length > 0 && !CalendarSync.fetching
-                        implicitWidth: syncNowRow.implicitWidth + 14
-                        implicitHeight: 24
-                        buttonRadius: 12
-                        opacity: enabled ? 1 : 0.55
-                        colBackground: Appearance.colors.colLayer2
-                        colBackgroundHover: Appearance.colors.colLayer2Hover
-                        onClicked: CalendarSync.fetchAll()
-
-                        contentItem: Item {
-                            Row {
-                                id: syncNowRow
-                                anchors.centerIn: parent
-                                spacing: 4
-
-                                MaterialSymbol {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: "refresh"
-                                    iconSize: 12
-                                    color: Appearance.colors.colOnLayer1
-                                }
-
-                                StyledText {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: Translation.tr("Sync now")
-                                    font.pixelSize: Appearance.font.pixelSize.smallest
-                                    font.weight: Font.Medium
-                                    color: Appearance.colors.colOnLayer1
-                                }
-                            }
-                        }
-                    }
+                    onActiveChanged: reload()
+                    onCapabilitySourceChanged: reload()
+                    onCapabilityViewChanged: reload()
                 }
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                Layout.leftMargin: 4
-                Layout.rightMargin: 4
-                spacing: 8
 
                 StyledText {
                     Layout.fillWidth: true
                     Layout.minimumWidth: 0
-                    text: Translation.tr("Calendar Sources")
-                    font.pixelSize: Appearance.font.pixelSize.normal
-                    font.weight: Font.Medium
-                    color: Appearance.colors.colOnLayer1
-                    elide: Text.ElideRight
-                }
-
-                RippleButton {
-                    implicitWidth: addRow.implicitWidth + 16
-                    implicitHeight: 30
-                    buttonRadius: Appearance.rounding.small
-                    colBackground: ColorUtils.transparentize(Appearance.colors.colPrimary, 0.88)
-                    colBackgroundHover: ColorUtils.transparentize(Appearance.colors.colPrimary, 0.80)
-                    onClicked: addSourceForm.expanded = !addSourceForm.expanded
-
-                    contentItem: Item {
-                        Row {
-                            id: addRow
-                            anchors.centerIn: parent
-                            spacing: 4
-
-                            MaterialSymbol {
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: "add"
-                                iconSize: 16
-                                color: Appearance.colors.colPrimary
-                            }
-                            StyledText {
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: Translation.tr("Add")
-                                font.pixelSize: Appearance.font.pixelSize.small
-                                font.weight: Font.Medium
-                                color: Appearance.colors.colPrimary
-                            }
-                        }
-                    }
-                }
-            }
-
-            Repeater {
-                model: Config.options?.calendar?.externalSync?.sources ?? []
-
-                delegate: Item {
-                    id: sourceItem
-                    required property var modelData
-                    required property int index
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    implicitHeight: sourceRow.implicitHeight + 12
-
-                    Rectangle {
-                        anchors.fill: parent
-                        clip: true
-                        radius: Appearance.rounding.small
-                        color: sourceMA.containsMouse ? Appearance.colors.colLayer1Hover : "transparent"
-                        Behavior on color { ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } }
-
-                        RowLayout {
-                            id: sourceRow
-                            anchors.fill: parent
-                            anchors.margins: 8
-                            spacing: 10
-
-                            Rectangle {
-                                Layout.preferredWidth: 12
-                                Layout.preferredHeight: 12
-                                radius: 6
-                                color: sourceItem.modelData?.color ?? Appearance.colors.colPrimary
-                            }
-
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                Layout.minimumWidth: 0
-                                Layout.preferredWidth: 1
-                                clip: true
-                                spacing: 1
-
-                                StyledText {
-                                    Layout.fillWidth: true
-                                    Layout.minimumWidth: 0
-                                    text: sourceItem.modelData?.name ?? Translation.tr("Unnamed")
-                                    font.pixelSize: Appearance.font.pixelSize.normal
-                                    color: Appearance.colors.colOnLayer1
-                                    elide: Text.ElideRight
-                                    maximumLineCount: 1
-                                }
-
-                                StyledText {
-                                    Layout.fillWidth: true
-                                    Layout.minimumWidth: 0
-                                    text: sourceItem.modelData?.url ?? ""
-                                    font.pixelSize: Appearance.font.pixelSize.smallest
-                                    color: Appearance.colors.colSubtext
-                                    elide: Text.ElideMiddle
-                                    maximumLineCount: 1
-                                }
-                            }
-
-                            MaterialSymbol {
-                                visible: {
-                                    const st = CalendarSync.sourceStatuses?.[sourceItem.modelData?.id]
-                                    return st?.error && st.error !== ""
-                                }
-                                text: "error"
-                                iconSize: 16
-                                color: Appearance.colors.colError
-
-                                StyledToolTip {
-                                    text: CalendarSync.sourceStatuses?.[sourceItem.modelData?.id]?.error ?? ""
-                                }
-                            }
-
-                            Switch {
-                                checked: sourceItem.modelData?.enabled ?? true
-                                onCheckedChanged: {
-                                    if (checked !== (sourceItem.modelData?.enabled ?? true)) {
-                                        CalendarSync.toggleSource(sourceItem.modelData.id, checked)
-                                    }
-                                }
-                            }
-
-                            RippleButton {
-                                implicitWidth: 28
-                                implicitHeight: 28
-                                buttonRadius: 14
-                                colBackground: "transparent"
-                                colBackgroundHover: Appearance.colors.colLayer1Hover
-                                onClicked: CalendarSync.removeSource(sourceItem.modelData.id)
-
-                                contentItem: MaterialSymbol {
-                                    anchors.centerIn: parent
-                                    text: "close"
-                                    iconSize: 14
-                                    color: Appearance.colors.colSubtext
-                                }
-
-                                StyledToolTip {
-                                    text: Translation.tr("Remove")
-                                }
-                            }
-                        }
-
-                        MouseArea {
-                            id: sourceMA
-                            anchors.fill: parent
-                            z: -1
-                            hoverEnabled: true
-                        }
-                    }
-                }
-            }
-
-            StyledText {
-                visible: (Config.options?.calendar?.externalSync?.sources ?? []).length === 0
-                Layout.alignment: Qt.AlignHCenter
-                Layout.topMargin: 2
-                Layout.bottomMargin: 2
-                text: Translation.tr("No calendar sources added yet")
-                font.pixelSize: Appearance.font.pixelSize.small
-                color: Appearance.colors.colSubtext
-                font.italic: true
-            }
-
-            StyledText {
-                Layout.fillWidth: true
-                Layout.minimumWidth: 0
-                Layout.leftMargin: 4
-                Layout.rightMargin: 4
-                text: Translation.tr("Paste a compatible ICS/iCal feed URL; no account sign-in within Alis.")
-                font.pixelSize: Appearance.font.pixelSize.smallest
-                color: Appearance.colors.colSubtext
-                wrapMode: Text.WordWrap
-                opacity: 0.75
-            }
-
-            Rectangle {
-                id: addSourceForm
-                Layout.fillWidth: true
-                Layout.topMargin: 4
-
-                property bool expanded: false
-
-                implicitHeight: expanded ? addFormCol.implicitHeight + 24 : 0
-                visible: expanded
-                clip: true
-                radius: Appearance.rounding.small
-                color: Appearance.colors.colSurfaceContainerLow
-                border.width: 1
-                border.color: Appearance.colors.colLayer0Border
-
-                Behavior on implicitHeight {
-                    NumberAnimation {
-                        duration: Appearance.animation.elementMoveFast.duration
-                        easing.type: Appearance.animation.elementMoveFast.type
-                        easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
-                    }
-                }
-
-                ColumnLayout {
-                    id: addFormCol
-                    anchors.fill: parent
-                    anchors.margins: 12
-                    spacing: 10
-
-                    StyledText {
-                        text: Translation.tr("Add Calendar Source")
-                        font.pixelSize: Appearance.font.pixelSize.normal
-                        font.weight: Font.DemiBold
-                        color: Appearance.colors.colOnLayer1
-                    }
-
-                    ColumnLayout {
-                        spacing: 4
-                        Layout.fillWidth: true
-
-                        StyledText {
-                            text: Translation.tr("Name")
-                            font.pixelSize: Appearance.font.pixelSize.small
-                            color: Appearance.colors.colSubtext
-                        }
-
-                        MaterialTextField {
-                            id: sourceNameInput
-                            Layout.fillWidth: true
-                            placeholderText: Translation.tr("Work Calendar")
-                            font.pixelSize: Appearance.font.pixelSize.small
-                            color: Appearance.colors.colOnSurface
-                            placeholderTextColor: Appearance.colors.colSubtext
-                            background: Rectangle {
-                                color: Appearance.colors.colLayer1
-                                radius: Appearance.rounding.small
-                                border.width: sourceNameInput.activeFocus ? 2 : 1
-                                border.color: sourceNameInput.activeFocus ? Appearance.colors.colPrimary : Appearance.colors.colLayer0Border
-                            }
-                        }
-                    }
-
-                    ColumnLayout {
-                        spacing: 4
-                        Layout.fillWidth: true
-
-                        StyledText {
-                            text: Translation.tr("ICS URL")
-                            font.pixelSize: Appearance.font.pixelSize.small
-                            color: Appearance.colors.colSubtext
-                        }
-
-                        MaterialTextField {
-                            id: sourceUrlInput
-                            Layout.fillWidth: true
-                            placeholderText: "https://calendar.google.com/calendar/ical/..."
-                            font.pixelSize: Appearance.font.pixelSize.small
-                            color: Appearance.colors.colOnSurface
-                            placeholderTextColor: Appearance.colors.colSubtext
-                            background: Rectangle {
-                                color: Appearance.colors.colLayer1
-                                radius: Appearance.rounding.small
-                                border.width: sourceUrlInput.activeFocus ? 2 : 1
-                                border.color: sourceUrlInput.activeFocus ? Appearance.colors.colPrimary : Appearance.colors.colLayer0Border
-                            }
-                        }
-                    }
-
-                    ColumnLayout {
-                        spacing: 4
-
-                        StyledText {
-                            text: Translation.tr("Color")
-                            font.pixelSize: Appearance.font.pixelSize.small
-                            color: Appearance.colors.colSubtext
-                        }
-
-                        Row {
-                            id: colorPickerRow
-                            spacing: 6
-                            property string selectedColor: CalendarSync.presetColors[0]
-
-                            Repeater {
-                                model: CalendarSync.presetColors
-
-                                delegate: Rectangle {
-                                    required property string modelData
-                                    required property int index
-                                    width: 24
-                                    height: 24
-                                    radius: 12
-                                    color: modelData
-                                    border.width: colorPickerRow.selectedColor === modelData ? 2 : 0
-                                    border.color: Appearance.colors.colOnLayer1
-                                    opacity: colorPickMA.containsMouse ? 0.8 : 1
-
-                                    MouseArea {
-                                        id: colorPickMA
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: colorPickerRow.selectedColor = modelData
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 8
-
-                        Item { Layout.fillWidth: true }
-
-                        RippleButton {
-                            implicitWidth: cancelLabel.implicitWidth + 24
-                            implicitHeight: 32
-                            buttonRadius: Appearance.rounding.small
-                            colBackground: "transparent"
-                            colBackgroundHover: Appearance.colors.colLayer1Hover
-                            onClicked: {
-                                addSourceForm.expanded = false
-                                sourceNameInput.text = ""
-                                sourceUrlInput.text = ""
-                            }
-
-                            contentItem: StyledText {
-                                id: cancelLabel
-                                anchors.centerIn: parent
-                                horizontalAlignment: Text.AlignHCenter
-                                verticalAlignment: Text.AlignVCenter
-                                text: Translation.tr("Cancel")
-                                font.pixelSize: Appearance.font.pixelSize.small
-                                color: Appearance.colors.colOnLayer1
-                            }
-                        }
-
-                        RippleButton {
-                            implicitWidth: addLabel.implicitWidth + 24
-                            implicitHeight: 32
-                            buttonRadius: Appearance.rounding.small
-                            colBackground: Appearance.colors.colPrimary
-                            colBackgroundHover: Appearance.colors.colPrimaryHover
-                            enabled: sourceNameInput.text.trim() !== "" && sourceUrlInput.text.trim() !== ""
-                            opacity: enabled ? 1 : 0.5
-                            onClicked: {
-                                CalendarSync.addSource(
-                                    sourceNameInput.text.trim(),
-                                    sourceUrlInput.text.trim(),
-                                    colorPickerRow.selectedColor
-                                )
-                                sourceNameInput.text = ""
-                                sourceUrlInput.text = ""
-                                addSourceForm.expanded = false
-                            }
-
-                            contentItem: StyledText {
-                                id: addLabel
-                                anchors.centerIn: parent
-                                horizontalAlignment: Text.AlignHCenter
-                                verticalAlignment: Text.AlignVCenter
-                                text: Translation.tr("Add")
-                                font.pixelSize: Appearance.font.pixelSize.small
-                                font.weight: Font.Medium
-                                color: Appearance.colors.colOnPrimary
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    SettingsCardSection {
-        id: workflowsSection
-        objectName: "integrationWorkflowsCard"
-        _consumesBentoExtraHeight: false
-        visible: true
-        expanded: true
-        icon: "hub"
-        title: Translation.tr("Connected Workflows & Defaults")
-
-        SettingsGroup {
-            spacing: 8
-
-            RowLayout {
-                Layout.fillWidth: true
-                Layout.minimumWidth: 0
-                spacing: 8
-
-                StyledText {
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    text: Translation.tr("Tasks backend")
-                    font.pixelSize: Appearance.font.pixelSize.small
-                    font.weight: Font.Medium
-                    color: Appearance.colors.colOnLayer1
-                    elide: Text.ElideRight
-                }
-
-                StyledText {
-                    Layout.minimumWidth: 0
-                    text: Todo.sourceLabel
-                    font.pixelSize: Appearance.font.pixelSize.smallest
-                    color: Appearance.colors.colSubtext
-                    elide: Text.ElideRight
-                }
-            }
-
-            ConfigSelectionArray {
-                objectName: "integrationTasksBackendSelector"
-                Layout.fillWidth: true
-                enableSettingsSearch: false
-                currentValue: Todo.backend
-                options: [
-                    {
-                        displayName: Translation.tr("Alis internal"),
-                        icon: "checklist",
-                        value: "internal"
-                    },
-                    {
-                        displayName: Translation.tr("Alis Nexus"),
-                        icon: "hub",
-                        value: "nexus"
-                    }
-                ]
-                onSelected: nextValue => {
-                    if (nextValue === "internal") {
-                        Todo.reactivateInternal()
-                    } else if (AlisIntergration.nexusEnabled && Todo.nexusConfigured) {
-                        Config.setNestedValue("todo.backend", "nexus")
-                    } else {
-                        root.openPluginModal("nexus", "todo")
-                    }
-                }
-            }
-
-            ConfigRow {
-                uniform: true
-
-                SettingsSwitch {
-                    buttonIcon: "school"
-                    text: Translation.tr("Dashboard study tab")
-                    checked: Config.options?.dashboard?.spacedRepetition?.enable ?? true
-                    onCheckedChanged: Config.setNestedValue("dashboard.spacedRepetition.enable", checked)
-                }
-
-                SettingsSwitch {
-                    objectName: "integrationExercisesTrackerTabSwitch"
-                    buttonIcon: "fitness_center"
-                    text: Translation.tr("Exercises Tracker tab")
-                    enabled: AlisIntergration.available
-                    checked: AlisIntergration.exercisesTrackerEnabled
-                    onToggledByUser: nextChecked => {
-                        AlisIntergration.setExercisesTrackerEnabled(nextChecked)
-                        checked = Qt.binding(() => AlisIntergration.exercisesTrackerEnabled)
-                    }
-                }
-            }
-
-            SettingsSwitch {
-                buttonIcon: "palette"
-                text: Translation.tr("Sync Nexus vault theme")
-                checked: Config.options?.integrations?.nexus?.autoTheme ?? false
-                onCheckedChanged: Config.setNestedValue("integrations.nexus.autoTheme", checked)
-            }
-
-            ConfigRow {
-                uniform: true
-
-                ConfigSpinBox {
-                    icon: "flag"
-                    text: Translation.tr("Daily study goal")
-                    value: Config.options?.dashboard?.spacedRepetition?.dailyGoalCards ?? 20
-                    from: 5
-                    to: 200
-                    stepSize: 5
-                    onValueChanged: Config.setNestedValue("dashboard.spacedRepetition.dailyGoalCards", value)
-                    enabled: Config.options?.dashboard?.spacedRepetition?.enable ?? true
-                }
-
-                ConfigSpinBox {
-                    icon: "library_add"
-                    text: Translation.tr("New cards per day")
-                    value: Config.options?.dashboard?.spacedRepetition?.dailyNewLimit ?? 20
-                    from: 5
-                    to: 100
-                    stepSize: 5
-                    onValueChanged: Config.setNestedValue("dashboard.spacedRepetition.dailyNewLimit", value)
-                    enabled: Config.options?.dashboard?.spacedRepetition?.enable ?? true
-                }
-            }
-
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.minimumWidth: 0
-                implicitHeight: 36
-                radius: Appearance.rounding.small
-                color: Appearance.colors.colLayer1
-                border.width: 1
-                border.color: Appearance.colors.colLayer0Border
-
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.leftMargin: 10
-                    anchors.rightMargin: 8
-                    spacing: 8
-
-                    MaterialSymbol {
-                        text: "task_alt"
-                        iconSize: 16
-                        color: Appearance.colors.colPrimary
-                    }
-
-                    StyledText {
-                        Layout.fillWidth: true
-                        Layout.minimumWidth: 0
-                        text: (Todo.list?.length ?? 0) + " " + Translation.tr("tasks") + " · " + Todo.sourceLabel
-                        font.pixelSize: Appearance.font.pixelSize.smallest
-                        color: Appearance.colors.colOnLayer1
-                        elide: Text.ElideRight
-                    }
-
-                    RippleButton {
-                        implicitWidth: openStoreRow.implicitWidth + 14
-                        implicitHeight: 24
-                        buttonRadius: 12
-                        colBackground: Appearance.colors.colLayer2
-                        colBackgroundHover: Appearance.colors.colLayer2Hover
-                        onClicked: Todo.openSource("")
-
-                        contentItem: Item {
-                            Row {
-                                id: openStoreRow
-                                anchors.centerIn: parent
-                                spacing: 4
-
-                                MaterialSymbol {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: "open_in_new"
-                                    iconSize: 12
-                                    color: Appearance.colors.colOnLayer1
-                                }
-
-                                StyledText {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: Translation.tr("Open source")
-                                    font.pixelSize: Appearance.font.pixelSize.smallest
-                                    font.weight: Font.Medium
-                                    color: Appearance.colors.colOnLayer1
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        SettingsGroup {
-            spacing: 8
-
-            ConfigRow {
-                uniform: true
-
-                SettingsSwitch {
-                    buttonIcon: "package_2"
-                    text: Translation.tr("Package actions in Search")
-                    checked: Config.options?.search?.globalActions?.enablePackages ?? true
-                    onCheckedChanged: Config.setNestedValue("search.globalActions.enablePackages", checked)
-                }
-
-                SettingsSwitch {
-                    buttonIcon: "build"
-                    text: Translation.tr("Setup actions in Search")
-                    checked: Config.options?.search?.globalActions?.enableSetup ?? true
-                    onCheckedChanged: Config.setNestedValue("search.globalActions.enableSetup", checked)
-                }
-            }
-
-            ConfigRow {
-                uniform: true
-
-                SettingsSwitch {
-                    buttonIcon: "bolt"
-                    text: Translation.tr("Default actions without prefix")
-                    checked: Config.options?.search?.prefix?.showDefaultActionsWithoutPrefix ?? true
-                    onCheckedChanged: Config.setNestedValue("search.prefix.showDefaultActionsWithoutPrefix", checked)
-                }
-
-                SettingsSwitch {
-                    buttonIcon: "tune"
-                    text: Translation.tr("Custom actions in Search")
-                    checked: Config.options?.search?.globalActions?.enableCustom ?? true
-                    onCheckedChanged: Config.setNestedValue("search.globalActions.enableCustom", checked)
-                }
-            }
-
-            ConfigSpinBox {
-                icon: "timer"
-                text: Translation.tr("Launcher result delay (ms)")
-                value: Config.options?.search?.nonAppResultDelay ?? 30
-                from: 0
-                to: 250
-                stepSize: 10
-                onValueChanged: Config.setNestedValue("search.nonAppResultDelay", value)
-            }
-
-            Flow {
-                Layout.fillWidth: true
-                Layout.minimumWidth: 0
-                spacing: 8
-
-                DialogButton {
-                    buttonText: Translation.tr("Open Alis Nexus")
-                    onClicked: {
-                        if (AlisIntergration.nexus)
-                            AlisIntergration.nexus.open()
-                        else
-                            root.openPluginModal("nexus", "theming")
-                    }
-                }
-
-                DialogButton {
-                    buttonText: Translation.tr("Vault & Notes")
-                    onClicked: root.openPluginModal("nexus", "theming")
-                }
-
-                DialogButton {
-                    buttonText: Translation.tr("Tasks & Todo")
-                    onClicked: root.openPluginModal("nexus", "todo")
+                    wrapMode: Text.WordWrap
+                    visible: pluginSettings.status === Loader.Error
+                    text: Translation.tr("Plugin settings could not be loaded. Refresh or re-download this plugin.")
+                    color: Appearance.colors.colError
                 }
             }
         }

@@ -75,6 +75,41 @@ DashCard {
         return false
     }
 
+    function focusAddDialogInput(): void {
+        if (root.showAddDialog)
+            todoInput.forceActiveFocus()
+    }
+
+    function captureAddDialogDraft(): var {
+        if (!root.showAddDialog)
+            return null
+        return {
+            text: String(todoInput.text ?? ""),
+            startTime: String(todoStartTime.text ?? ""),
+            endTime: String(todoEndTime.text ?? "")
+        }
+    }
+
+    function restoreAddDialogDraft(draft): void {
+        root.showAddDialog = true
+        if (draft) {
+            todoInput.text = String(draft.text ?? "")
+            todoStartTime.text = String(draft.startTime ?? "")
+            todoEndTime.text = String(draft.endTime ?? "")
+        }
+        todoInput.forceActiveFocus()
+        Qt.callLater(() => {
+            if (!todoInput || !root.showAddDialog)
+                return
+            if (draft) {
+                todoInput.text = String(draft.text ?? "")
+                todoStartTime.text = String(draft.startTime ?? "")
+                todoEndTime.text = String(draft.endTime ?? "")
+            }
+            todoInput.forceActiveFocus()
+        })
+    }
+
     Keys.onPressed: event => {
         if (event.key === Qt.Key_N && Todo.ready && !Todo.busy) {
             root.showAddDialog = true

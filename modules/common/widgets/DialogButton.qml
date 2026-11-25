@@ -29,9 +29,10 @@ RippleButton {
         anchors.rightMargin: root.padding
         text: root.buttonText
         horizontalAlignment: Text.AlignHCenter
+        verticalAlignment: Text.AlignVCenter
         font.pixelSize: Appearance?.font.pixelSize.small ?? 12
         font.family: Appearance.font.family.main
-        font.weight: Font.Normal
+        font.weight: Font.Medium
         font.italic: false
         color: root.enabled ? root.colEnabled : root.colDisabled
 

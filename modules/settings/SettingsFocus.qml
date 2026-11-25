@@ -230,6 +230,7 @@ Scope {
         root._pendingOptionId = -1;
         root._pendingPageIndex = -1;
         root._pendingSection = "";
+        root._pendingSectionApplied = false;
         root._spotlightRetries = 0;
         spotlightTimer.stop();
     }
@@ -315,6 +316,8 @@ Scope {
     property int _pendingOptionId: -1
     property int _pendingPageIndex: -1
     property string _pendingSection: ""
+    property bool _pendingSectionApplied: false
+    property var _activePageHost: null
     property int _spotlightRetries: 0
     readonly property int _spotlightMaxRetries: 15
 
@@ -322,6 +325,7 @@ Scope {
         root.searchText = "";
         root.searchResults = [];
         root._spotlightRetries = 0;
+        root._pendingSectionApplied = false;
 
         if (!entry || entry.pageIndex === undefined || entry.pageIndex < 0) {
             root._pendingOptionId = -1;
@@ -334,6 +338,11 @@ Scope {
         root._pendingPageIndex = entry.pageIndex;
         root._pendingSection = (root._pendingOptionId < 0 && entry.section)
             ? String(entry.section) : "";
+        if (root._pendingSection.length > 0 && root._activePageHost
+                && typeof root._activePageHost._applySectionToPage === "function") {
+            root._activePageHost._applySectionToPage(entry.pageIndex, root._pendingSection);
+            root._pendingSectionApplied = true;
+        }
         root.openPage(entry.pageIndex);
 
         if (root._pendingOptionId >= 0 || root._pendingSection.length > 0)
@@ -351,12 +360,34 @@ Scope {
     function _trySpotlight(): void {
         if (root._pendingOptionId < 0 && root._pendingSection.length === 0)
             return;
+        if (root._pendingPageIndex < 0 || root.level !== 1 || root.currentPage !== root._pendingPageIndex) {
+            root._pendingOptionId = -1;
+            root._pendingPageIndex = -1;
+            root._pendingSection = "";
+            root._pendingSectionApplied = false;
+            spotlightTimer.stop();
+            return;
+        }
 
-        const pageItem = pageHost.currentItem
-        if (pageItem && pageHost.currentIndex === root._pendingPageIndex
-                && root._pendingSection.length > 0
-                && typeof pageItem.activateSettingsSearchSection === "function")
+        const activeHost = root._activePageHost
+        const pageItem = activeHost ? activeHost.currentItem : null
+        if (!pageItem || activeHost.currentIndex !== root._pendingPageIndex) {
+            if (root._spotlightRetries < root._spotlightMaxRetries) {
+                root._spotlightRetries++;
+                spotlightTimer.restart();
+            } else {
+                root._pendingOptionId = -1;
+                root._pendingPageIndex = -1;
+                root._pendingSection = "";
+                root._pendingSectionApplied = false;
+            }
+            return;
+        }
+        if (!root._pendingSectionApplied && root._pendingSection.length > 0
+                && typeof pageItem.activateSettingsSearchSection === "function") {
             pageItem.activateSettingsSearchSection(root._pendingSection)
+            root._pendingSectionApplied = true
+        }
 
         var control = root._pendingOptionId >= 0
             ? SettingsSearchRegistry.getControlById(root._pendingOptionId)
@@ -369,6 +400,7 @@ Scope {
                 root._pendingOptionId = -1;
                 root._pendingPageIndex = -1;
                 root._pendingSection = "";
+                root._pendingSectionApplied = false;
             }
             return;
         }
@@ -387,6 +419,7 @@ Scope {
         root._pendingOptionId = -1;
         root._pendingPageIndex = -1;
         root._pendingSection = "";
+        root._pendingSectionApplied = false;
     }
 
     function _findParentFlickable(item): var {
@@ -484,15 +517,18 @@ Scope {
                 }
             }
 
-            // Escape unwinds one layer at a time: search, then page, then close.
+            // Escape unwinds one layer at a time: search, inner drill-down/dialog, then page, then close.
             Shortcut {
                 sequences: ["Escape"]
                 onActivated: {
                     if (root.searchText.length > 0)
                         root.clearSearch();
-                    else if (root.level === 1)
+                    else if (root.level === 1) {
+                        if (typeof pageHost?.currentItem?.handleEscape === "function"
+                                && pageHost.currentItem.handleEscape())
+                            return;
                         root.goHome();
-                    else
+                    } else
                         GlobalStates.settingsOverlayOpen = false;
                 }
             }
@@ -512,7 +548,14 @@ Scope {
             Shortcut {
                 sequences: ["Alt+Left"]
                 context: Qt.WindowShortcut
-                onActivated: if (root.level === 1) root.goHome()
+                onActivated: {
+                    if (root.level === 1) {
+                        if (typeof pageHost?.currentItem?.handleEscape === "function"
+                                && pageHost.currentItem.handleEscape())
+                            return;
+                        root.goHome();
+                    }
+                }
             }
 
             // Type-to-search. The home grid has no other keyboard entry point,
@@ -2028,6 +2071,11 @@ Scope {
 
                         SettingsPageHost {
                             id: pageHost
+                            Component.onCompleted: root._activePageHost = pageHost
+                            Component.onDestruction: {
+                                if (root._activePageHost === pageHost)
+                                    root._activePageHost = null
+                            }
                             anchors {
                                 top: parent.top
                                 bottom: parent.bottom

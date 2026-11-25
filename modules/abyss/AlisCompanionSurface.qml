@@ -34,10 +34,13 @@ Item {
     readonly property var inputRegions: extension?.inputRegions ?? []
     property var obstacleRects: []
     readonly property var _pocketObstacleItem: extension?.pocketPaneItem ?? null
-    readonly property var _talkObstacleItem: (extension && (extension.talkCloudHovered || extension.editing))
+    readonly property var _talkObstacleItem: (extension && (extension.editing || extension.popupOpen || extension.talkCloudHovered))
         ? (extension.talkCloudItem ?? null) : null
     readonly property string _obstacleGeometryKey: {
-        const parts = []
+        const parts = [
+            extension?.editing ? "E1" : "E0",
+            extension?.popupOpen ? "P1" : "P0"
+        ]
         for (const it of [root._pocketObstacleItem, root._talkObstacleItem]) {
             if (!it || !it.visible || it.width <= 0 || it.height <= 0 || (it.opacity ?? 1) <= 0.05) {
                 parts.push("0")
@@ -56,7 +59,18 @@ Item {
         const ext = root.extension
         const out = []
         if (ext) {
-            for (const it of [root._pocketObstacleItem, root._talkObstacleItem]) {
+            const entries = [
+                { item: root._pocketObstacleItem, priority: 2, intentWeight: 1, intent: "explicit", kind: "companionPocket" },
+                {
+                    item: root._talkObstacleItem,
+                    priority: ext.editing ? 2 : 1,
+                    intentWeight: ext.editing ? 1 : 0,
+                    intent: ext.editing ? "explicit" : "hover",
+                    kind: ext.editing ? "companionChat" : "companionCloud"
+                }
+            ]
+            for (const entry of entries) {
+                const it = entry.item
                 if (!it || !it.visible || it.width <= 0 || it.height <= 0 || (it.opacity ?? 1) <= 0.05)
                     continue
                 const pt = it.mapToItem(root, 0, 0)
@@ -65,7 +79,11 @@ Item {
                         x: Math.round(pt.x),
                         y: Math.round(pt.y),
                         width: Math.round(it.width),
-                        height: Math.round(it.height)
+                        height: Math.round(it.height),
+                        priority: entry.priority,
+                        intentWeight: entry.intentWeight,
+                        intent: entry.intent,
+                        kind: entry.kind
                     })
                 }
             }
@@ -73,7 +91,8 @@ Item {
         const cur = root.obstacleRects
         if (cur.length === out.length && cur.every((r, i) =>
                 r.x === out[i].x && r.y === out[i].y
-                && r.width === out[i].width && r.height === out[i].height)) {
+                && r.width === out[i].width && r.height === out[i].height
+                && r.priority === out[i].priority && r.intent === out[i].intent)) {
             return
         }
         root.obstacleRects = out

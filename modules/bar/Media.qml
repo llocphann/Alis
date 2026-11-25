@@ -25,9 +25,10 @@ Item {
     property bool edgeHostedExpansion: false
     readonly property string popupMode: edgeHostedExpansion ? "bar" : Config.options?.media?.popupMode ?? "dock"
     readonly property bool showVerboseLabel: Config.options?.bar?.verbose ?? true
+    readonly property bool showMediaLabel: !root.verticalContent && root.showVerboseLabel
     readonly property bool hasTrackMetadata: (activePlayer?.trackTitle?.length ?? 0) > 0
         || (activePlayer?.trackArtist?.length ?? 0) > 0
-    readonly property bool lockMediaWidth: showVerboseLabel && hasTrackMetadata
+    readonly property bool lockMediaWidth: showMediaLabel && hasTrackMetadata
     readonly property real mediaInset: Math.max(2, Math.round(4 * Appearance.sizes.barModuleScale))
     readonly property real mediaTextGap: Math.max(4, Math.round(7 * Appearance.sizes.barModuleScale))
     // The title scroller owns its own HoverHandler to pause the marquee, so the
@@ -48,9 +49,11 @@ Item {
             ? Math.max(120, Math.min(320, configured))
             : 180
     }
-    implicitWidth: lockMediaWidth
-        ? maxMediaWidth
-        : Math.min(rowLayout.implicitWidth + root.mediaInset * 2, maxMediaWidth)
+    implicitWidth: root.verticalContent
+        ? compactMediaGlyph.implicitWidth + root.mediaInset * 2
+        : (lockMediaWidth
+            ? maxMediaWidth
+            : Math.min(rowLayout.implicitWidth + root.mediaInset * 2, maxMediaWidth))
     implicitHeight: Appearance.sizes.barHeight
     clip: true
 
@@ -144,7 +147,8 @@ Item {
 
         Item {
             id: compactMediaGlyph
-            Layout.alignment: Qt.AlignVCenter
+            Layout.alignment: Qt.AlignCenter
+            Layout.fillWidth: root.verticalContent
             implicitWidth: Math.round(22 * Appearance.sizes.barModuleScale)
             implicitHeight: implicitWidth
 
@@ -182,7 +186,7 @@ Item {
 
         Item {
             id: titleScroller
-            visible: root.showVerboseLabel
+            visible: root.showMediaLabel
             Layout.alignment: Qt.AlignVCenter
             Layout.fillWidth: true
             Layout.minimumWidth: 0

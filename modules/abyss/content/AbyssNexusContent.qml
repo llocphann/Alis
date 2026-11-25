@@ -11,6 +11,7 @@ Item {
     property var participant: null
     property string outputName: ""
     property bool _everActivated: false
+    property string _loadedTargetSource: ""
     readonly property bool _participantActive: Boolean(participant && (participant.open || (participant.progress ?? 0) > 0.001))
     readonly property bool _warmupRequested: Boolean(participant?.backgroundPreload)
     readonly property bool _hostOwnsLoadingSurface: Boolean(participant?.showLoadingSurface)
@@ -24,13 +25,15 @@ Item {
             root._everActivated = true
         if (!AlisIntergration.nexusEnabled || root._targetSource.length === 0) {
             root._everActivated = false
+            root._loadedTargetSource = ""
             if (workspaceLoader.source.toString().length > 0)
                 workspaceLoader.source = ""
             return
         }
         if (!root._everActivated)
             return
-        if (workspaceLoader.source.toString() !== root._targetSource) {
+        if (root._loadedTargetSource !== root._targetSource || workspaceLoader.status === Loader.Null) {
+            root._loadedTargetSource = root._targetSource
             const settledNow = Boolean(root.participant ? (root.participant.open && Math.abs((root.participant.progress ?? 1) - 1) < 0.02) : true)
             workspaceLoader.setSource(root._targetSource, {
                 embeddedSurface: true,
@@ -69,7 +72,8 @@ Item {
     }
 
     Connections {
-        target: root.participant
+        target: root.participant && typeof root.participant === "object" && root.participant.objectName !== undefined ? root.participant : null
+        ignoreUnknownSignals: true
         function onOpenChanged() {
             if (root.participant?.open) {
                 root.focusPrimarySurface()

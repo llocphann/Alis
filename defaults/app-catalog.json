@@ -577,48 +577,14 @@
     }
   },
   {
-    "id": "thunar",
-    "name": "Thunar",
-    "description": "Xfce's lightweight file manager",
+    "id": "alis-files",
+    "name": "Alis Files",
+    "description": "Built-in Alis GTK4 file manager synced with Alis themes and tools",
     "icon": "folder",
-    "desktopIcon": "org.xfce.thunar",
+    "desktopIcon": "org.alis.Files",
     "category": "system",
-    "tags": ["files", "file-manager", "xfce"],
-    "targets": {
-      "pacman": "thunar",
-      "apt": "thunar",
-      "dnf": "thunar"
-    }
-  },
-  {
-    "id": "nautilus",
-    "name": "Nautilus",
-    "description": "GNOME's default file manager",
-    "icon": "folder",
-    "desktopIcon": "org.gnome.Nautilus",
-    "category": "system",
-    "tags": ["files", "file-manager", "gnome"],
-    "targets": {
-      "pacman": "nautilus",
-      "apt": "nautilus",
-      "dnf": "nautilus",
-      "flatpak": "org.gnome.Nautilus"
-    }
-  },
-  {
-    "id": "dolphin",
-    "name": "Dolphin",
-    "description": "KDE's powerful file manager",
-    "icon": "folder",
-    "desktopIcon": "org.kde.dolphin",
-    "category": "system",
-    "tags": ["files", "file-manager", "kde"],
-    "targets": {
-      "pacman": "dolphin",
-      "apt": "dolphin",
-      "dnf": "dolphin",
-      "flatpak": "org.kde.dolphin"
-    }
+    "tags": ["files", "file-manager", "alis"],
+    "targets": {}
   },
   {
     "id": "gimp",

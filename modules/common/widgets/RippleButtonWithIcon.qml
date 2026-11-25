@@ -10,19 +10,19 @@ RippleButton {
     property string materialIcon
     property bool materialIconFill: true
     property string mainText: "Button text"
+    readonly property bool _hasIcon: (buttonWithIconRoot.nerdIcon || buttonWithIconRoot.materialIcon).length > 0
+    readonly property bool _hasText: buttonWithIconRoot.mainText.length > 0 || buttonWithIconRoot.mainContentComponent !== defaultMainContentComponent
     property color contentColor: buttonWithIconRoot.colBackground.a > 0.01
         ? ColorUtils.ensureReadable(Appearance.colors.colOnLayer2,
             buttonWithIconRoot.colBackground, 4.5)
         : Appearance.colors.colOnSecondaryContainer
-    property Component mainContentComponent: Component {
+    property Component defaultMainContentComponent: Component {
         StyledText {
             visible: text !== ""
             text: buttonWithIconRoot.mainText
-            // Icon buttons are frequently placed inside narrow settings panes.
-            // Respect the loader's assigned width instead of painting the label
-            // past the button/pane boundary when the text is wider than it.
             elide: Text.ElideRight
             maximumLineCount: 1
+            horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
             clip: true
             font.pixelSize: Appearance.font.pixelSize.small
@@ -33,8 +33,9 @@ RippleButton {
             }
         }
     }
+    property Component mainContentComponent: defaultMainContentComponent
     implicitHeight: 35
-    horizontalPadding: 10
+    horizontalPadding: 12
     buttonRadius: Appearance.rounding.small
     colBackground: Appearance.colors.colLayer2
 
@@ -45,9 +46,12 @@ RippleButton {
             id: contentRow
             anchors.centerIn: parent
             width: Math.min(parent.width, implicitWidth)
-            spacing: 5
+            spacing: (buttonWithIconRoot._hasIcon && buttonWithIconRoot._hasText) ? 6 : 0
             MaterialSymbol {
+                visible: buttonWithIconRoot._hasIcon
                 Layout.alignment: Qt.AlignVCenter
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
                 text: buttonWithIconRoot.nerdIcon || buttonWithIconRoot.materialIcon
                 iconSize: Appearance.font.pixelSize.larger
                 color: buttonWithIconRoot.contentColor
@@ -60,6 +64,8 @@ RippleButton {
                 forceNerd: buttonWithIconRoot.nerdIcon !== ""
             }
             Loader {
+                visible: buttonWithIconRoot._hasText
+                active: buttonWithIconRoot._hasText
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
                 sourceComponent: buttonWithIconRoot.mainContentComponent

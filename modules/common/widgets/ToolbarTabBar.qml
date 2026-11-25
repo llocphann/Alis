@@ -19,6 +19,7 @@ Item {
     property real tabLabelPixelSize: Appearance.font.pixelSize.normal
     property real compactButtonSpacing: 4
     property real tabRadius: -1
+    property bool showBackground: true
     readonly property bool compactMode: (root.tabButtonList?.length ?? 0) >= root.compactThreshold
     // Emitted only for direct user interaction (click/wheel), never for
     // programmatic setCurrentIndex — lets consumers persist explicit choices.
@@ -164,6 +165,7 @@ Item {
                 Rectangle {
                     id: groupBackground
                     anchors.fill: parent
+                    visible: root.showBackground
                     radius: root.tabRadius >= 0 ? root.tabRadius : height / 2
                     color: Appearance.colors.colSurfaceContainer
                     border.width: 0

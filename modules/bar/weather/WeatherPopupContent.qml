@@ -26,31 +26,18 @@ Item {
     readonly property color outline: abyss ? Qt.alpha(ink, .2) : Appearance.colors.colOutlineVariant
 
     property bool compact: false
+    property bool verticalLayout: false
     readonly property real compactBreakpoint: 900
-    readonly property real panelHeight: root.compact ? 270 : 300
-    // Keep one stable connected-surface width for both tabs. Detailed Weather
-    // reflows at narrow widths instead of forcing the whole popup to stay wide.
-    readonly property real panelWidth: root.compact ? 360 : 390
-    // Let the liquid orbit consume the popup body instead of inheriting the
-    // detail-page inset. Keep only a small safety gutter, with extra room on
-    // the right for the persistent tab indicator rail.
+    readonly property real panelWidth: root.compact ? 344 : 372
+    readonly property real orbitHeight: root.compact ? 250 : 276
+    readonly property real detailContentHeight: Math.max(
+        root.compact ? 228 : 248,
+        detailColumn.implicitHeight + (root.compact ? 20 : 24))
+    readonly property real panelHeight: root.verticalLayout
+        ? (root.orbitHeight + 13 + root.detailContentHeight)
+        : Math.max(root.orbitHeight, root.detailContentHeight)
     readonly property real orbitalInset: root.compact ? 6 : 8
     readonly property real orbitalRightInset: root.orbitalInset
-    readonly property int tabCount: 2
-    readonly property int slideDuration: Appearance.animation.elementMove.duration
-    property int currentTab: 0
-    // Animate tab selection, never the viewport's physical size. A newly
-    // rehosted popup starts at zero height; animating y would briefly paint
-    // both tabs on top of one another while its first layout is established.
-    property real tabPosition: root.currentTab
-    Behavior on tabPosition {
-        enabled: Appearance.animationsEnabled && root.visible
-        NumberAnimation {
-            duration: root.slideDuration
-            easing.type: Appearance.animation.elementMove.type
-            easing.bezierCurve: Appearance.animation.elementMove.bezierCurve
-        }
-    }
     property date now: new Date()
     readonly property real sunProgress: {
         const sunrise = root.timeToMinutes(Weather.data?.sunrise)
@@ -61,12 +48,8 @@ Item {
         return Math.max(0, Math.min(1, (current - sunrise) / (sunset - sunrise)))
     }
 
-    implicitWidth: root.panelWidth
+    implicitWidth: root.verticalLayout ? root.panelWidth : (root.panelWidth * 2 + 13)
     implicitHeight: root.panelHeight
-
-    function selectTab(index): void {
-        root.currentTab = Math.max(0, Math.min(root.tabCount - 1, index))
-    }
 
     function timeToMinutes(value): int {
         const match = String(value ?? "").trim()
@@ -94,19 +77,20 @@ Item {
     }
 
     Item {
-        id: tabViewport
+        id: weatherViewport
         anchors.fill: parent
         clip: true
+        readonly property real viewportW: width > 0 ? width : root.implicitWidth
+        readonly property real viewportH: height > 0 ? height : root.implicitHeight
 
     Rectangle {
         id: timeWeatherPanel
         x: 0
-        width: tabViewport.width
-        height: tabViewport.height
+        y: 0
+        width: root.verticalLayout ? weatherViewport.viewportW : root.panelWidth
+        height: root.verticalLayout ? root.orbitHeight : weatherViewport.viewportH
         radius: Appearance.rounding.large
         color: "transparent"
-        y: -root.tabPosition * tabViewport.height
-        enabled: root.currentTab === 0
 
 
         Loader {
@@ -126,21 +110,37 @@ Item {
             OrbitalWeather {
                 now: root.now
                 liquidMode: true
-                liquidAnimationActive: root.currentTab === 0
-                    || timeWeatherPanel.y > -timeWeatherPanel.height + 1
+                liquidAnimationActive: root.visible
             }
         }
     }
 
     Rectangle {
+        id: sectionDivider
+        x: root.verticalLayout ? 24 : (root.panelWidth + 6)
+        y: root.verticalLayout
+            ? (root.orbitHeight + 6)
+            : Math.round((weatherViewport.viewportH - height) / 2)
+        width: root.verticalLayout ? Math.max(120, weatherViewport.viewportW - 48) : 1
+        height: root.verticalLayout
+            ? 1
+            : Math.max(120, Math.min(weatherViewport.viewportH - 40, weatherViewport.viewportH - 56))
+        color: Appearance.colors.colPrimary
+        opacity: 0.24
+    }
+
+    Rectangle {
         id: detailPanel
-        x: 0
-        width: tabViewport.width
-        height: tabViewport.height
+        x: root.verticalLayout ? 0 : (root.panelWidth + 13)
+        y: root.verticalLayout ? (root.orbitHeight + 13) : 0
+        width: root.verticalLayout
+            ? weatherViewport.viewportW
+            : Math.max(root.panelWidth, weatherViewport.viewportW - x)
+        height: root.verticalLayout
+            ? Math.max(root.detailContentHeight, weatherViewport.viewportH - y)
+            : weatherViewport.viewportH
         radius: Appearance.rounding.small
         color: "transparent"
-        y: (1 - root.tabPosition) * tabViewport.height
-        enabled: root.currentTab === 1
 
 
         ColumnLayout {
@@ -148,7 +148,7 @@ Item {
             anchors {
                 fill: parent
                 leftMargin: root.compact ? 10 : 12
-                rightMargin: root.compact ? 22 : 24
+                rightMargin: root.compact ? 10 : 12
                 topMargin: root.compact ? 10 : 12
                 bottomMargin: root.compact ? 10 : 12
             }
@@ -473,60 +473,6 @@ Item {
                 pixelSize: Appearance.font.pixelSize.smaller
                 weight: Font.DemiBold
             }
-        }
-    }
-
-    Item {
-        id: tabIndicator
-        width: 14
-        height: indicatorDots.implicitHeight
-        anchors.right: parent.right
-        anchors.rightMargin: 4
-        anchors.verticalCenter: parent.verticalCenter
-        z: 20
-
-        Column {
-            id: indicatorDots
-            anchors.centerIn: parent
-            spacing: 7
-
-            Repeater {
-                model: root.tabCount
-
-                delegate: Rectangle {
-                    id: indicatorDot
-                    required property int index
-                    width: 7
-                    height: 7
-                    radius: width / 2
-                    color: indicatorDot.index === root.currentTab
-                        ? Appearance.colors.colPrimary
-                        : Appearance.colors.colOutlineVariant
-                    opacity: indicatorDot.index === root.currentTab ? 1 : 0.55
-
-                    MouseArea {
-                        anchors.fill: parent
-                        anchors.margins: -5
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.selectTab(indicatorDot.index)
-                    }
-                }
-            }
-        }
-    }
-
-    WheelHandler {
-        target: root
-        orientation: Qt.Vertical
-        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-
-        onWheel: event => {
-            if (event.angleDelta.y < 0)
-                root.selectTab(root.currentTab + 1)
-            else if (event.angleDelta.y > 0)
-                root.selectTab(root.currentTab - 1)
-            event.accepted = true
         }
     }
 }

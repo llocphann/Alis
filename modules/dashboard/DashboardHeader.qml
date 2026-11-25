@@ -8,9 +8,10 @@ import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.abyss.looks
 import qs.modules.waffle.looks as Waffle
+import "DashboardCustomTabPolicy.js" as TabPolicy
 
 /**
- * Dashboard navigation: uptime at left, page dots at center, actions at right.
+ * Dashboard navigation: uptime at left, tab icon indicators at center, actions at right.
  */
 Item {
     id: root
@@ -30,15 +31,15 @@ Item {
     // DashboardContent supplies its existing slide progress; standalone Header
     // tests can fall back to the selected page without inventing a new timer.
     property real indicatorProgress: currentPage
-    readonly property int pageDotButtonWidth: 24
-    readonly property int pageDotDiameter: 8
+    readonly property int pageDotButtonWidth: 32
+    readonly property int pageIconSize: 18
     // Arrows follow the latest request while a cold target is incubating.
-    // Dots continue to show the selected, ready page.
+    // Indicators continue to show the selected, ready page.
     property int navigationPage: currentPage
     property int pageCount: 1
     property var pageIds: ["dashboard", "music"]
     property var customTabs: []
-    property string defaultTabId: "dashboard"
+    property var tabIcons: Config.options?.dashboard?.tabIcons ?? []
     property bool navigationAllowed: true
     property bool pageSlideInFlight: false
     property bool reorderAllowed: editMode
@@ -53,10 +54,6 @@ Item {
     readonly property bool abyss: Config.options?.panelFamily === "abyss"
     signal pageRequested(int index)
     signal pageMoveRequested(string id, int target)
-    signal createTabRequested()
-    signal setDefaultTabRequested(string id)
-    signal renameTabRequested(string id)
-    signal deleteTabRequested(string id)
     signal editModeRequested
     signal horizontalWheel(var event)
     function pageLabel(id): string {
@@ -67,9 +64,12 @@ Item {
         if(id==="exercisesTracker") return Translation.tr("Exercises Tracker")
         return root.customTabs.find(tab => tab.id === id)?.name ?? String(id ?? "")
     }
+    function pageIcon(id): string {
+        return TabPolicy.iconFor(root.tabIcons, id)
+    }
     function focusMovedPage(): void {
         const index=pageIds.indexOf(_movedPageId)
-        if(reorderAllowed && index>=0)pageRepeater.itemAt(index)?.forceActiveFocus()
+        if(reorderAllowed && index>=0)pageRepeater.itemAt(index)?.forceActiveFocus(Qt.MouseFocusReason)
     }
     function moveFocusedPage(id,target): void {
         _movedPageId=id
@@ -105,6 +105,15 @@ Item {
         else if(!wasDragging && target>=0)root.pageRequested(target)
     }
     onReorderAllowedChanged: if(!reorderAllowed)cancelPageDrag()
+    onEditModeChanged: {
+        if (!editMode) {
+            for (let i = 0; i < pageRepeater.count; ++i) {
+                const item = pageRepeater.itemAt(i)
+                if (item?.focus || item?.activeFocus)
+                    item.focus = false
+            }
+        }
+    }
     onPageIdsChanged: {
         // Config may republish an equal list during a live pointer gesture.
         // Cancel only when its identities/order actually changed.
@@ -213,8 +222,7 @@ Item {
 
         HeaderButton {
             objectName: "dashboardEditLayoutButton"
-            enabled: root.pageIds[root.currentPage] === "dashboard"
-                || (root.pageIds[root.currentPage]?.startsWith("custom-") ?? false)
+            enabled: root.pageCount > 0
             iconName: root.editMode ? "done" : "edit"
             tooltip: root.editMode ? Translation.tr("Done editing") : Translation.tr("Edit widgets")
             toggled: root.editMode
@@ -280,7 +288,7 @@ Item {
         height: 32
         visible: root.separateNavigation
         clip: true
-        contentWidth: Math.max(width, pages.width + (root.editMode ? 104 : 0))
+        contentWidth: Math.max(width, pages.width + (root.editMode ? 40 : 0))
         contentHeight: height
         interactive: visible && contentWidth > width
         boundsBehavior: Flickable.StopAtBounds
@@ -309,9 +317,10 @@ Item {
         id: pages
         parent: root.separateNavigation ? menuStrip : root
         objectName: "dashboardPageDots"
+        z: 1
         anchors.centerIn: parent
         spacing: 4
-        width: pageDotsRow.implicitWidth + (root.editMode && customTabActions.implicitWidth > 0 ? pages.spacing + customTabActions.implicitWidth : 0)
+        width: pageDotsRow.implicitWidth
         visible: root.pageCount > 1
         Row {
             id: pageDotsRow
@@ -326,36 +335,66 @@ Item {
                 delegate: RippleButton {
                     id:pageButton
                     required property int index
+                    readonly property string pageId: String(root.pageIds[index] ?? "")
+                    readonly property real selectedBlend: Math.max(0, 1 - Math.abs(root.indicatorProgress - index))
                     objectName: "dashboardPage" + index
-                    implicitWidth: root.waffleMenu ? Math.max(56, waffleTabLabel.implicitWidth + 18) : root.pageDotButtonWidth
+                    implicitWidth: root.waffleMenu ? Math.max(56, waffleTabRow.implicitWidth + 18) : root.pageDotButtonWidth
                     implicitHeight: root.waffleMenu ? 28 : 32
                     buttonRadius: root.waffleMenu ? Waffle.Looks.radius.medium : 16
                     enabled: root.reorderAllowed || (root.navigationAllowed && !root.editMode)
-                    focusPolicy:Qt.StrongFocus
-                    Accessible.name:root.pageLabel(root.pageIds[index])
-                    colBackground: (root.waffleMenu && index === root.currentPage) ? Waffle.Looks.colors.bg1 : "transparent"
-                    colBackgroundHover: root.waffleMenu ? Waffle.Looks.colors.bg1Hover : root.colHoverTonal
+                    focusPolicy: Qt.TabFocus
+                    Accessible.name:root.pageLabel(pageId)
+                    colBackground: root.waffleMenu
+                        ? (index === root.currentPage ? Waffle.Looks.colors.bg1 : "transparent")
+                        : (pageDragMouse.pressed && index !== root.currentPage
+                            ? Appearance.colors.colPrimaryContainer
+                            : (pageDragMouse.containsMouse && index !== root.currentPage
+                                ? root.colHoverTonal : "transparent"))
+                    colBackgroundHover: root.waffleMenu
+                        ? Waffle.Looks.colors.bg1Hover
+                        : (index === root.currentPage ? Appearance.colors.colPrimaryContainerHover : root.colHoverTonal)
                     contentItem: Item {
-                        Rectangle {
-                            objectName: "dashboardPageDot" + index
+                        MaterialSymbol {
+                            id: pageIconSymbol
+                            objectName: "dashboardPageIcon" + index
                             visible: !root.waffleMenu
                             anchors.centerIn: parent
-                            width: root.pageDotDiameter
-                            height: root.pageDotDiameter
-                            radius: width / 2
-                            // Every base dot stays visible: the selected highlight
-                            // travels above them instead of swapping colors at once.
-                            color: Qt.alpha(root.colText, .35)
+                            text: root.pageIcon(pageButton.pageId)
+                            iconSize: root.pageIconSize
+                            fill: pageButton.selectedBlend
+                            horizontalAlignment: Text.AlignHCenter
+                            color: pageDragMouse.pressed && index !== root.currentPage
+                                ? Appearance.colors.colOnPrimaryContainer
+                                : ColorUtils.mix(
+                                    Appearance.colors.colOnPrimaryContainer,
+                                    (pageButton.hovered || pageDragMouse.containsMouse) ? root.colText : root.colSubtext,
+                                    1 - pageButton.selectedBlend
+                                )
                         }
-                        StyledText {
-                            id: waffleTabLabel
+                        Row {
+                            id: waffleTabRow
                             visible: root.waffleMenu
                             anchors.centerIn: parent
-                            text: root.pageLabel(root.pageIds[index])
-                            font.family: Waffle.Looks.font.family.ui
-                            font.pixelSize: Waffle.Looks.font.pixelSize.small
-                            font.weight: index === root.currentPage ? Font.DemiBold : Font.Normal
-                            color: index === root.currentPage ? root.colText : root.colSubtext
+                            spacing: 5
+                            MaterialSymbol {
+                                visible: root.waffleMenu
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: root.pageIcon(pageButton.pageId)
+                                iconSize: 14
+                                fill: pageButton.index === root.currentPage ? 1 : 0
+                                horizontalAlignment: Text.AlignHCenter
+                                color: pageButton.index === root.currentPage ? root.colText : root.colSubtext
+                            }
+                            StyledText {
+                                id: waffleTabLabel
+                                visible: root.waffleMenu
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: root.pageLabel(pageButton.pageId)
+                                font.family: Waffle.Looks.font.family.ui
+                                font.pixelSize: Waffle.Looks.font.pixelSize.small
+                                font.weight: pageButton.index === root.currentPage ? Font.DemiBold : Font.Normal
+                                color: pageButton.index === root.currentPage ? root.colText : root.colSubtext
+                            }
                         }
                     }
                     onClicked: if(!root.editMode && root.navigationAllowed)root.pageRequested(index)
@@ -371,16 +410,14 @@ Item {
                         }else if(event.key===Qt.Key_Escape && root.cancelPageDrag())event.accepted=true
                         else event.accepted=false
                     }
-                    Rectangle {
-                        anchors.fill:parent;anchors.margins:2;radius:12;color:"transparent"
-                        border.width:pageButton.activeFocus?1:0;border.color:root.colText
-                    }
                     MouseArea {
+                        id: pageDragMouse
                         anchors.fill:parent
                         enabled:root.reorderAllowed
+                        hoverEnabled:true
                         cursorShape:pressed?Qt.ClosedHandCursor:Qt.OpenHandCursor
                         onPressed: mouse => {
-                            pageButton.forceActiveFocus()
+                            pageButton.forceActiveFocus(Qt.MouseFocusReason)
                             const point=mapToItem(root,mouse.x,mouse.y)
                             root.dragPageOrder=JSON.stringify(root.pageIds)
                             root.dragPageId=root.pageIds[pageButton.index]
@@ -396,88 +433,20 @@ Item {
                 }
             }
         }
-        // Page dots and Create/Rename/Delete remain in the centered group.
-        // Set Default now sits to the left, after the reorder handle.
-        Row {
-        id: customTabActions
-        objectName: "dashboardCustomTabActions"
-        Layout.alignment: Qt.AlignVCenter
-        Layout.leftMargin: root.editMode ? 0 : -pages.spacing
-        spacing: 2
-        z: 10
-        visible: root.pageCount > 0
-        readonly property string targetCustomTabId: root.pageIds[root.currentPage]?.startsWith("custom-")
-            ? root.pageIds[root.currentPage]
-            : (root.customTabs[root.customTabs.length - 1]?.id ?? "")
-        RippleButton {
-            objectName: "dashboardCreateCustomTab"
-            visible: root.editMode
-            implicitWidth: 28
-            implicitHeight: 30
-            buttonRadius: Appearance.rounding.full
-            enabled: root.editMode
-            focusPolicy: Qt.StrongFocus
-            colBackground: "transparent"
-            colBackgroundHover: root.colHoverTonal
-            onClicked: root.createTabRequested()
-            contentItem: MaterialSymbol {
-                text: "add"
-                iconSize: 20
-                color: root.colText
-            }
-            StyledToolTip { text: Translation.tr("Create custom tab") }
-        }
-        RippleButton {
-            objectName: "dashboardRenameCustomTab"
-            visible: root.editMode
-            enabled: root.editMode && customTabActions.targetCustomTabId.length > 0
-            opacity: enabled ? 1 : 0.45
-            implicitWidth: 27
-            implicitHeight: 30
-            buttonRadius: Appearance.rounding.full
-            colBackground: "transparent"
-            colBackgroundHover: root.colHoverTonal
-            onClicked: if (customTabActions.targetCustomTabId.length > 0) root.renameTabRequested(customTabActions.targetCustomTabId)
-            contentItem: MaterialSymbol {
-                text: "drive_file_rename_outline"
-                iconSize: 17
-                color: root.colText
-            }
-            StyledToolTip { text: Translation.tr("Rename custom tab") }
-        }
-        RippleButton {
-            objectName: "dashboardDeleteCustomTab"
-            visible: root.editMode
-            enabled: root.editMode && customTabActions.targetCustomTabId.length > 0
-            opacity: enabled ? 1 : 0.45
-            implicitWidth: 27
-            implicitHeight: 30
-            buttonRadius: Appearance.rounding.full
-            colBackground: "transparent"
-            colBackgroundHover: root.colHoverTonal
-            onClicked: if (customTabActions.targetCustomTabId.length > 0) root.deleteTabRequested(customTabActions.targetCustomTabId)
-            contentItem: MaterialSymbol {
-                text: "delete_outline"
-                iconSize: 17
-                color: root.colText
-            }
-            StyledToolTip { text: Translation.tr("Delete custom tab") }
-        }
-    }
     }
     Rectangle {
         id: activePageIndicator
         objectName: "dashboardActivePageIndicator"
         parent: root.separateNavigation ? menuStrip : root
-        z: 10
+        z: root.waffleMenu ? 10 : 0
         readonly property Item currentTabItem: (root.currentPage >= 0 && root.currentPage < pageRepeater.count)
             ? pageRepeater.itemAt(root.currentPage) : null
         width: root.waffleMenu
             ? Math.max(16, (currentTabItem?.width ?? 36) - 18)
-            : root.pageDotDiameter
-        height: root.waffleMenu ? 3 : root.pageDotDiameter
-        radius: root.waffleMenu ? 1.5 : width / 2
-        color: root.waffleMenu ? Waffle.Looks.colors.accent : root.colText
+            : root.pageDotButtonWidth
+        height: root.waffleMenu ? 3 : 30
+        radius: root.waffleMenu ? 1.5 : height / 2
+        color: root.waffleMenu ? Waffle.Looks.colors.accent : Appearance.colors.colPrimaryContainer
         visible: pages.visible && root.currentPage >= 0
             && root.currentPage < root.pageCount
         anchors.verticalCenter: root.waffleMenu ? undefined : pages.verticalCenter
@@ -508,54 +477,12 @@ Item {
         anchors.verticalCenter:pages.verticalCenter
         text:"drag_indicator";iconSize:16;color:root.colSubtext
     }
-    RippleButton {
-        id: defaultTabButton
-        objectName: "dashboardSetDefaultTab"
-        parent: root.separateNavigation ? menuStrip : root
-        visible: root.editMode
-        // Desired left-to-right order: Set Default, reorder grip, page dots.
-        anchors.right: tabReorderHandle.left
-        anchors.rightMargin: 4
-        anchors.verticalCenter: pages.verticalCenter
-        implicitWidth: 29
-        implicitHeight: 30
-        buttonRadius: Appearance.rounding.full
-        readonly property bool isDefault:
-            root.pageIds[root.currentPage] === root.defaultTabId
-        toggled: isDefault
-        enabled: root.editMode && root.pageIds[root.currentPage] !== undefined
-        focusPolicy: Qt.StrongFocus
-        colBackground: Appearance.colors.colLayer2
-        colBackgroundHover: Appearance.colors.colLayer2Hover
-        colBackgroundToggled: Appearance.colors.colPrimaryContainer
-        colBackgroundToggledHover: Appearance.colors.colPrimaryContainerHover
-        onClicked: root.setDefaultTabRequested(root.pageIds[root.currentPage])
-        contentItem: MaterialSymbol {
-            text: "home"
-            iconSize: 19
-            color: defaultTabButton.isDefault
-                ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnLayer2
-        }
-        Rectangle {
-            anchors.fill: parent; anchors.margins: 1
-            radius: defaultTabButton.buttonRadius
-            color: "transparent"
-            border.width: defaultTabButton.activeFocus ? 1 : 0
-            border.color: defaultTabButton.isDefault
-                ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnLayer2
-        }
-        StyledToolTip {
-            text: defaultTabButton.isDefault
-                ? Translation.tr("Default tab after inactivity")
-                : Translation.tr("Set this as default tab after inactivity")
-        }
-    }
     Rectangle {
         objectName:"dashboardTabInsertion"
         parent: root.separateNavigation ? menuStrip : root
         visible:root.draggingPage && root.dragTarget>=0
         x:pages.x+(pageRepeater.itemAt(root.dragTarget)?.x ?? 0)
-            +(root.dragTarget>root.pageIds.indexOf(root.dragPageId)?24:0)-2
+            +(root.dragTarget>root.pageIds.indexOf(root.dragPageId)?(pageRepeater.itemAt(root.dragTarget)?.width ?? root.pageDotButtonWidth):0)-2
         y:pages.y+6;width:2;height:20;radius:1;color:root.colText
     }
     Rectangle {

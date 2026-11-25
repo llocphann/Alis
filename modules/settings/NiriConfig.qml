@@ -286,6 +286,7 @@ ContentPage {
     property string pendingChangeValue: ""
     property string pendingPreviewKind: ""
     property string pendingSetSection: ""
+    property int configSyncRevision: 0
     property string pendingActionLabel: ""
     property string applyOutputPurpose: ""
     property string applyOutputTargetName: ""
@@ -411,8 +412,8 @@ ContentPage {
             id=$(xdg-mime query default inode/directory)
             case "$id" in
                 ""|kitty-open*|*terminal*|foot*|alacritty*|konsole*|xterm*|wezterm*)
-                    for c in org.gnome.Nautilus org.kde.dolphin thunar nemo pcmanfm-qt; do
-                        [ -f "/usr/share/applications/$c.desktop" ] && { echo "$c"; exit 0; }
+                    for c in org.alis.Files org.gnome.Nautilus org.kde.dolphin thunar nemo pcmanfm-qt; do
+                        { [ -f "\${XDG_DATA_HOME:-$HOME/.local/share}/applications/$c.desktop" ] || [ -f "/usr/share/applications/$c.desktop" ]; } && { echo "$c"; exit 0; }
                     done ;;
                 *) echo "\${id%.desktop}" ;;
             esac`]
@@ -1225,6 +1226,7 @@ ContentPage {
                 root.inputData = data
                 root.resyncInputControls()
                 root.inputReady = true
+                root.configSyncRevision++
             })
         }
         onRunningChanged: {
@@ -1329,6 +1331,7 @@ ContentPage {
                 root.animationsData = data
                 root.resyncAnimationsControls()
                 root.animationsReady = true
+                root.configSyncRevision++
             })
         }
         onRunningChanged: {
@@ -1381,6 +1384,7 @@ ContentPage {
                 root.windowRulesData = data
                 root.resyncWindowRulesControls()
                 root.windowRulesReady = true
+                root.configSyncRevision++
             })
         }
         onRunningChanged: {
@@ -1736,6 +1740,7 @@ ContentPage {
                 root.lastActionError = (setErrorCollector.text || setCollector.text || Translation.tr("Failed to update Niri configuration.")).trim()
                 root.pendingSetSection = ""
                 root.pendingActionLabel = ""
+                root.configSyncRevision++
                 root.runNextSetRequest()
                 return
             }
@@ -1937,11 +1942,6 @@ ContentPage {
         }
     }
 
-    component NiriFieldSlider: StyledSlider {
-        Layout.fillWidth: !isVertical && customLength <= 0
-        Layout.maximumWidth: isVertical || customLength > 0 ? implicitWidth : Math.round(520 * Appearance.fontSizeScale)
-    }
-
     SettingsTaskNavigator {
         showTabBar: true
         showIntro: false
@@ -1969,7 +1969,7 @@ ContentPage {
 
         SettingsGroup {
             id: arrangementFields
-            fieldColumns: width >= 700 * Appearance.fontSizeScale ? 2 : 1
+            fieldColumns: 1
             MonitorVisibilityConfig {
                 id: niriArrangementEmbed
                 visible: CompositorService.isNiri
@@ -1978,7 +1978,7 @@ ContentPage {
                 Layout.minimumWidth: 0
                 settingsFormPreview: true
                 Layout.preferredHeight: implicitHeight
-                implicitHeight: niriOutputNames().length > 1 ? 300 : 215
+                implicitHeight: niriOutputNames().length > 1 ? 300 : 250
                 interactive: false
                 activeSection: "outputs"
             }
@@ -1989,7 +1989,7 @@ ContentPage {
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
                 Layout.preferredHeight: implicitHeight
-                implicitHeight: 184 * Appearance.fontSizeScale
+                implicitHeight: 220 * Appearance.fontSizeScale
                 radius: Appearance.rounding.normal
                 color: Appearance.colors.colLayer1
                 border.width: 1
@@ -2001,8 +2001,8 @@ ContentPage {
 
                     Rectangle {
                         Layout.alignment: Qt.AlignHCenter
-                        implicitWidth: 210
-                        implicitHeight: 126
+                        implicitWidth: 230
+                        implicitHeight: 136
                         radius: Appearance.rounding.normal
                         color: ColorUtils.transparentize(Appearance.colors.colPrimary, 0.88)
                         border.width: 2
@@ -2046,12 +2046,49 @@ ContentPage {
                 }
             }
 
-            ContentSubsection {
-                title: Translation.tr("Primary monitor")
-                tooltip: Translation.tr("Fallback output for single-screen surfaces.")
+            RowLayout {
+                id: primaryMonitorSubsection
+                property string title: Translation.tr("Primary monitor")
+                readonly property string subsectionLayoutId: title
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                Layout.topMargin: 2
+                spacing: 12
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    spacing: 6
+
+                    ContentSubsectionLabel {
+                        Layout.minimumWidth: 0
+                        text: primaryMonitorSubsection.title
+                    }
+
+                    MaterialSymbol {
+                        text: "info"
+                        iconSize: Appearance.font.pixelSize.normal
+                        color: Appearance.colors.colSubtext
+                        MouseArea {
+                            id: primaryMonitorInfoArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.WhatsThisCursor
+                            StyledToolTip {
+                                extraVisibleCondition: false
+                                alternativeVisibleCondition: primaryMonitorInfoArea.containsMouse
+                                text: Translation.tr("Fallback output for single-screen surfaces.")
+                            }
+                        }
+                    }
+
+                    Item { Layout.fillWidth: true }
+                }
 
                 StyledComboBox {
-                    Layout.fillWidth: true
+                    Layout.fillWidth: false
+                    Layout.preferredWidth: Math.min(Math.round(300 * Appearance.fontSizeScale), Math.max(180, Math.round(arrangementFields.width * 0.42)))
+                    Layout.minimumWidth: 160
                     model: root.primaryMonitorOptions
                     textRole: "displayName"
                     currentIndex: root.choiceIndex(model, root.configuredPrimaryMonitor)
@@ -2092,7 +2129,6 @@ ContentPage {
                     anchors {
                         left: parent.left; right: parent.right
                         verticalCenter: parent.verticalCenter
-                        leftMargin: 8; rightMargin: 8
                     }
                     spacing: 10
 
@@ -2198,24 +2234,27 @@ ContentPage {
                 }
             }
 
-            GridLayout {
-                Layout.fillWidth: true
-                Layout.minimumWidth: 0
+            ContentSubsection {
                 visible: root.currentOutput !== null
-                columns: width >= 680 * Appearance.fontSizeScale ? 2 : 1
-                uniformCellWidths: columns > 1
-                columnSpacing: 16
-                rowSpacing: 12
+                title: Translation.tr("Scale presets")
 
-                ContentSubsection {
+                Rectangle {
                     Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    Layout.alignment: Qt.AlignTop
-                    title: Translation.tr("Scale")
+                    implicitHeight: scalePresetsRow.implicitHeight + 6
+                    radius: 10
+                    color: SettingsMaterialPreset.controlSurface
+                    border.width: 1
+                    border.color: SettingsMaterialPreset.controlBorderColor
 
-                    Flow {
-                        Layout.fillWidth: true
-                        spacing: 6
+                    RowLayout {
+                        id: scalePresetsRow
+                        anchors {
+                            left: parent.left
+                            right: parent.right
+                            verticalCenter: parent.verticalCenter
+                            margins: 3
+                        }
+                        spacing: 3
 
                         Repeater {
                             model: [0.75, 1.0, 1.25, 1.5, 1.75, 2.0]
@@ -2223,30 +2262,44 @@ ContentPage {
                                 required property real modelData
                                 readonly property bool activeScale: Math.abs((root.currentOutput?.scale ?? 1.0) - modelData) < 0.01
                                 enabled: !root.displayControlsLocked
-                                implicitHeight: 28
-                                implicitWidth: Math.max(52, scalePillLabel.implicitWidth + 18)
-                                buttonRadius: Appearance.rounding.full
+                                Layout.fillWidth: true
+                                Layout.preferredWidth: 1
+                                Layout.minimumWidth: 0
+                                implicitHeight: Math.round(28 * Appearance.fontSizeScale)
+                                buttonRadius: 7
                                 toggled: activeScale
-                                colBackground: Appearance.colors.colLayer2
-                                colBackgroundHover: Appearance.colors.colLayer2Hover
-                                colBackgroundToggled: Appearance.colors.colPrimary
-                                colBackgroundToggledHover: Appearance.colors.colPrimaryHover
+                                colBackground: "transparent"
+                                colBackgroundHover: SettingsMaterialPreset.controlSurfaceHover
+                                colBackgroundToggled: SettingsMaterialPreset.pillSelectedColor
+                                colBackgroundToggledHover: SettingsMaterialPreset.pillSelectedHoverColor
                                 onClicked: root.safeApplyOutput("scale", "scale", String(modelData))
                                 contentItem: StyledText {
-                                    id: scalePillLabel
                                     anchors.centerIn: parent
                                     text: Math.round(parent.modelData * 100) + "%"
                                     horizontalAlignment: Text.AlignHCenter
                                     verticalAlignment: Text.AlignVCenter
+                                    font.family: SettingsMaterialPreset.fontFamily
+                                    font.features: ({ "tnum": 1 })
                                     font.pixelSize: Appearance.font.pixelSize.smaller
-                                    font.family: Appearance.font.family.monospace
+                                    font.weight: parent.toggled ? Font.DemiBold : Font.Medium
                                     color: parent.toggled
-                                        ? (parent.enabled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer1)
-                                        : Appearance.colors.colOnLayer1
+                                        ? SettingsMaterialPreset.pillSelectedTextColor
+                                        : SettingsMaterialPreset.textColor
                                 }
                             }
                         }
                     }
+                }
+            }
+
+            ConfigRow {
+                uniform: true
+                visible: root.currentOutput !== null
+
+                ContentSubsection {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    title: Translation.tr("Scale")
 
                     StyledComboBox {
                         id: scaleCombo
@@ -2261,7 +2314,6 @@ ContentPage {
                 ContentSubsection {
                     Layout.fillWidth: true
                     Layout.minimumWidth: 0
-                    Layout.alignment: Qt.AlignTop
                     title: Translation.tr("Rotation")
 
                     StyledComboBox {
@@ -2484,7 +2536,7 @@ ContentPage {
                 spacing: 8
 
                 StyledText {
-                    Layout.preferredWidth: 126
+                    Layout.fillWidth: true
                     Layout.minimumWidth: 0
                     text: Translation.tr("Desktop widgets")
                     font.pixelSize: Appearance.font.pixelSize.small
@@ -2493,14 +2545,19 @@ ContentPage {
                 }
 
                 Flow {
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
+                    Layout.fillWidth: false
+                    Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+                    Layout.maximumWidth: Math.max(160, Math.round(parent.width * 0.65))
                     spacing: 6
 
                     RippleButton {
                         implicitHeight: 28
                         implicitWidth: Math.max(46, allWidgetText.implicitWidth + 18)
                         buttonRadius: Appearance.rounding.full
+                        colBackground: Appearance.colors.colLayer2
+                        colBackgroundHover: Appearance.colors.colLayer2Hover
+                        colBackgroundToggled: Appearance.colors.colPrimary
+                        colBackgroundToggledHover: Appearance.colors.colPrimaryHover
                         toggled: root.surfaceAllScreensEnabled("background.widgets.screenList")
                         onClicked: root.setSurfaceAllScreens("background.widgets.screenList")
                         contentItem: StyledText {
@@ -2520,6 +2577,10 @@ ContentPage {
                             implicitHeight: 28
                             implicitWidth: Math.max(48, widgetScreenText.implicitWidth + 18)
                             buttonRadius: Appearance.rounding.full
+                            colBackground: Appearance.colors.colLayer2
+                            colBackgroundHover: Appearance.colors.colLayer2Hover
+                            colBackgroundToggled: Appearance.colors.colPrimary
+                            colBackgroundToggledHover: Appearance.colors.colPrimaryHover
                             toggled: !root.surfaceAllScreensEnabled("background.widgets.screenList")
                                      && root.surfaceScreenEnabled("background.widgets.screenList", modelData)
                             onClicked: root.toggleSurfaceScreen("background.widgets.screenList", modelData)
@@ -2541,7 +2602,7 @@ ContentPage {
                 spacing: 8
 
                 StyledText {
-                    Layout.preferredWidth: 126
+                    Layout.fillWidth: true
                     Layout.minimumWidth: 0
                     text: Translation.tr("OSD popups")
                     font.pixelSize: Appearance.font.pixelSize.small
@@ -2550,14 +2611,19 @@ ContentPage {
                 }
 
                 Flow {
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
+                    Layout.fillWidth: false
+                    Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+                    Layout.maximumWidth: Math.max(160, Math.round(parent.width * 0.65))
                     spacing: 6
 
                     RippleButton {
                         implicitHeight: 28
                         implicitWidth: Math.max(46, allOsdScreenText.implicitWidth + 18)
                         buttonRadius: Appearance.rounding.full
+                        colBackground: Appearance.colors.colLayer2
+                        colBackgroundHover: Appearance.colors.colLayer2Hover
+                        colBackgroundToggled: Appearance.colors.colPrimary
+                        colBackgroundToggledHover: Appearance.colors.colPrimaryHover
                         toggled: root.surfaceAllScreensEnabled("osd.screenList")
                         onClicked: root.setSurfaceAllScreens("osd.screenList")
                         contentItem: StyledText {
@@ -2577,6 +2643,10 @@ ContentPage {
                             implicitHeight: 28
                             implicitWidth: Math.max(48, osdScreenText.implicitWidth + 18)
                             buttonRadius: Appearance.rounding.full
+                            colBackground: Appearance.colors.colLayer2
+                            colBackgroundHover: Appearance.colors.colLayer2Hover
+                            colBackgroundToggled: Appearance.colors.colPrimary
+                            colBackgroundToggledHover: Appearance.colors.colPrimaryHover
                             toggled: !root.surfaceAllScreensEnabled("osd.screenList")
                                      && root.surfaceScreenEnabled("osd.screenList", modelData)
                             onClicked: root.toggleSurfaceScreen("osd.screenList", modelData)
@@ -2614,7 +2684,7 @@ ContentPage {
                 spacing: 8
 
                 StyledText {
-                    Layout.preferredWidth: 126
+                    Layout.fillWidth: true
                     Layout.minimumWidth: 0
                     text: surfaceVisRow.modelData.label
                     font.pixelSize: Appearance.font.pixelSize.small
@@ -2623,14 +2693,19 @@ ContentPage {
                 }
 
                 Flow {
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
+                    Layout.fillWidth: false
+                    Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+                    Layout.maximumWidth: Math.max(160, Math.round(parent.width * 0.65))
                     spacing: 6
 
                     RippleButton {
                         implicitHeight: 28
                         implicitWidth: Math.max(46, allSurfText.implicitWidth + 18)
                         buttonRadius: Appearance.rounding.full
+                        colBackground: Appearance.colors.colLayer2
+                        colBackgroundHover: Appearance.colors.colLayer2Hover
+                        colBackgroundToggled: Appearance.colors.colPrimary
+                        colBackgroundToggledHover: Appearance.colors.colPrimaryHover
                         toggled: root.surfaceAllScreensEnabled(surfaceVisRow.modelData.path)
                         onClicked: root.setSurfaceAllScreens(surfaceVisRow.modelData.path)
                         contentItem: StyledText {
@@ -2650,6 +2725,10 @@ ContentPage {
                             implicitHeight: 28
                             implicitWidth: Math.max(48, surfScreenText.implicitWidth + 18)
                             buttonRadius: Appearance.rounding.full
+                            colBackground: Appearance.colors.colLayer2
+                            colBackgroundHover: Appearance.colors.colLayer2Hover
+                            colBackgroundToggled: Appearance.colors.colPrimary
+                            colBackgroundToggledHover: Appearance.colors.colPrimaryHover
                             toggled: !root.surfaceAllScreensEnabled(surfaceVisRow.modelData.path)
                                      && root.surfaceScreenEnabled(surfaceVisRow.modelData.path, modelData)
                             onClicked: root.toggleSurfaceScreen(surfaceVisRow.modelData.path, modelData)
@@ -2705,32 +2784,22 @@ ContentPage {
         ContentSubsection {
             title: Translation.tr("Color temperature")
 
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 8
-
-                NiriFieldSlider {
-                    id: nightTempSlider
-                    from: 1200
-                    to: 6500
-                    stepSize: 100
-                    value: Config.options?.light?.night?.colorTemperature ?? 5000
-                    liveValue: Config.options?.light?.night?.colorTemperature ?? 5000
-                    configuration: StyledSlider.Configuration.S
-                    onMoved: {
-                        if (pressed) return
-                        Config.setNestedValue("light.night.colorTemperature", Math.round(value))
-                    }
-                }
-
-                StyledText {
-                    text: Math.round(nightTempSlider.value) + " K"
-                    font.pixelSize: Appearance.font.pixelSize.smallest
-                    font.family: Appearance.font.family.monospace
-                    color: Appearance.colors.colSubtext
-                    Layout.preferredWidth: 48
-                    horizontalAlignment: Text.AlignRight
-                }
+            SettingsPresetRow {
+                id: nightTempSlider
+                from: 1200
+                to: 6500
+                stepSize: 100
+                matchTolerance: 40
+                value: Config.options?.light?.night?.colorTemperature ?? 5000
+                displayValue: Math.round(liveValue) + " K"
+                presets: [
+                    { label: "2700 K", value: 2700 },
+                    { label: "3500 K", value: 3500 },
+                    { label: "4500 K", value: 4500 },
+                    { label: "5000 K", value: 5000 },
+                    { label: "6500 K", value: 6500 }
+                ]
+                onMoved: nextVal => Config.setNestedValue("light.night.colorTemperature", Math.round(nextVal))
             }
         }
 
@@ -2774,33 +2843,24 @@ ContentPage {
             title: Translation.tr("Corner radius")
             tooltip: Translation.tr("Rounding applied to window corners (0 = square)")
 
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 8
-
-                NiriFieldSlider {
-                    id: cornerRadiusSlider
-                    from: 0
-                    to: 32
-                    value: root.windowRulesData?.corner_radius ?? 16
-                    liveValue: root.windowRulesData?.corner_radius ?? 16
-                    stepSize: 1
-                    configuration: StyledSlider.Configuration.S
-
-                    onMoved: {
-                        if (pressed) return
-                        root.setConfig("window-rules", "corner-radius", String(Math.round(value)))
-                    }
-                }
-
-                StyledText {
-                    text: Math.round(cornerRadiusSlider.value) + "px"
-                    font.pixelSize: Appearance.font.pixelSize.smallest
-                    font.family: Appearance.font.family.monospace
-                    color: Appearance.colors.colSubtext
-                    Layout.preferredWidth: 35
-                    horizontalAlignment: Text.AlignRight
-                }
+            SettingsPresetRow {
+                id: cornerRadiusSlider
+                from: 0
+                to: 32
+                stepSize: 1
+                matchTolerance: 0.4
+                asyncCommit: true
+                syncRevision: root.configSyncRevision
+                value: root.windowRulesData?.corner_radius ?? 16
+                displayValue: Math.round(liveValue) + " px"
+                presets: [
+                    { label: "0 px", value: 0 },
+                    { label: "8 px", value: 8 },
+                    { label: "12 px", value: 12 },
+                    { label: "16 px", value: 16 },
+                    { label: "24 px", value: 24 }
+                ]
+                onMoved: nextVal => root.setConfig("window-rules", "corner-radius", String(Math.round(nextVal)))
             }
         }
 
@@ -2808,33 +2868,24 @@ ContentPage {
             title: Translation.tr("Inactive window opacity")
             tooltip: Translation.tr("Transparency of unfocused windows (1.0 = fully opaque)")
 
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 8
-
-                NiriFieldSlider {
-                    id: inactiveOpacitySlider
-                    from: 0
-                    to: 100
-                    value: Math.round((root.windowRulesData?.inactive_opacity ?? 0.9) * 100)
-                    liveValue: Math.round((root.windowRulesData?.inactive_opacity ?? 0.9) * 100)
-                    stepSize: 5
-                    configuration: StyledSlider.Configuration.S
-
-                    onMoved: {
-                        if (pressed) return
-                        root.setConfig("window-rules", "inactive-opacity", (value / 100.0).toFixed(2))
-                    }
-                }
-
-                StyledText {
-                    text: (inactiveOpacitySlider.value / 100.0).toFixed(2)
-                    font.pixelSize: Appearance.font.pixelSize.smallest
-                    font.family: Appearance.font.family.monospace
-                    color: Appearance.colors.colSubtext
-                    Layout.preferredWidth: 35
-                    horizontalAlignment: Text.AlignRight
-                }
+            SettingsPresetRow {
+                id: inactiveOpacitySlider
+                from: 0
+                to: 100
+                stepSize: 5
+                matchTolerance: 1
+                asyncCommit: true
+                syncRevision: root.configSyncRevision
+                value: Math.round((root.windowRulesData?.inactive_opacity ?? 0.9) * 100)
+                displayValue: Math.round(liveValue) + "%"
+                presets: [
+                    { label: "75%", value: 75 },
+                    { label: "85%", value: 85 },
+                    { label: "90%", value: 90 },
+                    { label: "95%", value: 95 },
+                    { label: "100%", value: 100 }
+                ]
+                onMoved: nextVal => root.setConfig("window-rules", "inactive-opacity", (nextVal / 100.0).toFixed(2))
             }
         }
 
@@ -2876,13 +2927,13 @@ ContentPage {
 
         SettingsGroup {
             id: motionFields
-            fieldColumns: width >= 700 * Appearance.fontSizeScale ? 2 : 1
+            fieldColumns: 1
             Rectangle {
                 id: motionPreviewStage
                 Layout.alignment: Qt.AlignTop
                 objectName: "niriMotionPreviewStage"
                 Layout.fillWidth: true
-                implicitHeight: 92
+                implicitHeight: 84
                 radius: Appearance.rounding.normal
                 color: Appearance.colors.colLayer1
                 border.width: 1
@@ -2890,7 +2941,7 @@ ContentPage {
                 clip: true
 
                 property bool previewShifted: false
-                readonly property int previewDurationMs: Math.max(80, Math.round(280 * Math.max(0.5, (slowdownSlider.value / 100.0))))
+                readonly property int previewDurationMs: Math.max(80, Math.round(280 * Math.max(0.5, (slowdownSlider.liveValue / 100.0))))
 
                 RowLayout {
                     anchors.fill: parent
@@ -2908,7 +2959,7 @@ ContentPage {
                             x: motionPreviewStage.previewShifted
                                 ? Math.max(0, parent.width - width - 8)
                                 : 8
-                            radius: Math.min(18, Math.max(4, Math.round(cornerRadiusSlider.value)))
+                            radius: Math.min(18, Math.max(4, Math.round(cornerRadiusSlider.liveValue)))
                             color: ColorUtils.transparentize(Appearance.colors.colPrimary, 0.84)
                             border.width: 2
                             border.color: Appearance.colors.colPrimary
@@ -2932,7 +2983,7 @@ ContentPage {
                                 }
 
                                 StyledText {
-                                    text: (slowdownSlider.value / 100.0).toFixed(2) + "x"
+                                    text: (slowdownSlider.liveValue / 100.0).toFixed(2) + "×"
                                     font.pixelSize: Appearance.font.pixelSize.smaller
                                     font.family: Appearance.font.family.monospace
                                     font.weight: Font.DemiBold
@@ -2951,60 +3002,58 @@ ContentPage {
                 }
             }
 
-            ConfigRow {
-                uniform: true
+            GridLayout {
+                Layout.fillWidth: true
+                columns: width >= 430 * Appearance.fontSizeScale ? 2 : 1
+                uniformCellWidths: columns === 2
+                columnSpacing: 12
+                rowSpacing: 6
 
                 SettingsSwitch {
                     id: animationsEnabledSwitch
-                Layout.fillWidth: true
-                buttonIcon: "animation"
-                text: Translation.tr("Compositor animations")
-                checked: root.animationsData?.enabled ?? true
-                onCheckedChanged: {
-                    if (!root.animationsReady) return
-                    root.setBooleanConfig("animations", "enabled", checked)
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    buttonIcon: "animation"
+                    text: Translation.tr("Compositor animations")
+                    checked: root.animationsData?.enabled ?? true
+                    onCheckedChanged: {
+                        if (!root.animationsReady) return
+                        root.setBooleanConfig("animations", "enabled", checked)
+                    }
+                }
+
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    buttonIcon: "sports_esports"
+                    text: Translation.tr("Skip in GameMode")
+                    checked: Config.options?.gameMode?.disableNiriAnimations ?? true
+                    onCheckedChanged: Config.setNestedValue("gameMode.disableNiriAnimations", checked)
                 }
             }
-
-            SettingsSwitch {
-                Layout.fillWidth: true
-                buttonIcon: "sports_esports"
-                text: Translation.tr("Skip in GameMode")
-                checked: Config.options?.gameMode?.disableNiriAnimations ?? true
-                onCheckedChanged: Config.setNestedValue("gameMode.disableNiriAnimations", checked)
-            }
-        }
 
         ContentSubsection {
             title: Translation.tr("Global animation slowdown")
             tooltip: Translation.tr("1.0 is normal speed. Higher values make every animation slower.")
 
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 8
-
-                NiriFieldSlider {
-                    id: slowdownSlider
-                    from: 50
-                    to: 500
-                    value: Math.round((root.animationsData?.slowdown ?? 1.0) * 100)
-                    liveValue: Math.round((root.animationsData?.slowdown ?? 1.0) * 100)
-                    stepSize: 10
-                    configuration: StyledSlider.Configuration.S
-                    onMoved: {
-                        if (pressed) return
-                        root.setConfig("animations", "slowdown", (value / 100.0).toFixed(2))
-                    }
-                }
-
-                StyledText {
-                    text: (slowdownSlider.value / 100.0).toFixed(2) + "x"
-                    font.pixelSize: Appearance.font.pixelSize.smallest
-                    font.family: Appearance.font.family.monospace
-                    color: Appearance.colors.colSubtext
-                    Layout.preferredWidth: 42
-                    horizontalAlignment: Text.AlignRight
-                }
+            SettingsPresetRow {
+                id: slowdownSlider
+                from: 50
+                to: 500
+                stepSize: 10
+                matchTolerance: 3
+                asyncCommit: true
+                syncRevision: root.configSyncRevision
+                value: Math.round((root.animationsData?.slowdown ?? 1.0) * 100)
+                displayValue: (liveValue / 100.0).toFixed(2) + "×"
+                presets: [
+                    { label: "0.5×", value: 50 },
+                    { label: "0.8×", value: 80 },
+                    { label: "1.0×", value: 100 },
+                    { label: "1.5×", value: 150 },
+                    { label: "2.0×", value: 200 }
+                ]
+                onMoved: nextVal => root.setConfig("animations", "slowdown", (nextVal / 100.0).toFixed(2))
             }
         }
 
@@ -3114,27 +3163,18 @@ ContentPage {
         title: Translation.tr("Window Chrome & Struts")
 
         SettingsGroup {
-            ConfigRow {
-                uniform: true
-
-                SettingsSwitch {
-                    Layout.fillWidth: true
-                    buttonIcon: "title"
-                    text: Translation.tr("Shell window titlebars")
-                    checked: Config.options?.windows?.showTitlebar ?? true
-                    onCheckedChanged: Config.setNestedValue("windows.showTitlebar", checked)
-                }
-
-                SettingsSwitch {
-                    Layout.fillWidth: true
-                    buttonIcon: "format_align_center"
-                    text: Translation.tr("Center window titles")
-                    checked: Config.options?.windows?.centerTitle ?? true
-                    onCheckedChanged: Config.setNestedValue("windows.centerTitle", checked)
-                }
+            SettingsSwitch {
+                visible: (Config.options?.panelFamily ?? "abyss") === "waffle"
+                Layout.fillWidth: true
+                buttonIcon: "title"
+                text: Translation.tr("Shell window titlebars")
+                checked: Config.options?.windows?.showTitlebar ?? true
+                onCheckedChanged: Config.setNestedValue("windows.showTitlebar", checked)
             }
 
-            SettingsDivider {}
+            SettingsDivider {
+                visible: (Config.options?.panelFamily ?? "abyss") === "waffle"
+            }
 
             ContentSubsection {
                 title: Translation.tr("Outer workspace struts (px)")
@@ -3229,6 +3269,7 @@ ContentPage {
 
             ConfigRow {
                 uniform: true
+                visible: (Config.options?.panelFamily ?? "abyss") !== "abyss"
 
                 SettingsSwitch {
                     Layout.fillWidth: true
@@ -3248,7 +3289,7 @@ ContentPage {
             }
 
             ConfigRow {
-                uniform: true
+                uniform: (Config.options?.panelFamily ?? "abyss") === "ii"
 
                 SettingsSwitch {
                     Layout.fillWidth: true
@@ -3259,6 +3300,7 @@ ContentPage {
                 }
 
                 SettingsSwitch {
+                    visible: (Config.options?.panelFamily ?? "abyss") === "ii"
                     Layout.fillWidth: true
                     buttonIcon: "desktop_windows"
                     text: Translation.tr("Active screen overview")
@@ -3316,6 +3358,7 @@ ContentPage {
                 tooltip: Translation.tr("When to center the focused column on screen")
 
                 ConfigSelectionArray {
+                    fillWidthSegments: true
                     currentValue: root.layoutData?.center_focused ?? "never"
                     options: [
                         { displayName: Translation.tr("Never"), icon: "align_horizontal_left", value: "never" },
@@ -3352,27 +3395,15 @@ ContentPage {
                 }
             }
 
-            ConfigRow {
-                uniform: true
-
-                SettingsSwitch {
-                    id: emptyWorkspaceAboveFirstSwitch
-                    Layout.fillWidth: true
-                    buttonIcon: "vertical_align_top"
-                    text: Translation.tr("Empty space above first")
-                    checked: root.layoutData?.empty_workspace_above_first ?? false
-                    onCheckedChanged: {
-                        if (!root.layoutReady) return
-                        root.setBooleanConfig("layout", "empty-workspace-above-first", checked)
-                    }
-                }
-
-                SettingsSwitch {
-                    Layout.fillWidth: true
-                    buttonIcon: "grid_view"
-                    text: Translation.tr("Shell overview")
-                    checked: Config.options?.overview?.enable ?? true
-                    onCheckedChanged: Config.setNestedValue("overview.enable", checked)
+            SettingsSwitch {
+                id: emptyWorkspaceAboveFirstSwitch
+                Layout.fillWidth: true
+                buttonIcon: "vertical_align_top"
+                text: Translation.tr("Empty space above first")
+                checked: root.layoutData?.empty_workspace_above_first ?? false
+                onCheckedChanged: {
+                    if (!root.layoutReady) return
+                    root.setBooleanConfig("layout", "empty-workspace-above-first", checked)
                 }
             }
 
@@ -3415,6 +3446,7 @@ ContentPage {
                 uniform: true
 
                 SettingsSwitch {
+                    visible: (Config.options?.panelFamily ?? "abyss") !== "abyss"
                     Layout.fillWidth: true
                     buttonIcon: "swap_horiz"
                     text: Translation.tr("Alt-Tab animations")
@@ -3708,6 +3740,7 @@ ContentPage {
             title: Translation.tr("Mouse acceleration & speed")
 
             ConfigSelectionArray {
+                fillWidthSegments: true
                 currentValue: root.mouseData?.accel_profile ?? "flat"
                 options: [
                     { displayName: Translation.tr("Adaptive"), icon: "tune", value: "adaptive" },
@@ -3718,33 +3751,19 @@ ContentPage {
                 }
             }
 
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 8
-
-                NiriFieldSlider {
-                    id: mouseSpeedSlider
-                    from: -100
-                    to: 100
-                    value: Math.round((root.mouseData?.accel_speed ?? 0) * 100)
-                    liveValue: Math.round((root.mouseData?.accel_speed ?? 0) * 100)
-                    stepSize: 5
-                    configuration: StyledSlider.Configuration.S
-
-                    onMoved: {
-                        if (pressed) return
-                        root.setConfig("input", "mouse.accel-speed", (value / 100.0).toFixed(2))
-                    }
-                }
-
-                StyledText {
-                    text: (mouseSpeedSlider.value / 100.0).toFixed(2)
-                    font.pixelSize: Appearance.font.pixelSize.smallest
-                    font.family: Appearance.font.family.monospace
-                    color: Appearance.colors.colSubtext
-                    Layout.preferredWidth: 40
-                    horizontalAlignment: Text.AlignRight
-                }
+            SettingsMetricControl {
+                id: mouseSpeedSlider
+                icon: "speed"
+                text: Translation.tr("Pointer speed")
+                centerOrigin: true
+                from: -100
+                to: 100
+                stepSize: 5
+                asyncCommit: true
+                syncRevision: root.configSyncRevision
+                currentValue: Math.round((root.mouseData?.accel_speed ?? 0) * 100)
+                valueText: (liveValue >= 0 ? "+" : "") + (liveValue / 100.0).toFixed(2)
+                onCommitted: val => root.setConfig("input", "mouse.accel-speed", (val / 100.0).toFixed(2))
             }
         }
 
@@ -3753,7 +3772,7 @@ ContentPage {
         ContentSubsection {
             Layout.fillWidth: true
             Layout.minimumWidth: 0
-            title: Translation.tr("Cursor theme & size")
+            title: Translation.tr("Cursor theme")
             visible: true
 
             StyledComboBox {
@@ -3773,37 +3792,31 @@ ContentPage {
             }
         }
 
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 8
-
-            NiriFieldSlider {
-                id: cursorSizeSlider
-                from: 16
-                to: 48
-                value: root.cursorData?.size ?? 24
-                liveValue: root.cursorData?.size ?? 24
-                stepSize: 2
-                configuration: StyledSlider.Configuration.S
-
-                onMoved: {
-                    if (pressed) return
-                    root.setConfig("input", "cursor.xcursor-size", String(Math.round(value)))
-                }
-            }
-
-            StyledText {
-                text: Math.round(cursorSizeSlider.value) + "px"
-                font.pixelSize: Appearance.font.pixelSize.smallest
-                font.family: Appearance.font.family.monospace
-                color: Appearance.colors.colSubtext
-                Layout.preferredWidth: 35
-                horizontalAlignment: Text.AlignRight
-            }
+        SettingsPresetRow {
+            id: cursorSizeSlider
+            icon: "arrow_selector_tool"
+            text: Translation.tr("Cursor size")
+            from: 16
+            to: 48
+            stepSize: 2
+            matchTolerance: 0.5
+            asyncCommit: true
+            syncRevision: root.configSyncRevision
+            value: root.cursorData?.size ?? 24
+            displayValue: Math.round(liveValue) + " px"
+            presets: [
+                { label: "16 px", value: 16 },
+                { label: "20 px", value: 20 },
+                { label: "24 px", value: 24 },
+                { label: "32 px", value: 32 },
+                { label: "48 px", value: 48 }
+            ]
+            onMoved: nextVal => root.setConfig("input", "cursor.xcursor-size", String(Math.round(nextVal)))
         }
 
         SettingsSwitch {
             id: cursorHideWhenTypingSwitch
+            Layout.columnSpan: mouseFields.activeColumns
             Layout.fillWidth: true
             buttonIcon: "keyboard_hide"
             text: Translation.tr("Hide cursor while typing")
@@ -4247,6 +4260,7 @@ ContentPage {
                 title: Translation.tr("Touchpad acceleration & speed")
 
                 ConfigSelectionArray {
+                    fillWidthSegments: true
                     currentValue: root.touchpadData?.accel_profile ?? "adaptive"
                     options: [
                         { displayName: Translation.tr("Adaptive"), icon: "tune", value: "adaptive" },
@@ -4257,33 +4271,19 @@ ContentPage {
                     }
                 }
 
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 8
-
-                    NiriFieldSlider {
-                        id: touchpadSpeedSlider
-                        from: -100
-                        to: 100
-                        value: Math.round((root.touchpadData?.accel_speed ?? 0) * 100)
-                        liveValue: Math.round((root.touchpadData?.accel_speed ?? 0) * 100)
-                        stepSize: 5
-                        configuration: StyledSlider.Configuration.S
-
-                        onMoved: {
-                            if (pressed) return
-                            root.setConfig("input", "touchpad.accel-speed", (value / 100.0).toFixed(2))
-                        }
-                    }
-
-                    StyledText {
-                        text: (touchpadSpeedSlider.value / 100.0).toFixed(2)
-                        font.pixelSize: Appearance.font.pixelSize.smallest
-                        font.family: Appearance.font.family.monospace
-                        color: Appearance.colors.colSubtext
-                        Layout.preferredWidth: 40
-                        horizontalAlignment: Text.AlignRight
-                    }
+                SettingsMetricControl {
+                    id: touchpadSpeedSlider
+                    icon: "speed"
+                    text: Translation.tr("Touchpad speed")
+                    centerOrigin: true
+                    from: -100
+                    to: 100
+                    stepSize: 5
+                    asyncCommit: true
+                    syncRevision: root.configSyncRevision
+                    currentValue: Math.round((root.touchpadData?.accel_speed ?? 0) * 100)
+                    valueText: (liveValue >= 0 ? "+" : "") + (liveValue / 100.0).toFixed(2)
+                    onCommitted: val => root.setConfig("input", "touchpad.accel-speed", (val / 100.0).toFixed(2))
                 }
             }
         }
@@ -4372,9 +4372,11 @@ ContentPage {
 
                 ContentSubsection {
                     Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignTop
                     title: Translation.tr("Trackpoint acceleration")
 
                     ConfigSelectionArray {
+                        fillWidthSegments: true
                         currentValue: root.trackpointData?.accel_profile ?? "flat"
                         options: [
                             { displayName: Translation.tr("Adaptive"), icon: "tune", value: "adaptive" },
@@ -4386,6 +4388,7 @@ ContentPage {
 
                 ContentSubsection {
                     Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignTop
                     title: Translation.tr("Trackpoint scrolling")
 
                     StyledComboBox {
@@ -4402,33 +4405,19 @@ ContentPage {
                 title: Translation.tr("Trackpoint speed")
                 tooltip: Translation.tr("Acceleration speed. Negative = slower, positive = faster.")
 
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 8
-
-                    NiriFieldSlider {
-                        id: trackpointSpeedSlider
-                        from: -100
-                        to: 100
-                        value: Math.round((root.trackpointData?.accel_speed ?? 0) * 100)
-                        liveValue: Math.round((root.trackpointData?.accel_speed ?? 0) * 100)
-                        stepSize: 5
-                        configuration: StyledSlider.Configuration.S
-
-                        onMoved: {
-                            if (pressed) return
-                            root.setConfig("input", "trackpoint.accel-speed", (value / 100.0).toFixed(2))
-                        }
-                    }
-
-                    StyledText {
-                        text: (trackpointSpeedSlider.value / 100.0).toFixed(2)
-                        font.pixelSize: Appearance.font.pixelSize.smallest
-                        font.family: Appearance.font.family.monospace
-                        color: Appearance.colors.colSubtext
-                        Layout.preferredWidth: 40
-                        horizontalAlignment: Text.AlignRight
-                    }
+                SettingsMetricControl {
+                    id: trackpointSpeedSlider
+                    icon: "speed"
+                    text: Translation.tr("Acceleration speed")
+                    centerOrigin: true
+                    from: -100
+                    to: 100
+                    stepSize: 5
+                    asyncCommit: true
+                    syncRevision: root.configSyncRevision
+                    currentValue: Math.round((root.trackpointData?.accel_speed ?? 0) * 100)
+                    valueText: (liveValue >= 0 ? "+" : "") + (liveValue / 100.0).toFixed(2)
+                    onCommitted: val => root.setConfig("input", "trackpoint.accel-speed", (val / 100.0).toFixed(2))
                 }
             }
 

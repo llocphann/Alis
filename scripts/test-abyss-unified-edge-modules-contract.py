@@ -62,7 +62,10 @@ assert 'liquidPresentationKind: "notesTimers"' in module
 assert 'liquidPresentationKind: "notificationActivity"' in module
 assert 'presentationKind === "notesTimers"' in perimeter
 assert 'presentationKind === "notificationActivity"' in perimeter
-assert 'tangentEdgeOverride: root.moduleAnchorMode ? "" : "end"' in center
+assert 'tangentEdgeOverride: root.moduleAnchorMode ? "" : root.cornerTangentEdge' in center
+assert 'tangentEdgeOverride: root.cornerTangentEdge' in notes
+assert 'cornerTangentEdge:notesAnchor.popupTangentEdge' in abyss_corners
+assert 'cornerTangentEdge:centerAnchor.popupTangentEdge' in abyss_corners
 assert "GlobalStates.notificationCenterExplicitOpen" in perimeter
 assert "NotificationCenterPopup {" in corners
 assert "QuickNotesPopup {" in corners

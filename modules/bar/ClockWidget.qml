@@ -27,29 +27,33 @@ Item {
         const tokens = raw.split(/[,\s]+/).filter(t => t.length > 0)
         const items = []
         for (const token of tokens) {
-            if (/^[A-Za-zÀ-ỹ]+$/.test(token) && token.length > 3) {
-                const shortDay = Qt.locale().toString(DateTime.todayDate, "ddd").replace(/\.$/, "")
+            if (/^[A-Za-zÀ-ỹ]+$/.test(token)) {
+                const shortDay = token.length > 3
+                    ? Qt.locale().toString(DateTime.todayDate, "ddd").replace(/\.$/, "")
+                    : token
                 items.push({
                     text: shortDay.length > 0 && shortDay.length <= 4 ? shortDay : token.slice(0, 3),
-                    slashBefore: false
+                    isWeekday: true
                 })
             } else if (/[\/.-]/.test(token)) {
                 const parts = token.split(/[\/.-]+/).filter(p => p.length > 0)
-                for (let i = 0; i < parts.length; ++i) {
-                    const part = parts[i]
+                if (parts.length >= 2) {
+                    const compactParts = parts.filter(p => !/^\d{4}$/.test(p)).slice(0, 2)
                     items.push({
-                        text: /^\d{4}$/.test(part) ? part.slice(2) : part,
-                        slashBefore: i > 0
+                        text: (compactParts.length >= 2 ? compactParts : parts.slice(0, 2)).join("/"),
+                        isWeekday: false
                     })
+                } else if (parts.length === 1) {
+                    items.push({ text: parts[0], isWeekday: false })
                 }
             } else {
-                items.push({ text: token, slashBefore: false })
+                items.push({ text: token, isWeekday: false })
             }
         }
         return items
     }
     implicitWidth: root.verticalContent
-        ? Math.max(40, verticalColumn.implicitHeight + 12 * root.typographyScale)
+        ? Math.max(36, verticalColumn.implicitHeight + 10 * root.typographyScale)
         : rowLayout.implicitWidth
     implicitHeight: Appearance.sizes.barHeight
 
@@ -106,16 +110,23 @@ Item {
         Repeater {
             model: root.verticalTimeLines
             delegate: StyledText {
+                required property int index
                 required property string modelData
+                readonly property bool isAmPm: /am|pm/i.test(modelData)
+                readonly property bool isSeconds: index >= 2 && /^\d{2}$/.test(modelData)
                 Layout.alignment: Qt.AlignHCenter
                 horizontalAlignment: Text.AlignHCenter
                 font.family: root._timeFontFamily.length > 0
                     ? root._timeFontFamily : Appearance.font.family.main
-                font.pixelSize: modelData.match(/am|pm/i)
+                font.weight: (isAmPm || isSeconds) ? Font.Medium : Font.DemiBold
+                font.pixelSize: isAmPm
                     ? Math.round(Appearance.font.pixelSize.smaller * root.typographyScale)
-                    : (root._timePixelSize > 0
-                        ? root._timePixelSize * root.typographyScale
-                        : Appearance.font.pixelSize.large * root.typographyScale)
+                    : (isSeconds
+                        ? Math.round(Appearance.font.pixelSize.small * root.typographyScale)
+                        : (root._timePixelSize > 0
+                            ? root._timePixelSize * root.typographyScale
+                            : Math.round(Appearance.font.pixelSize.larger * root.typographyScale)))
+                opacity: isSeconds ? 0.8 : 1
                 color: Appearance.colors.colOnLayer1
                 text: modelData
             }
@@ -126,7 +137,7 @@ Item {
             Layout.alignment: Qt.AlignHCenter
             Layout.topMargin: 2 * root.typographyScale
             Layout.bottomMargin: 2 * root.typographyScale
-            implicitWidth: 16 * root.typographyScale
+            implicitWidth: 18 * root.typographyScale
             implicitHeight: 1
             color: Appearance.colors.colOnLayer1
             opacity: 0.45
@@ -134,32 +145,18 @@ Item {
 
         Repeater {
             model: root.showDate ? root.verticalDateItems : []
-            delegate: ColumnLayout {
+            delegate: StyledText {
                 required property var modelData
                 Layout.alignment: Qt.AlignHCenter
-                spacing: 1 * root.typographyScale
-
-                Rectangle {
-                    visible: Boolean(modelData?.slashBefore)
-                    Layout.alignment: Qt.AlignHCenter
-                    implicitWidth: 8 * root.typographyScale
-                    implicitHeight: 1
-                    rotation: -14
-                    color: Appearance.colors.colOnLayer1
-                    opacity: 0.4
-                }
-
-                StyledText {
-                    Layout.alignment: Qt.AlignHCenter
-                    horizontalAlignment: Text.AlignHCenter
-                    font.family: root._dateFontFamily.length > 0
-                        ? root._dateFontFamily : Appearance.font.family.main
-                    font.pixelSize: root._datePixelSize > 0
-                        ? root._datePixelSize * root.typographyScale
-                        : Appearance.font.pixelSize.small * root.typographyScale
-                    color: Appearance.colors.colOnLayer1
-                    text: String(modelData?.text ?? "")
-                }
+                horizontalAlignment: Text.AlignHCenter
+                font.family: root._dateFontFamily.length > 0
+                    ? root._dateFontFamily : Appearance.font.family.main
+                font.weight: Font.Medium
+                font.pixelSize: root._datePixelSize > 0
+                    ? root._datePixelSize * root.typographyScale
+                    : Math.round(Appearance.font.pixelSize.smaller * root.typographyScale)
+                color: Appearance.colors.colOnLayer1
+                text: String(modelData?.text ?? "")
             }
         }
     }

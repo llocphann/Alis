@@ -68,7 +68,6 @@ ShellRoot {
                 check(detailCards.length===6,"detailed Weather lost its four metrics, secondary strip or timeline")
                 for (const family of ["abyss", "waffle"]) {
                     Config.setNestedValue("panelFamily",family)
-                    popup.currentTab=1
                     for (const dark of [false,true]) {
                         Appearance.m3colors.darkmode=dark
                         Appearance.m3colors.m3surface=dark ? "#0b111b" : "#fff9f3"
@@ -96,7 +95,6 @@ ShellRoot {
                             }
                         }
                     }
-                    popup.currentTab=0
                 }
                 console.info("WEATHER_HOUR_INK_PASS", checked, "actual hourly labels, both routes, live light/dark/light changes")
             } catch (e) { console.error("WEATHER_HOUR_INK_FAIL", e.message, e.stack) }

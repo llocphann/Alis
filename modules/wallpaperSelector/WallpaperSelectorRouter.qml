@@ -147,6 +147,12 @@ Scope {
             else root._openLauncher("",monitorName)
         }
         function random(): void { Wallpapers.randomFromCurrentFolder() }
+        function apply(filePath: string): void {
+            const cleaned = FileUtils.trimFileProtocol(String(filePath ?? "")).trim()
+            if (cleaned.length === 0)
+                return
+            Wallpapers.select(cleaned)
+        }
         function status(): string {
             return JSON.stringify({
                 style: "caelestia",

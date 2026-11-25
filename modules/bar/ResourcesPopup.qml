@@ -6,6 +6,11 @@ import QtQuick.Layouts
 
 StyledPopup {
     id: popup
+    readonly property string effectiveAttachmentEdge: popup.embeddedHost
+        ? String(popup.embeddedHost.attachedEdge || "top")
+        : popup._attachmentEdge
+    property bool verticalLayout:
+        effectiveAttachmentEdge === "left" || effectiveAttachmentEdge === "right"
     readonly property bool thinkFanManaged:
         ThinkFanService.stateKnown && ThinkFanService.profile === "managed"
     readonly property bool thinkFanCanApply:
@@ -155,31 +160,42 @@ StyledPopup {
     }
 
     ColumnLayout {
-        spacing: 12
+        id: mainColumn
+        spacing: popup.verticalLayout ? 9 : 12
+        implicitWidth: popup.verticalLayout
+            ? Math.max(246, fanHeaderRow.implicitWidth)
+            : Math.max(resourcesRow.implicitWidth, fanHeaderRow.implicitWidth)
 
-        Row {
+        GridLayout {
             id: resourcesRow
-            Layout.alignment: Qt.AlignHCenter
-            spacing: 12
+            columns: popup.verticalLayout ? 1 : 3
+            columnSpacing: 12
+            rowSpacing: 9
+            Layout.fillWidth: popup.verticalLayout
+            Layout.alignment: popup.verticalLayout ? Qt.AlignLeft : Qt.AlignHCenter
 
-            Column {
+            ColumnLayout {
                 id: ramColumn
-                anchors.top: parent.top
-                spacing: 8
+                Layout.alignment: Qt.AlignTop
+                Layout.fillWidth: popup.verticalLayout
+                spacing: popup.verticalLayout ? 5 : 8
 
                 ResourceHeaderItem {
                     icon: "memory"
                     label: "RAM"
                 }
-                Column {
+                ColumnLayout {
+                    Layout.fillWidth: popup.verticalLayout
                     spacing: 4
                     ResourceItem {
+                        Layout.fillWidth: popup.verticalLayout
                         icon: "clock_loader_60"
                         label: Translation.tr("Used:")
                         value: (ResourceUsage.memoryUsed / (1024 * 1024)).toFixed(1) + " GB"
                         minimumValueSample: "99.9 GB"
                     }
                     ResourceItem {
+                        Layout.fillWidth: popup.verticalLayout
                         icon: "empty_dashboard"
                         label: Translation.tr("Total:")
                         value: (ResourceUsage.memoryTotal / (1024 * 1024)).toFixed(1) + " GB"
@@ -188,24 +204,37 @@ StyledPopup {
                 }
             }
 
-            Column {
+            ColumnLayout {
                 id: thermalColumn
-                anchors.top: parent.top
-                spacing: 8
+                Layout.alignment: Qt.AlignTop
+                Layout.fillWidth: popup.verticalLayout
+                spacing: popup.verticalLayout ? 5 : 8
+
+                Rectangle {
+                    visible: popup.verticalLayout
+                    Layout.fillWidth: true
+                    Layout.bottomMargin: 4
+                    implicitHeight: 1
+                    color: Appearance.colors.colLayer0Border
+                    opacity: 0.45
+                }
 
                 ResourceHeaderItem {
                     icon: "thermostat"
                     label: Translation.tr("Thermal")
                 }
-                Column {
+                ColumnLayout {
+                    Layout.fillWidth: popup.verticalLayout
                     spacing: 4
                     ResourceItem {
+                        Layout.fillWidth: popup.verticalLayout
                         icon: "memory"
                         label: "CPU:"
                         value: ResourceUsage.cpuTemp + "°C"
                         minimumValueSample: "99°C"
                     }
                     ResourceItem {
+                        Layout.fillWidth: popup.verticalLayout
                         icon: "memory_alt"
                         label: "GPU:"
                         value: ResourceUsage.gpuTemp + "°C"
@@ -214,33 +243,43 @@ StyledPopup {
                 }
             }
 
-            Column {
+            ColumnLayout {
                 id: cpuColumn
-                anchors.top: parent.top
-                spacing: 8
+                Layout.alignment: Qt.AlignTop
+                Layout.fillWidth: popup.verticalLayout
+                spacing: popup.verticalLayout ? 5 : 8
+
+                Rectangle {
+                    visible: popup.verticalLayout
+                    Layout.fillWidth: true
+                    Layout.bottomMargin: 4
+                    implicitHeight: 1
+                    color: Appearance.colors.colLayer0Border
+                    opacity: 0.45
+                }
 
                 ResourceHeaderItem {
                     icon: "planner_review"
                     label: Translation.tr("Load")
                 }
-                Column {
+                ColumnLayout {
+                    Layout.fillWidth: popup.verticalLayout
                     spacing: 4
                     ResourceItem {
+                        Layout.fillWidth: popup.verticalLayout
                         icon: "bolt"
                         label: Translation.tr("CPU:")
                         value: `${Math.round(ResourceUsage.cpuUsage * 100)}%`
-                        // Keep the existing reserved "99%" cell so popup
-                        // geometry never changes, but align the live value to
-                        // the cell's leading edge to remove the visual gap.
                         minimumValueSample: "99%"
-                        valueHorizontalAlignment: Text.AlignLeft
+                        valueHorizontalAlignment: popup.verticalLayout ? Text.AlignRight : Text.AlignLeft
                     }
                     ResourceItem {
+                        Layout.fillWidth: popup.verticalLayout
                         icon: "memory_alt"
                         label: Translation.tr("GPU:")
                         value: `${Math.round(ResourceUsage.gpuUsage * 100)}%`
                         minimumValueSample: "99%"
-                        valueHorizontalAlignment: Text.AlignLeft
+                        valueHorizontalAlignment: popup.verticalLayout ? Text.AlignRight : Text.AlignLeft
                     }
                 }
             }
@@ -256,8 +295,12 @@ StyledPopup {
         ColumnLayout {
             id: fanCompactSection
             objectName: "fanCompactSection"
-            Layout.alignment: Qt.AlignHCenter
-            Layout.preferredWidth: resourcesRow.implicitWidth
+            Layout.alignment: popup.verticalLayout ? Qt.AlignLeft : Qt.AlignHCenter
+            Layout.fillWidth: popup.verticalLayout
+            Layout.preferredWidth: popup.verticalLayout ? -1 : resourcesRow.implicitWidth
+            Layout.minimumWidth: popup.verticalLayout
+                ? Math.max(238, fanHeaderRow.implicitWidth)
+                : Math.max(resourcesRow.implicitWidth, fanHeaderRow.implicitWidth)
             spacing: 8
 
             // Hidden geometry references preserving column-width layout contract
@@ -271,10 +314,12 @@ StyledPopup {
             // 1. Header: Fan icon + Fan | RPM readout + Profile toggle
             Item {
                 Layout.fillWidth: true
+                implicitWidth: fanHeaderRow.implicitWidth
                 implicitHeight: 24
                 height: 24
 
                 RowLayout {
+                    id: fanHeaderRow
                     anchors.fill: parent
                     spacing: 6
 

@@ -28,7 +28,10 @@ assert focus.count("if (requestedPage < 0)") >= 1
 assert 'label.includes("todo") || label.includes("to-do") || label.includes("nexus")' in services
 assert 'SettingsPageRegistry.navigateToKey("integrations",section)' in services
 assert re.search(r'settingsPageIndex:\s*38\b', integrations)
-assert '"nexus"' in integrations and '"calendar"' in integrations
+assert '"nexus"' in integrations
+assert '"calendar"' not in integrations and '"curl"' not in integrations and '"khal"' not in integrations
+planner_cal = (ROOT / "modules" / "dashboard" / "PlannerCalendarSyncPanel.qml").read_text(encoding="utf-8")
+assert "CalendarSync" in planner_cal and "Holiday Presets" in planner_cal
 
 assert 'pageIndex: 38, pageName: root.pages[38].name' in registry
 assert 'section: Translation.tr("To-do & Quick Notes")' in registry
@@ -49,10 +52,10 @@ for(const abyssFamily of [true,false]){
  vm.runInContext(fs.readFileSync(process.argv[2],'utf8').replace(/^\.pragma library\s*$/m,''),policy);
  const context=vm.createContext({root,FamilyPolicy:policy,Config:{options:{panelFamily:abyssFamily?'abyss':'waffle'}}});
  const navigate=vm.runInContext('(function(key,section){'+body+'})',context);
- for(const section of ['Todo','To-do & Quick Notes','Nexus vault','Zettelkasten','Quick Notes','Calendar Sync','SERVICES · NEXUS']){
+ for(const section of ['Todo','To-do & Quick Notes','Nexus vault','Zettelkasten','Quick Notes','SERVICES · NEXUS']){
   assert.equal(navigate('services',section),true);assert.deepEqual(events.pop(),[38,section]);
  }
- for(const section of ['Data','Weather','System','Network','Updates','']){
+ for(const section of ['Data','Weather','System','Network','Updates','Calendar Sync','']){
   assert.equal(navigate('services',section),true);assert.deepEqual(events.pop(),[7,section]);
  }
  for(const section of ['Thinkfan','Fan Control','TLP','Cooling','Thermal']){
@@ -61,7 +64,7 @@ for(const abyssFamily of [true,false]){
  for(const section of ['Audio','Power','Battery','Input']){
   assert.equal(navigate('system',section),true);assert.deepEqual(events.pop(),[1,section]);
  }
- assert.equal(navigate('integrations','Calendar Sync'),true);assert.deepEqual(events.pop(),[38,'Calendar Sync']);
+ assert.equal(navigate('integrations','Nexus'),true);assert.deepEqual(events.pop(),[38,'Nexus']);
  assert.equal(navigate('missing','Nexus'),false);assert.equal(events.length,0);
 }
 console.log('Moved Services deep links: PASS (legacy Services/System routes, missing targets and both families)');

@@ -130,59 +130,32 @@ ContentPage {
         SettingsGroup {
             id: panelStyleGroup
 
-            RowLayout {
+            readonly property bool twoCol: width >= 600
+            readonly property real innerW: Math.max(240, width - SettingsMaterialPreset.groupPadding * 2)
+            readonly property real maxPreviewW: twoCol
+                ? Math.round((innerW - 16) * 0.50)
+                : Math.min(innerW, Math.round(220 * 1.6))
+            readonly property real previewH: Math.max(186, Math.min(238, Math.round(maxPreviewW / 1.6)))
+            readonly property real previewW: Math.min(maxPreviewW, Math.round(previewH * 1.6))
+
+            GridLayout {
+                id: panelStyleGrid
                 Layout.fillWidth: true
-                spacing: 12
-
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    spacing: 2
-
-                    StyledText {
-                        Layout.fillWidth: true
-                        text: "Active shell architecture"
-                        color: Appearance.colors.colOnLayer1
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        font.weight: Font.Medium
-                    }
-
-                    StyledText {
-                        Layout.fillWidth: true
-                        text: modulesPage.isWaffle
-                            ? "Windows 11-inspired taskbar, Start Menu and Action Center."
-                            : "Connected Abyss perimeter frame, top bar and liquid dock."
-                        color: Appearance.colors.colSubtext
-                        font.pixelSize: Appearance.font.pixelSize.smaller
-                        wrapMode: Text.WordWrap
-                    }
-                }
-
-                ConfigSelectionArray {
-                    id: panelStyleSelector
-                    Layout.fillWidth: false
-                    Layout.alignment: Qt.AlignVCenter
-                    currentValue: Config.options?.panelFamily ?? "abyss"
-                    onSelected: newValue => Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "panelFamily", "set", newValue])
-                    options: [
-                        {
-                            displayName: "Abyss",
-                            icon: "water",
-                            value: "abyss"
-                        },
-                        {
-                            displayName: "Waffle",
-                            icon: "window",
-                            value: "waffle"
-                        }
-                    ]
-                }
-            }
+                Layout.minimumWidth: 0
+                columns: panelStyleGroup.twoCol ? 2 : 1
+                columnSpacing: 16
+                rowSpacing: 12
 
             Rectangle {
                 id: panelStylePreview
-                Layout.fillWidth: true
-                implicitHeight: Math.round(224 * Appearance.fontSizeScale)
+                objectName: "panelStylePreview"
+                Layout.fillWidth: !panelStyleGroup.twoCol
+                Layout.preferredWidth: panelStyleGroup.twoCol ? panelStyleGroup.previewW : panelStyleGroup.previewW
+                Layout.minimumWidth: panelStyleGroup.twoCol ? panelStyleGroup.previewW : 0
+                Layout.maximumWidth: panelStyleGroup.previewW
+                Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
+                implicitWidth: panelStyleGroup.previewW
+                implicitHeight: panelStyleGroup.previewH
                 Layout.preferredHeight: implicitHeight
                 radius: Appearance.rounding.normal
                 clip: true
@@ -966,6 +939,105 @@ ContentPage {
                     }
                 }
             }
+
+            // Right column: architecture heading, selector & highlights flush to right edge
+            ColumnLayout {
+                id: panelStyleControlsCol
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                Layout.alignment: Qt.AlignVCenter
+                spacing: 10
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    spacing: 3
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: Translation.tr("Active shell architecture")
+                        color: Appearance.colors.colOnLayer1
+                        font.pixelSize: Appearance.font.pixelSize.normal
+                        font.weight: Font.DemiBold
+                        wrapMode: Text.WordWrap
+                    }
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: modulesPage.isWaffle
+                            ? Translation.tr("Windows 11-inspired taskbar, Start Menu and Action Center.")
+                            : Translation.tr("Connected Abyss perimeter frame, top bar and liquid dock.")
+                        color: Appearance.colors.colSubtext
+                        font.pixelSize: Appearance.font.pixelSize.smaller
+                        wrapMode: Text.WordWrap
+                    }
+                }
+
+                ConfigSelectionArray {
+                    id: panelStyleSelector
+                    Layout.fillWidth: true
+                    fillWidthSegments: true
+                    currentValue: Config.options?.panelFamily ?? "abyss"
+                    onSelected: newValue => Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "panelFamily", "set", newValue])
+                    options: [
+                        {
+                            displayName: "Abyss",
+                            icon: "water",
+                            value: "abyss"
+                        },
+                        {
+                            displayName: "Waffle",
+                            icon: "window",
+                            value: "waffle"
+                        }
+                    ]
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    spacing: 5
+
+                    Repeater {
+                        model: modulesPage.isWaffle
+                            ? [
+                                { icon: "dock_to_bottom", text: Translation.tr("Centered taskbar with Start Menu and system tray") },
+                                { icon: "dashboard_customize", text: Translation.tr("Action Center quick toggles and notification drawer") },
+                                { icon: "view_carousel", text: Translation.tr("Task View workspace switcher and widget board") }
+                            ]
+                            : [
+                                { icon: "waves", text: Translation.tr("Seamless perimeter frame with live edgebar waves") },
+                                { icon: "dock_to_bottom", text: Translation.tr("Integrated liquid dock, sidebars and top status bar") },
+                                { icon: "layers", text: Translation.tr("Embedded live-preview Settings inside the shell") }
+                            ]
+
+                        delegate: RowLayout {
+                            required property var modelData
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: 0
+                            spacing: 8
+
+                            MaterialSymbol {
+                                Layout.alignment: Qt.AlignVCenter
+                                text: modelData.icon
+                                iconSize: 15
+                                color: Appearance.colors.colPrimary
+                            }
+
+                            StyledText {
+                                Layout.fillWidth: true
+                                Layout.minimumWidth: 0
+                                text: modelData.text
+                                font.pixelSize: Appearance.font.pixelSize.smaller
+                                color: Appearance.colors.colSubtext
+                                elide: Text.ElideRight
+                                maximumLineCount: 1
+                            }
+                        }
+                    }
+                }
+            }
+            }
         }
     }
 
@@ -992,9 +1064,10 @@ ContentPage {
 
             GridLayout {
                 Layout.fillWidth: true
-                columns: width >= 410 ? 2 : 1
-                uniformCellWidths: columns === 2
-                columnSpacing: 10
+                Layout.minimumWidth: 0
+                columns: width >= Math.round(760 * Appearance.fontSizeScale) ? 3 : 1
+                uniformCellWidths: columns > 1
+                columnSpacing: 14
                 rowSpacing: 6
 
                 SettingsSwitch {
@@ -1019,22 +1092,29 @@ ContentPage {
                     checked: Config.options?.reloadToasts?.enable ?? true
                     onCheckedChanged: Config.setNestedValue("reloadToasts.enable", checked)
                 }
+
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    Layout.minimumWidth: 0
+                    buttonIcon: "swap_horiz"
+                    text: Translation.tr("Animate panel style switch")
+                    checked: Config.options?.familyTransitionAnimation ?? true
+                    onCheckedChanged: Config.setNestedValue("familyTransitionAnimation", checked)
+                }
             }
 
-            SettingsSwitch {
-                buttonIcon: "swap_horiz"
-                text: Translation.tr("Animate panel style switch")
-                checked: Config.options?.familyTransitionAnimation ?? true
-                onCheckedChanged: Config.setNestedValue("familyTransitionAnimation", checked)
+            SettingsDivider {
+                visible: !modulesPage.isAbyss
             }
-
-            SettingsDivider {}
 
             ContentSubsection {
+                visible: !modulesPage.isAbyss
                 title: Translation.tr("Overlay layout")
                 enabled: Config.options?.settingsUi?.overlayMode ?? true
 
                 ConfigSelectionArray {
+                    fillWidthSegments: true
                     currentValue: Config.options?.settingsUi?.overlayStyle ?? "rail"
                     options: [
                         { displayName: Translation.tr("Nav rail"), icon: "view_sidebar", value: "rail" },
@@ -1054,24 +1134,17 @@ ContentPage {
                 }
             }
 
-            SettingsDivider {}
+            SettingsDivider {
+                visible: !modulesPage.isAbyss
+            }
 
             ContentSubsection {
+                visible: !modulesPage.isAbyss
                 title: Translation.tr("Overlay appearance")
                 enabled: Config.options?.settingsUi?.overlayMode ?? true
 
                 ConfigRow {
                     uniform: true
-
-                    ConfigSpinBox {
-                        icon: "opacity"
-                        text: Translation.tr("Panel opacity (%)")
-                        value: Math.round((Config.options?.settingsUi?.overlayAppearance?.backgroundOpacity ?? 1.0) * 100)
-                        from: 50
-                        to: 100
-                        stepSize: 5
-                        onValueChanged: Config.setNestedValue("settingsUi.overlayAppearance.backgroundOpacity", value / 100)
-                    }
 
                     ConfigSpinBox {
                         icon: "blur_on"
@@ -1085,18 +1158,18 @@ ContentPage {
                             text: Translation.tr("Blur wallpaper behind Settings; 0 disables the effect.")
                         }
                     }
-                }
 
-                ConfigSpinBox {
-                    icon: "water"
-                    text: Translation.tr("Background dim (%)")
-                    value: Config.options?.settingsUi?.overlayAppearance?.scrimDim ?? 35
-                    from: 0
-                    to: 80
-                    stepSize: 5
-                    onValueChanged: Config.setNestedValue("settingsUi.overlayAppearance.scrimDim", value)
-                    StyledToolTip {
-                        text: Translation.tr("How dark the backdrop behind the Settings panel should be (0 = transparent, 80 = very dark)")
+                    ConfigSpinBox {
+                        icon: "water"
+                        text: Translation.tr("Background dim (%)")
+                        value: Config.options?.settingsUi?.overlayAppearance?.scrimDim ?? 35
+                        from: 0
+                        to: 80
+                        stepSize: 5
+                        onValueChanged: Config.setNestedValue("settingsUi.overlayAppearance.scrimDim", value)
+                        StyledToolTip {
+                            text: Translation.tr("How dark the backdrop behind the Settings panel should be (0 = transparent, 80 = very dark)")
+                        }
                     }
                 }
             }
@@ -1326,14 +1399,6 @@ ContentPage {
             }
 
             SettingsSwitch {
-                buttonIcon: "tab"
-                text: Translation.tr("Alt-Tab Switcher")
-                checked: false
-                enabled: false
-                StyledToolTip { text: Translation.tr("Window switcher popup") }
-            }
-
-            SettingsSwitch {
                 buttonIcon: "content_paste"
                 text: Translation.tr("Clipboard History")
                 checked: modulesPage.isPanelEnabled("iiClipboard")
@@ -1389,6 +1454,7 @@ ContentPage {
             }
 
             GridLayout {
+                id: waffleCoreGrid
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
                 columns: width >= 410 ? 2 : 1
@@ -1507,6 +1573,7 @@ ContentPage {
                 }
 
                 SettingsSwitch {
+                    Layout.columnSpan: waffleCoreGrid.columns
                     Layout.fillWidth: true
                     Layout.preferredWidth: 1
                     Layout.minimumWidth: 0
@@ -1538,6 +1605,7 @@ ContentPage {
             }
 
             GridLayout {
+                id: waffleSharedGrid
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
                 columns: width >= 410 ? 2 : 1
@@ -1642,17 +1710,6 @@ ContentPage {
                     checked: modulesPage.isPanelEnabled("iiOnScreenKeyboard")
                     onCheckedChanged: modulesPage.setPanelEnabled("iiOnScreenKeyboard", checked)
                     StyledToolTip { text: Translation.tr("Virtual keyboard for touch input") }
-                }
-
-                SettingsSwitch {
-                    Layout.fillWidth: true
-                    Layout.preferredWidth: 1
-                    Layout.minimumWidth: 0
-                    buttonIcon: "tab"
-                    text: Translation.tr("Alt-Tab Switcher")
-                    checked: false
-                    enabled: false
-                    StyledToolTip { text: Translation.tr("Window switcher popup") }
                 }
 
                 SettingsSwitch {

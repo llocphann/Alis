@@ -47,12 +47,9 @@ Item {
     readonly property bool contentReady: _firstSurfaceReady || _rawContentReady
 
     readonly property bool musicEnabled: Config.options?.dashboard?.music?.enable ?? true
-    readonly property bool spacedRepetitionPluginManaged: AlisIntergration.available
-        && AlisIntergration.installedPlugins.some(plugin => plugin.id === "spaced_repetition")
-    readonly property bool spacedRepetitionEnabled: (spacedRepetitionPluginManaged ? AlisIntergration.spacedRepetitionEnabled : true)
+    readonly property bool spacedRepetitionEnabled: AlisIntergration.spacedRepetitionEnabled
         && (Config.options?.dashboard?.spacedRepetition?.enable ?? true)
-        && (Config.options?.dashboard?.pageOrderVersion ?? 1) >= 1
-        && Array.from(dashboardCanvas.effectivePageOrder ?? []).includes("spacedRepetition")
+        && AlisIntergration.spacedRepetitionDashboardSource().length > 0
     readonly property bool exercisesTrackerEnabled: AlisIntergration.exercisesTrackerEnabled
         && (Config.options?.dashboard?.exercisesTracker?.enable ?? true)
         && AlisIntergration.exercisesTrackerDashboardSource().length > 0
@@ -94,7 +91,8 @@ Item {
         return index < 0 ? dashboardCanvas
             : (customPagesRepeater.itemAt(index)?.canvasController ?? null)
     }
-    property bool editMode: root.canvasController?.editMode ?? false
+    property bool editMode: (root.canvasController?.editMode ?? false)
+        || root._pendingNewEditId.length > 0
     onEditModeChanged: {
         if (!editMode) {
             root._navigationDraftOrder = null
@@ -213,8 +211,8 @@ Item {
             && root.canvasController !== null
         onTriggered: {
             const editor = root.canvasController
+            editor?.beginEditMode()
             root._pendingNewEditId = ""
-            editor.beginEditMode()
         }
     }
     property bool _sessionWasVisible: false
@@ -245,12 +243,12 @@ Item {
         if (currentPageId === "weeklyPlanner") plannerVisited = true
         if (currentPageId === "spacedRepetition") {
             spacedRepetitionVisited = true
-            if (root.presentationActive)
+            if (root.presentationActive && !root.editMode)
                 Qt.callLater(() => root.focusPrimarySurface())
         }
         if (currentPageId === "exercisesTracker") {
             exercisesTrackerVisited = true
-            if (root.presentationActive)
+            if (root.presentationActive && !root.editMode)
                 Qt.callLater(() => root.focusPrimarySurface())
         }
     }
@@ -516,6 +514,7 @@ Item {
             const updates = {
                 "dashboard.customTabs":stored.filter(tab => tab.id !== id),
                 "dashboard.customTabLayouts":layouts,
+                "dashboard.tabIcons":TabPolicy.removeTabIcon(Config.options?.dashboard?.tabIcons, id),
                 "dashboard.pageOrder":PagePolicy.normalized(
                     Config.options?.dashboard?.pageOrder).filter(page => page !== id)
             }
@@ -545,6 +544,7 @@ Item {
         // in-progress tab drag. This is the same discard path as Cancel.
         if (root.editMode) {
             dashboardHeader.cancelPageDrag()
+            root._pendingNewEditId = ""
             root.canvasController?.cancelEditMode()
             return true
         }
@@ -673,11 +673,7 @@ Item {
                 pageSlideInFlight: root.pageSlideInFlight
                 reorderAllowed: root.editMode && !root._agendaDialogShown
                 customTabs: root.customTabs
-                defaultTabId: Config.options?.dashboard?.defaultTabId ?? ""
-                onSetDefaultTabRequested: id => root.setDefaultTab(id)
-                onCreateTabRequested: root.openCustomTabDialog("create", "")
-                onRenameTabRequested: id => root.openCustomTabDialog("rename", id)
-                onDeleteTabRequested: id => root.openCustomTabDialog("delete", id)
+                tabIcons: Config.options?.dashboard?.tabIcons ?? []
                 onPageMoveRequested: (id,target) => root.moveTab(id,target)
                 onHorizontalWheel: event => root.handlePageWheel(event, false)
                 onPageRequested: index => {
@@ -686,9 +682,17 @@ Item {
                     if (root.editMode) {
                         if (targetId && (targetId === "dashboard" || targetId.startsWith("custom-")) && targetId !== root.currentPageId) {
                             const prevEditor = root.canvasController
-                            prevEditor?.commitEditMode()
                             root._pendingNewEditId = targetId
+                            prevEditor?.commitEditMode()
+                            if (prevEditor?.editMode) {
+                                root._pendingNewEditId = ""
+                                return
+                            }
                             root.selectPage(targetId)
+                            if (root.canvasController && !root.canvasController.editMode) {
+                                root.canvasController.beginEditMode()
+                                root._pendingNewEditId = ""
+                            }
                         }
                         return
                     }
@@ -696,10 +700,13 @@ Item {
                 }
                 editMode: root.editMode
                 onEditModeRequested: {
-                    if (root.canvasController?.editMode)
+                    if (root.canvasController?.editMode) {
                         root.canvasController.commitEditMode();
-                    else
+                    } else if (!root.canvasController && root.currentPageId.startsWith("custom-")) {
+                        root._pendingNewEditId = root.currentPageId;
+                    } else {
                         root.canvasController?.beginEditMode();
+                    }
                 }
             }
 
@@ -770,6 +777,7 @@ Item {
                         visible: Math.abs(pages.slideProgress - root.pageIds.indexOf("dashboard")) < 1
                         enabled: root.currentPageId === "dashboard"
                         presentationActive: root.presentationActive && (root.currentPageId === "dashboard"
+                            || (dashboardCanvas.editMode && !root.currentPageId.startsWith("custom-"))
                             || (root.pageIds.indexOf("dashboard") >= 0
                                 && Math.abs(pages.slideProgress - root.pageIds.indexOf("dashboard")) < 0.999))
                         layer.enabled: visible && Math.abs(pages.pagePosition - root.currentPage) > 0.001
@@ -851,8 +859,8 @@ Item {
                         objectName: "dashboardSpacedRepetitionPageLoader"
                         asynchronous: root._synchronousPageId !== "spacedRepetition" && status !== Loader.Ready
                         onStatusChanged: if (status === Loader.Error) root.pageLoadFailed("spacedRepetition")
-                        onLoaded: if (root.presentationActive && root.currentPageId === "spacedRepetition") Qt.callLater(() => root.focusPrimarySurface())
-                        onVisibleChanged: if (visible && root.presentationActive && root.currentPageId === "spacedRepetition") Qt.callLater(() => root.focusPrimarySurface())
+                        onLoaded: if (root.presentationActive && !root.editMode && root.currentPageId === "spacedRepetition") Qt.callLater(() => root.focusPrimarySurface())
+                        onVisibleChanged: if (visible && root.presentationActive && !root.editMode && root.currentPageId === "spacedRepetition") Qt.callLater(() => root.focusPrimarySurface())
                         width: pages.width
                         height: pages.height
                         x: root.pageIds.indexOf("spacedRepetition") * pages.width
@@ -862,7 +870,7 @@ Item {
                         active: root.spacedRepetitionEnabled
                             && (root.spacedRepetitionVisited || root._pendingPageId === "spacedRepetition")
                             && (root.presentationActive || root.warmContent)
-                        source: active ? (AlisIntergration.spacedRepetitionDashboardSource() || Qt.resolvedUrl("DashboardSpacedRepetition.qml")) : ""
+                        source: active ? AlisIntergration.spacedRepetitionDashboardSource() : ""
                         Binding {
                             target: spacedRepetitionPage.item
                             property: "presentationActive"
@@ -877,8 +885,8 @@ Item {
                         objectName: "dashboardExercisesTrackerPageLoader"
                         asynchronous: root._synchronousPageId !== "exercisesTracker" && status !== Loader.Ready
                         onStatusChanged: if (status === Loader.Error) root.pageLoadFailed("exercisesTracker")
-                        onLoaded: if (root.presentationActive && root.currentPageId === "exercisesTracker") Qt.callLater(() => root.focusPrimarySurface())
-                        onVisibleChanged: if (visible && root.presentationActive && root.currentPageId === "exercisesTracker") Qt.callLater(() => root.focusPrimarySurface())
+                        onLoaded: if (root.presentationActive && !root.editMode && root.currentPageId === "exercisesTracker") Qt.callLater(() => root.focusPrimarySurface())
+                        onVisibleChanged: if (visible && root.presentationActive && !root.editMode && root.currentPageId === "exercisesTracker") Qt.callLater(() => root.focusPrimarySurface())
                         width: pages.width
                         height: pages.height
                         x: root.pageIds.indexOf("exercisesTracker") * pages.width

@@ -22,7 +22,6 @@ InterfaceConfig 1.0 InterfaceConfig.qml
 OverviewConfig 1.0 OverviewConfig.qml
 DashboardConfig 1.0 DashboardConfig.qml
 DashboardMusicSettings 1.0 DashboardMusicSettings.qml
-DashboardSpacedRepetitionSettings 1.0 DashboardSpacedRepetitionSettings.qml
 EffectsConfig 1.0 EffectsConfig.qml
 ModulesConfig 1.0 ModulesConfig.qml
 DockConfig 1.0 DockConfig.qml

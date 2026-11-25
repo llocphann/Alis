@@ -61,6 +61,7 @@ StyledImage {
     source: resolvedThumbnailSource
 
     asynchronous: true
+    cache: false
     smooth: true
     mipmap: false
 

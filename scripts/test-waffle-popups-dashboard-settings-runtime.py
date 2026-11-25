@@ -86,8 +86,14 @@ ShellRoot {
 
                 // 1. Legacy upgrade migration parity: pre-patch config had spaced_repetition=true and no exercises_tracker key
                 check(Config.options.panelFamily === "waffle", "Expected panelFamily === waffle")
-                check(Config.options.integrations.alisIntergration.exercises_tracker === true,
-                    "Legacy active user config did not migrate exercises_tracker=true")
+                tryCompare(AlisIntergration, "initialProbeDone", true, 6000)
+                check(!Config.hasPersistedKey("integrations.alisIntergration.exercises_tracker"),
+                    "Read-only legacy config should not backfill exercises_tracker into config.json")
+                check(AlisIntergration.isPluginInstalled("exercises_tracker") === true
+                    && !AlisIntergration.isPluginInstalled("spaced_repetition"),
+                    "Expected only exercises_tracker plugin installed in base-v2 data dir")
+                check(AlisIntergration.exercisesTrackerEnabled === true,
+                    "Legacy active user config did not activate installed exercises_tracker=true")
                 check(GlobalStates.useSettingsOverlay() === true,
                     "Waffle should default to fast in-process SettingsOverlay unless windowMode is enabled")
 
@@ -201,6 +207,47 @@ def main() -> None:
             "spaced_repetition": True,
         }
         (config_dir / "config.json").write_text(json.dumps(options), encoding="utf-8")
+
+        import hashlib
+        base_dir = private / "data/alis-intergration/current"
+        base_dir.mkdir(parents=True)
+        base_files = {}
+        for rel_name in ("AlisSession.qml", "LICENSE"):
+            raw = (ROOT / "assets/alis-intergration-base" / rel_name).read_bytes()
+            (base_dir / rel_name).write_bytes(raw)
+            base_files[rel_name] = hashlib.sha256(raw).hexdigest()
+        base_manifest = json.loads((ROOT / "assets/alis-intergration-base/manifest.json").read_text(encoding="utf-8"))
+        base_manifest.update({
+            "layout": "base-v2",
+            "sourceSha": "a" * 40,
+            "files": base_files,
+        })
+        (base_dir / "manifest.json").write_text(json.dumps(base_manifest, indent=2), encoding="utf-8")
+
+        ex_dir = private / "data/alis-intergration/plugins/exercises_tracker"
+        ex_payloads = {
+            "services/ExercisesTracker.qml": b"import QtQuick\nItem { property bool ready: true }\n",
+            "modules/dashboard/DashboardExercisesTracker.qml": b"import QtQuick\nItem { implicitHeight: 64 }\n",
+            "modules/settings/DashboardExercisesTrackerSettings.qml": b"import QtQuick\nItem { implicitHeight: 48 }\n",
+            "scripts/integrations/exercises_tracker.py": b"print('{}')\n",
+        }
+        ex_hashes = {}
+        for rel_path, content in ex_payloads.items():
+            dst = ex_dir / rel_path
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            dst.write_bytes(content)
+            ex_hashes[rel_path] = hashlib.sha256(content).hexdigest()
+        (ex_dir / "plugin-manifest.json").write_text(json.dumps({
+            "id": "exercises_tracker",
+            "version": "1.0.0",
+            "hostApi": 1,
+            "sourceSha": "a" * 40,
+            "files": ex_hashes,
+        }, indent=2), encoding="utf-8")
+        (private / "data/alis-intergration/installed-plugins.json").write_text(
+            json.dumps({"schemaVersion": 1, "plugins": ["exercises_tracker"]}, indent=2),
+            encoding="utf-8",
+        )
 
         runtime = private / "runtime"
         runtime.mkdir(mode=0o700)

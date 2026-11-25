@@ -54,6 +54,26 @@ ContentPage {
         { value: "both", displayName: Translation.tr("System + microphone") }
     ]
 
+    readonly property string activeClipboardPanelId: (Config.options?.panelFamily ?? "abyss") === "abyss"
+        ? "abyssClipboard"
+        : "iiClipboard"
+
+    function isPanelEnabled(panelId: string): bool {
+        return (Config.options?.enabledPanels ?? []).includes(panelId)
+    }
+
+    function setPanelEnabled(panelId: string, enabled: bool): void {
+        let panels = [...(Config.options?.enabledPanels ?? [])]
+        const idx = panels.indexOf(panelId)
+        if (enabled && idx === -1) {
+            panels.push(panelId)
+            Config.setNestedValue("enabledPanels", panels)
+        } else if (!enabled && idx !== -1) {
+            panels.splice(idx, 1)
+            Config.setNestedValue("enabledPanels", panels)
+        }
+    }
+
     function openCaptureFolderDialog(target: string): void {
         root.captureFolderTarget = target
         captureFolderDialog.open()
@@ -408,18 +428,11 @@ ContentPage {
                 Layout.minimumWidth: 0
                 buttonIcon: "pip"
                 text: Translation.tr("Show recording overlay")
-                checked: Config.options?.screenRecord?.showOsd ?? false
-                onCheckedChanged: {
-                    Config.setNestedValue("screenRecord.showOsd", checked)
-                    let panels = [...(Config.options?.enabledPanels ?? [])]
-                    const idx = panels.indexOf("iiRecordingOsd")
-                    if (checked && idx === -1) {
-                        panels.push("iiRecordingOsd")
-                        Config.setNestedValue("enabledPanels", panels)
-                    } else if (!checked && idx !== -1) {
-                        panels.splice(idx, 1)
-                        Config.setNestedValue("enabledPanels", panels)
-                    }
+                autoToggle: false
+                checked: root.isPanelEnabled("iiRecordingOsd")
+                onToggledByUser: nextChecked => {
+                    Config.setNestedValue("screenRecord.showOsd", nextChecked)
+                    root.setPanelEnabled("iiRecordingOsd", nextChecked)
                 }
             }
 
@@ -820,6 +833,7 @@ ContentPage {
             title: Translation.tr("Google Lens")
 
             ConfigSelectionArray {
+                fillWidthSegments: true
                 currentValue: (Config.options?.search?.imageSearch?.useCircleSelection ?? false) ? "circle" : "rectangles"
                 onSelected: newValue => {
                     Config.setNestedValue("search.imageSearch.useCircleSelection", newValue === "circle");
@@ -831,13 +845,17 @@ ContentPage {
             }
         }
 
-        ConfigRow {
+        GridLayout {
             Layout.fillWidth: true
             Layout.minimumWidth: 0
-            uniform: width >= 500
+            columns: width >= 680 * Appearance.fontSizeScale ? 3 : 1
+            uniformCellWidths: columns > 1
+            columnSpacing: 14
+            rowSpacing: 8
 
             SettingsSwitch {
                 Layout.fillWidth: true
+                Layout.preferredWidth: 1
                 Layout.minimumWidth: 0
                 buttonIcon: "draw"
                 text: Translation.tr("Native screenshot editor")
@@ -847,36 +865,22 @@ ContentPage {
 
             SettingsSwitch {
                 Layout.fillWidth: true
+                Layout.preferredWidth: 1
                 Layout.minimumWidth: 0
                 buttonIcon: "label"
                 text: Translation.tr("Region labels")
                 checked: Config.options?.regionSelector?.targetRegions?.showLabel ?? false
                 onCheckedChanged: Config.setNestedValue("regionSelector.targetRegions.showLabel", checked)
             }
-        }
-
-        ConfigRow {
-            Layout.fillWidth: true
-            Layout.minimumWidth: 0
-            uniform: width >= 500
 
             SettingsSwitch {
                 Layout.fillWidth: true
+                Layout.preferredWidth: 1
                 Layout.minimumWidth: 0
                 buttonIcon: "open_in_new"
                 text: Translation.tr("External Satty editor")
                 checked: Config.options?.regionSelector?.annotation?.useSatty ?? false
                 onCheckedChanged: Config.setNestedValue("regionSelector.annotation.useSatty", checked)
-            }
-
-            ConfigSpinBox {
-                icon: "border_outer"
-                text: Translation.tr("Region border (px)")
-                value: Config.options?.regionSelector?.borderSize ?? 4
-                from: 1
-                to: 12
-                stepSize: 1
-                onValueChanged: Config.setNestedValue("regionSelector.borderSize", value)
             }
         }
 
@@ -1077,8 +1081,12 @@ ContentPage {
                 Layout.minimumWidth: 0
                 buttonIcon: "content_paste"
                 text: Translation.tr("Clipboard history")
-                checked: Config.options?.modules?.clipboard ?? true
-                onCheckedChanged: Config.setNestedValue("modules.clipboard", checked)
+                autoToggle: false
+                checked: root.isPanelEnabled(root.activeClipboardPanelId)
+                onToggledByUser: nextChecked => {
+                    Config.setNestedValue("modules.clipboard", nextChecked)
+                    root.setPanelEnabled(root.activeClipboardPanelId, nextChecked)
+                }
             }
 
             SettingsSwitch {
@@ -1086,8 +1094,12 @@ ContentPage {
                 Layout.minimumWidth: 0
                 buttonIcon: "keyboard"
                 text: Translation.tr("On-screen keyboard")
-                checked: Config.options?.modules?.onScreenKeyboard ?? true
-                onCheckedChanged: Config.setNestedValue("modules.onScreenKeyboard", checked)
+                autoToggle: false
+                checked: root.isPanelEnabled("iiOnScreenKeyboard")
+                onToggledByUser: nextChecked => {
+                    Config.setNestedValue("modules.onScreenKeyboard", nextChecked)
+                    root.setPanelEnabled("iiOnScreenKeyboard", nextChecked)
+                }
             }
         }
 
@@ -1099,7 +1111,7 @@ ContentPage {
             SettingsSwitch {
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
-                enabled: Config.options?.modules?.onScreenKeyboard ?? true
+                enabled: root.isPanelEnabled("iiOnScreenKeyboard")
                 buttonIcon: "push_pin"
                 text: Translation.tr("Pin OSK on startup")
                 checked: Config.options?.osk?.pinnedOnStartup ?? false
@@ -1109,7 +1121,7 @@ ContentPage {
             SettingsSwitch {
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
-                enabled: Config.options?.modules?.onScreenKeyboard ?? true
+                enabled: root.isPanelEnabled("iiOnScreenKeyboard")
                 buttonIcon: "flip_to_front"
                 text: Translation.tr("Keep OSK on top")
                 checked: Config.options?.osk?.keepOnTop ?? false
@@ -1125,7 +1137,7 @@ ContentPage {
             StyledComboBox {
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
-                enabled: Config.options?.modules?.onScreenKeyboard ?? true
+                enabled: root.isPanelEnabled("iiOnScreenKeyboard")
                 model: root.availableOskLayoutOptions()
                 textRole: "displayName"
                 currentIndex: root.choiceIndex(model, Config.options?.osk?.layout ?? "English (US)")

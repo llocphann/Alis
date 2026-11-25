@@ -128,7 +128,7 @@ const KB_TERMINALS: &[&str] = &[
     "gnome-terminal",
 ];
 
-const KB_FILE_MANAGERS: &[&str] = &["dolphin", "nautilus", "thunar", "nemo", "pcmanfm", "ranger", "yazi"];
+const KB_FILE_MANAGERS: &[&str] = &["alis-files", "dolphin", "nautilus", "thunar", "nemo", "pcmanfm", "ranger", "yazi"];
 
 const KB_BROWSERS: &[&str] = &["firefox", "zen-browser", "chromium", "brave", "vivaldi"];
 

@@ -6,7 +6,9 @@ Item {
     id: root
     property string outputName: ""
     property var participant: null
-    readonly property real preferredContentHeight:sidebar.preferredContentHeight
+    readonly property real preferredContentHeight: sidebar.preferredContentHeight
+    readonly property real minimumUsefulWidth: sidebar.minimumUsefulWidth
+    readonly property real minimumUsefulHeight: sidebar.minimumUsefulHeight
     signal closeRequested()
     SidebarLeftContent {
         id:sidebar

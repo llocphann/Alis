@@ -111,7 +111,6 @@ Item {
     property var searchIndex: [
         {pageIndex:18,pageName:"Default Applications",section:"Core Applications",label:"Default applications",targetLabel:"Default Terminal",description:"Preferred terminal, browser, editor, file manager and system utilities",keywords:["apps","applications","terminal","browser","editor","file","manager","flatpak","flathub","default"]},
         {pageIndex:17,pageName:"Integrations",section:"Nexus",label:"Nexus",description:"Vault, theming, notes and tasks",keywords:["nexus","vault","theme","integrations","tasks"]},
-        {pageIndex:17,pageName:"Integrations",section:"Calendar",label:"External calendars",description:"ICS/iCal sources",keywords:["calendar","ics","ical","integrations"]},
         { pageIndex: 16, pageName: "Battery", section: "Power management", label: "Battery and TLP settings", targetLabel: "Configuration categories", keywords: ["tlp", "power", "battery", "cpu", "processor", "disk", "pcie", "usb", "radio", "energy", "profile"] },
         { pageIndex: 16, pageName: "Battery", section: "Battery Care", label: "Charge limit", targetLabel: "Hardware-aware charge care", keywords: ["tlp", "battery", "charge", "limit", "threshold", "thinkpad", "conservation"] },
         { pageIndex: 15, pageName: "Shell Layout", section: "Live shell layout", label: "Edit live", targetLabel: "Edit live", keywords: ["layout", "move", "position", "taskbar", "output", "edit", "live"] },

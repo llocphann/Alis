@@ -20,7 +20,8 @@ layout(std140, binding = 0) uniform buf {
     vec4 backdropVignette;    // (vignetteIntensity, vignetteRadius, auroraOverlayAlpha, texWidth)
     vec4 wallpaperCrop;       // (cropX, cropY, cropW, cropH)
     vec4 wallpaperNextCrop;   // (cropX, cropY, cropW, cropH) for incoming preview wallpaper
-    vec4 wallpaperTransition; // (mixProgress 0..1, nextReady 0|1, nextTexWidth, reserved)
+    vec4 wallpaperTransition; // (mixProgress 0..1, nextReady 0|1, nextTexWidth, transitionMode 0..6)
+    vec4 transitionParams;    // (originX, originY, angleRad, timeSec)
     vec4 surface;             // premultiplied AbyssStyle.surfaceDeep @ surfaceOpacity
     vec4 dockSurface;         // premultiplied AbyssStyle.surfaceDeep @ contentOpacity
     vec4 raised;              // premultiplied AbyssStyle.surfaceRaised
@@ -43,6 +44,123 @@ float fuse(float a, float b, float k) {
     float s = max(0.5, k);
     float h = max(s - abs(a - b), 0.0) / s;
     return min(a, b) - h * h * s * 0.25;
+}
+
+float hash12(vec2 p) {
+    vec3 q = fract(vec3(p.xyx) * 0.1031);
+    q += dot(q, q.yzx + 33.33);
+    return fract((q.x + q.y) * q.z);
+}
+
+float noise2(vec2 p) {
+    vec2 cell = floor(p);
+    vec2 f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    float a = hash12(cell);
+    float b = hash12(cell + vec2(1.0, 0.0));
+    float c = hash12(cell + vec2(0.0, 1.0));
+    float d = hash12(cell + vec2(1.0, 1.0));
+    return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+}
+
+// Compute scalar incoming mix fraction + optional front highlight BEFORE any texture fetch.
+void evalTransitionField(vec2 uv, float mixT, int mode, out float reveal, out float rimAmt) {
+    rimAmt = 0.0;
+    if (mixT <= 0.0001) {
+        reveal = 0.0;
+        return;
+    }
+    if (mixT >= 0.9999) {
+        reveal = 1.0;
+        return;
+    }
+    if (mode <= 0) {
+        reveal = mixT;
+        return;
+    }
+
+    float aspect = max(0.1, viewport.x / max(1.0, viewport.y));
+    vec2 scale = vec2(aspect, 1.0);
+    float timeSec = transitionParams.w;
+
+    if (mode == 1) {
+        // Liquid (alisMelt): organic descending membrane matching Desktop stage
+        float activity = 4.0 * mixT * (1.0 - mixT);
+        float broad = noise2(uv * vec2(3.2, 2.4) + vec2(timeSec * 0.10, -timeSec * 0.08));
+        float fine = noise2(uv * vec2(8.5, 5.0) + vec2(-timeSec * 0.16, timeSec * 0.12));
+        float slowRoll = sin(uv.x * 10.0 + 2.3 * broad + timeSec * 0.35) * 0.009;
+        float displacement = (0.20 * (broad - 0.5) + 0.054 * (fine - 0.5) + slowRoll) * activity;
+        float signedFront = mix(-0.19, 1.19, mixT) - uv.y - displacement;
+        reveal = smoothstep(-0.025, 0.025, signedFront);
+        rimAmt = exp(-abs(signedFront) * 42.0) * activity * clamp(materialParams.x, 0.25, 1.0) * 0.26;
+        return;
+    }
+
+    if (mode == 2) {
+        // Circular grow / center / any
+        vec2 origin = clamp(transitionParams.xy, vec2(0.0), vec2(1.0));
+        float maxR = max(
+            max(length((vec2(0.0, 0.0) - origin) * scale), length((vec2(1.0, 0.0) - origin) * scale)),
+            max(length((vec2(0.0, 1.0) - origin) * scale), length((vec2(1.0, 1.0) - origin) * scale))
+        );
+        float dist = length((uv - origin) * scale);
+        float feather = 0.028;
+        float radius = mix(-feather, maxR + feather, mixT);
+        reveal = 1.0 - smoothstep(radius - feather, radius + feather, dist);
+        return;
+    }
+
+    if (mode == 3) {
+        // Circular shrink inward (outer)
+        vec2 center = vec2(0.5, 0.5);
+        float maxR = length(vec2(0.5, 0.5) * scale);
+        float dist = length((uv - center) * scale);
+        float feather = 0.028;
+        float radius = mix(maxR + feather, -feather, mixT);
+        reveal = smoothstep(radius - feather, radius + feather, dist);
+        return;
+    }
+
+    if (mode == 4) {
+        // Wave: directional sinusoidal sweep
+        float angle = transitionParams.z;
+        vec2 dir = vec2(cos(angle), -sin(angle));
+        vec2 perp = vec2(-dir.y, dir.x);
+        vec2 centered = uv - vec2(0.5, 0.5);
+        float extent = 0.5 * (abs(dir.x) + abs(dir.y));
+        float proj = dot(centered, dir) + extent;
+        float span = 2.0 * extent;
+        float waveOffset = sin(dot(centered * scale, perp) * 18.0 + timeSec * 4.0) * 0.045;
+        float front = mix(-0.08, span + 0.08, mixT) + waveOffset;
+        reveal = 1.0 - smoothstep(front - 0.032, front + 0.032, proj);
+        return;
+    }
+
+    if (mode == 5) {
+        // Wipe / slide: directional linear feathered sweep
+        float angle = transitionParams.z;
+        vec2 dir = vec2(cos(angle), -sin(angle));
+        vec2 centered = uv - vec2(0.5, 0.5);
+        float extent = 0.5 * (abs(dir.x) + abs(dir.y));
+        float proj = dot(centered, dir) + extent;
+        float span = 2.0 * extent;
+        float feather = 0.035;
+        float front = mix(-feather, span + feather, mixT);
+        reveal = 1.0 - smoothstep(front - feather, front + feather, proj);
+        return;
+    }
+
+    // Mode 6 (wallfx): organic ember sweep synced to Wallfx reveal envelope
+    vec2 center = vec2(0.5, 0.5);
+    float maxR = length(vec2(0.5, 0.5) * scale);
+    float broad = noise2(uv * vec2(4.2, 3.6) + vec2(0.35, -0.25));
+    float dist = length((uv - center) * scale) + (broad - 0.5) * 0.16;
+    float waveP = smoothstep(0.08, 0.94, mixT);
+    float radius = mix(-0.06, maxR + 0.10, waveP);
+    float diff = radius - dist;
+    reveal = smoothstep(-0.032, 0.032, diff);
+    float bell = sin(3.14159265 * clamp((mixT - 0.08) / 0.86, 0.0, 1.0));
+    rimAmt = exp(-abs(diff) * 28.0) * bell * 0.24;
 }
 
 vec3 sampleSingleWallpaperBlur(sampler2D tex, vec4 crop, float rawTexW, vec2 normUv, float radius, out float inBounds) {
@@ -81,18 +199,57 @@ vec3 sampleSingleWallpaperBlur(sampler2D tex, vec4 crop, float rawTexW, vec2 nor
     return acc;
 }
 
-vec3 sampleWallpaperBlur(vec2 normUv, float radius, out float inBounds) {
-    float inA = 1.0;
-    vec3 colA = sampleSingleWallpaperBlur(wallpaper, wallpaperCrop, backdropVignette.w, normUv, radius, inA);
-    float mixT = clamp(wallpaperTransition.x, 0.0, 1.0);
-    if (mixT <= 0.0001 || wallpaperTransition.y < 0.5) {
-        inBounds = inA;
-        return colA;
+// Lighter 5-tap blur used solely on active two-texture transition pixels (10 taps total instead of 26).
+vec3 sampleSingleWallpaperBlurFast(sampler2D tex, vec4 crop, float rawTexW, vec2 normUv, float radius, out float inBounds) {
+    vec2 rawUv = crop.xy + normUv * crop.zw;
+    if (backdropTone.w > 0.5 && (rawUv.x < 0.0 || rawUv.x > 1.0 || rawUv.y < 0.0 || rawUv.y > 1.0)) {
+        inBounds = 0.0;
+        return auroraBase.rgb / max(auroraBase.a, 0.0001);
     }
+    inBounds = 1.0;
+    vec2 baseUv = clamp(rawUv, vec2(0.002), vec2(0.998));
+    if (radius <= 0.05)
+        return texture(tex, baseUv).rgb;
+
+    float texW = max(320.0, rawTexW);
+    float texH = max(180.0, texW * 0.5625);
+    vec2 d = vec2(1.0 / texW, 1.0 / texH) * abs(crop.zw) * (radius * 0.78);
+    vec2 minUv = vec2(0.002);
+    vec2 maxUv = vec2(0.998);
+
+    vec3 acc = texture(tex, baseUv).rgb * 0.24;
+    acc += texture(tex, clamp(baseUv + vec2( d.x,  d.y), minUv, maxUv)).rgb * 0.19;
+    acc += texture(tex, clamp(baseUv + vec2(-d.x,  d.y), minUv, maxUv)).rgb * 0.19;
+    acc += texture(tex, clamp(baseUv + vec2( d.x, -d.y), minUv, maxUv)).rgb * 0.19;
+    acc += texture(tex, clamp(baseUv + vec2(-d.x, -d.y), minUv, maxUv)).rgb * 0.19;
+    return acc;
+}
+
+vec3 sampleWallpaperBlur(vec2 normUv, float radius, out float inBounds, out float rimAmt) {
+    float mixT = clamp(wallpaperTransition.x, 0.0, 1.0);
+    int mode = int(wallpaperTransition.w + 0.5);
+    float reveal = mixT;
+    rimAmt = 0.0;
+
+    if (mixT <= 0.0001 || wallpaperTransition.y < 0.5) {
+        return sampleSingleWallpaperBlur(wallpaper, wallpaperCrop, backdropVignette.w, normUv, radius, inBounds);
+    }
+
+    evalTransitionField(normUv, mixT, mode, reveal, rimAmt);
+
+    if (reveal <= 0.001) {
+        return sampleSingleWallpaperBlur(wallpaper, wallpaperCrop, backdropVignette.w, normUv, radius, inBounds);
+    }
+    if (reveal >= 0.999) {
+        return sampleSingleWallpaperBlur(wallpaperNext, wallpaperNextCrop, wallpaperTransition.z, normUv, radius, inBounds);
+    }
+
+    float inA = 1.0;
     float inB = 1.0;
-    vec3 colB = sampleSingleWallpaperBlur(wallpaperNext, wallpaperNextCrop, wallpaperTransition.z, normUv, radius, inB);
-    inBounds = mix(inA, inB, mixT);
-    return mix(colA, colB, mixT);
+    vec3 colA = sampleSingleWallpaperBlurFast(wallpaper, wallpaperCrop, backdropVignette.w, normUv, radius, inA);
+    vec3 colB = sampleSingleWallpaperBlurFast(wallpaperNext, wallpaperNextCrop, wallpaperTransition.z, normUv, radius, inB);
+    inBounds = mix(inA, inB, reveal);
+    return mix(colA, colB, reveal);
 }
 
 vec3 applyBackdropGrading(vec3 rgb) {
@@ -160,15 +317,6 @@ void main() {
         return;
     }
 
-    float inBounds = 1.0;
-    vec3 fallbackBg = auroraBase.rgb / max(auroraBase.a, 0.0001);
-    vec3 rawWall = viewport.w > 0.5
-        ? sampleWallpaperBlur(qt_TexCoord0, materialParams.z, inBounds)
-        : fallbackBg;
-    vec3 surroundRgb = viewport.w > 0.5 ? applyBackdropGrading(rawWall) : fallbackBg;
-    float surroundAlpha = progress;
-    vec4 surround = vec4(surroundRgb * surroundAlpha, surroundAlpha);
-
     float frameCoverage = 1.0 - smoothstep(-aaOuter, aaOuter, dOuter);
     vec4 body = vec4(0.0);
     if (frameCoverage > 0.0001) {
@@ -187,7 +335,12 @@ void main() {
         if (viewport.w > 0.5 && (panelAlpha < 0.999 || refraction > 0.01)) {
             vec2 refrOffset = nOuter * (refraction / max(vec2(1.0), viewport.xy)) * exp(-abs(dOuter) / 26.0);
             float glassInBounds = 1.0;
-            vec3 glassRgb = sampleWallpaperBlur(qt_TexCoord0 + refrOffset, materialParams.w, glassInBounds);
+            float glassRimAmt = 0.0;
+            vec3 glassRgb = sampleWallpaperBlur(qt_TexCoord0 + refrOffset, materialParams.w, glassInBounds, glassRimAmt);
+            if (glassRimAmt > 0.001) {
+                vec3 glassRimRgb = rim.rgb / max(rim.a, 0.0001);
+                glassRgb = clamp(glassRgb + glassRimRgb * glassRimAmt, 0.0, 1.0);
+            }
             float refrTint = refraction > 0.01 ? min(0.14, refraction * 0.01) * depthOuter : 0.0;
             vec3 tintedSolid = mix(solidRgb, glassRgb, refrTint);
             baseRgb = mix(glassRgb, tintedSolid, panelAlpha);
@@ -219,12 +372,28 @@ void main() {
         }
     }
 
+    float frameAlpha = frameCoverage * body.a;
+    vec4 surround = vec4(0.0);
+    if (frameAlpha < 0.999) {
+        float inBounds = 1.0;
+        float surroundRimAmt = 0.0;
+        vec3 fallbackBg = auroraBase.rgb / max(auroraBase.a, 0.0001);
+        vec3 rawWall = viewport.w > 0.5
+            ? sampleWallpaperBlur(qt_TexCoord0, materialParams.z, inBounds, surroundRimAmt)
+            : fallbackBg;
+        vec3 surroundRgb = viewport.w > 0.5 ? applyBackdropGrading(rawWall) : fallbackBg;
+        if (surroundRimAmt > 0.001) {
+            vec3 rimRgb = rim.rgb / max(rim.a, 0.0001);
+            surroundRgb = clamp(surroundRgb + rimRgb * surroundRimAmt, 0.0, 1.0);
+        }
+        surround = vec4(surroundRgb * progress, progress);
+    }
+
     float dPos = max(dOuter, 0.0);
     vec4 outside = (shadow * 1.35 * exp(-dPos / 14.0) + glow * exp(-dPos / 9.0)) * progress;
     outside *= smoothstep(-aaOuter, aaOuter, dOuter) * (1.0 - smoothstep(28.0, 44.0, dOuter));
 
     vec4 back = outside + surround * (1.0 - outside.a);
-    float frameAlpha = frameCoverage * body.a;
     vec4 combined = body * frameCoverage + back * (1.0 - frameAlpha);
     fragColor = combined * cutout * qt_Opacity;
 }

@@ -11,7 +11,7 @@ editor=(root/"modules/sidebarRight/events/EventsDialog.qml").read_text()
 events=(root/"services/Events.qml").read_text()
 occurrences=(root/"services/EventOccurrences.js").read_text()
 sidebar=(root/"modules/sidebarRight/calendar/CalendarWidget.qml").read_text()
-settings=(root/"modules/settings/IntegrationsConfig.qml").read_text()
+settings=(root/"modules/dashboard/PlannerCalendarSyncPanel.qml").read_text()
 english=json.loads((root/"translations/en_US.json").read_text())
 def require(ok,msg):
     if not ok:raise SystemExit("CALENDAR_EVENT_DOTS_FAIL: "+msg)

@@ -26,6 +26,7 @@ Item {
 
     property string requestedKind: ""
     property bool requestedOpen: false
+    property bool transientOpen: false
     property string requestedFallbackEdge: "top"
     property real requestedAlongCenter: 0
     property string hoverKind: ""
@@ -40,6 +41,7 @@ Item {
     property string activeFallbackEdge: "top"
     property real activeAlongCenter: 0
     property bool resident: false
+    property bool _evictedClosePending: false
     property real offsetScale: 1
     readonly property real revealProgress: 1 - offsetScale
     readonly property string desiredKind:
@@ -78,6 +80,7 @@ Item {
 
     function latch(kind): void {
         if (!kind) return
+        root._evictedClosePending = false
         body.resetPresentationOwner()
         root.activeKind = String(kind)
         root.activePosition = Object.assign({},
@@ -90,12 +93,14 @@ Item {
     }
 
     function finishRetract(): void {
+        root._evictedClosePending = false
         if (!root.resident)
             return
         const previousKind = root.activeKind
         root.resident = false
         root.activeKind = ""
         root.activePosition = ({})
+        root.offsetScale = 1
         if (previousKind === "dockAppMenu" && root.desiredKind !== "dockAppMenu"
                 && GlobalStates.abyssDockMenuModel !== undefined)
             GlobalStates.abyssDockMenuModel = []
@@ -105,6 +110,11 @@ Item {
     function beginRetract(): void {
         if (!root.resident)
             return
+        if (root._evictedClosePending || !body.placementVisible) {
+            retractTimer.stop()
+            root.finishRetract()
+            return
+        }
         root.offsetScale = 1
         if (AbyssStyle.motionEnabled)
             retractTimer.restart()
@@ -144,7 +154,7 @@ Item {
     Component.onCompleted: syncRequest()
 
     Behavior on offsetScale {
-        enabled: AbyssStyle.motionEnabled
+        enabled: AbyssStyle.motionEnabled && root.resident
         NumberAnimation {
             duration: AbyssStyle.motionNormal
             easing.type: Easing.InOutCubic
@@ -176,8 +186,11 @@ Item {
         animatePlacementChanges: true
         animatePresentation: false
         placementCanResize: false
+        placementCanShiftLaterally: root.activeKind !== "dockAppMenu"
         stableContentSize: true
         stackPolicy: "pyramid"
+        readonly property bool explicitOrFocused: !root.transientOpen || body.contentFocused
+        placementIntent: explicitOrFocused ? "explicit" : "hover"
         semanticOpenOverride:
             root.activeKind.length > 0
             && root.desiredKind === root.activeKind
@@ -207,7 +220,8 @@ Item {
         joinedEdge: configuredJoinedEdge.length > 0 ? configuredJoinedEdge
             : edge === root.activeFallbackEdge ? root.sourceJoinedEdge : ""
 
-        placementPriority: root.activeKind === "dockAppMenu" ? -2 : 0
+        placementPriority: root.activeKind === "dockAppMenu" ? -2
+            : (body.explicitOrFocused ? 1 : 0)
         obstacles: root.obstacles
         contentKind: root.activeKind
         property bool triggerHovered:
@@ -220,6 +234,20 @@ Item {
 
         open: root.resident
         externalProgress: root.revealProgress
+        onPlacementVisibleChanged: {
+            // Evicted hover-only generic popups close their lease cleanly so they never
+            // resurrect later; explicit/focused popups stay temporarily hidden and auto-restore.
+            if (body.semanticOpen && !body.placementVisible && !body.explicitOrFocused) {
+                const evictedKind = root.activeKind
+                Qt.callLater(() => {
+                    if (body.semanticOpen && !body.placementVisible && !body.explicitOrFocused
+                            && root.activeKind === evictedKind && evictedKind.length > 0) {
+                        root._evictedClosePending = true
+                        root.closeRequested(evictedKind)
+                    }
+                })
+            }
+        }
         onOpenChanged: {
             if (!open && root.controller && root.controller.clearHoverSurface)
                 root.controller.clearHoverSurface(identity)

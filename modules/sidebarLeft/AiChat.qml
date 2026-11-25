@@ -17,12 +17,14 @@ Item {
     id: root
     clip: true
     property real padding: 4
-    readonly property bool companionUnifiedActive: AlisCompanion.available
+    readonly property bool _companionChatWanted: AlisCompanion.available
         && AlisCompanion.chatViewSource.length > 0
+        && companionChatLoader.status !== Loader.Error
+    readonly property bool companionUnifiedActive: root._companionChatWanted
         && companionChatLoader.status === Loader.Ready
     property var inputField: companionUnifiedActive && companionChatLoader.item?.inputField
         ? companionChatLoader.item.inputField
-        : messageInputField
+        : (legacyChatLoader.item?.inputField ?? null)
     property string commandPrefix: "/"
     property bool historyOpen: false
     // The normal sidebar is the baseline. Extra information is added only
@@ -33,6 +35,14 @@ Item {
 
     property var suggestionQuery: ""
     property var suggestionList: []
+    property bool _confirmClearPending: false
+
+    Timer {
+        id: confirmClearTimer
+        interval: 4000
+        repeat: false
+        onTriggered: root._confirmClearPending = false
+    }
 
     Component.onCompleted: VoiceSearch.ensureInitialized()
 
@@ -64,7 +74,15 @@ Item {
                 }
             }
             if ((event.modifiers & Qt.ControlModifier) && (event.modifiers & Qt.ShiftModifier) && event.key === Qt.Key_O) {
-                companionChatLoader.item?.mind?.clearConversation();
+                if (!root._confirmClearPending) {
+                    root._confirmClearPending = true;
+                    confirmClearTimer.restart();
+                    companionChatLoader.item?.mind?.showStatusBanner("Press Ctrl+Shift+O again within 4s to clear conversation.", "warning");
+                } else {
+                    root._confirmClearPending = false;
+                    confirmClearTimer.stop();
+                    companionChatLoader.item?.mind?.clearConversation();
+                }
                 event.accepted = true;
                 return;
             }
@@ -74,18 +92,29 @@ Item {
                 root.inputField.forceActiveFocus();
             return;
         }
-        messageInputField.forceActiveFocus();
+        const field = legacyChatLoader.item?.inputField ?? null;
+        if (field)
+            field.forceActiveFocus();
         if (event.modifiers === Qt.NoModifier) {
-            if (event.key === Qt.Key_PageUp) {
-                messageListView.contentY = Math.max(0, messageListView.contentY - messageListView.height / 2);
+            const lv = legacyChatLoader.item?.listView ?? null;
+            if (event.key === Qt.Key_PageUp && lv) {
+                lv.contentY = Math.max(0, lv.contentY - lv.height / 2);
                 event.accepted = true;
-            } else if (event.key === Qt.Key_PageDown) {
-                messageListView.contentY = Math.min(messageListView.contentHeight - messageListView.height / 2, messageListView.contentY + messageListView.height / 2);
+            } else if (event.key === Qt.Key_PageDown && lv) {
+                lv.contentY = Math.min(lv.contentHeight - lv.height / 2, lv.contentY + lv.height / 2);
                 event.accepted = true;
             }
         }
         if ((event.modifiers & Qt.ControlModifier) && (event.modifiers & Qt.ShiftModifier) && event.key === Qt.Key_O) {
-            Ai.clearMessages();
+            if (!root._confirmClearPending) {
+                root._confirmClearPending = true;
+                confirmClearTimer.restart();
+            } else {
+                root._confirmClearPending = false;
+                confirmClearTimer.stop();
+                Ai.clearMessages();
+            }
+            event.accepted = true;
         }
     }
 
@@ -273,7 +302,7 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
             if (!sent) return false
         }
 
-        messageListView.positionViewAtEnd()
+        legacyChatLoader.item?.listView?.positionViewAtEnd()
         return true
     }
 
@@ -338,20 +367,32 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
         id: companionChatLoader
         objectName: "companionUnifiedChatLoader"
         anchors.fill: parent
-        anchors.margins: root.padding
+        anchors.margins: 0
         z: 10
         active: AlisCompanion.available && AlisCompanion.chatViewSource.length > 0
         source: active ? AlisCompanion.chatViewSource : ""
     }
 
-    ColumnLayout {
-        id: columnLayout
-        visible: !root.companionUnifiedActive
-        anchors {
-            fill: parent
-            margins: root.padding
-        }
-        spacing: root.padding
+    Loader {
+        id: legacyChatLoader
+        anchors.fill: parent
+        active: !root._companionChatWanted
+        sourceComponent: legacyChatComp
+    }
+
+    Component {
+        id: legacyChatComp
+
+        ColumnLayout {
+            id: columnLayout
+            readonly property alias inputField: messageInputField
+            readonly property alias listView: messageListView
+            visible: !root.companionUnifiedActive
+            anchors {
+                fill: parent
+                margins: root.padding
+            }
+            spacing: root.padding
 
         Item {
             // Messages
@@ -1134,6 +1175,7 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                     }
                 }
             }
+        }
         }
     }
 }

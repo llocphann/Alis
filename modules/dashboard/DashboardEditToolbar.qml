@@ -6,6 +6,7 @@ import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
 import qs.modules.abyss.looks
+import "DashboardCustomTabPolicy.js" as TabPolicy
 
 Rectangle {
     id: root
@@ -40,7 +41,7 @@ Rectangle {
     readonly property real desiredRightDockHeight: (root.splitSideDocks && root.canvasController !== null)
         ? Math.ceil(rightLayoutDock.implicitHeight) : 0
 
-    readonly property bool editing: root.canvasController?.editMode ?? false
+    readonly property bool editing: (root.tabController?.editMode ?? false) || (root.canvasController?.editMode ?? false)
     readonly property bool naming: tabController?.tabNamingActive ?? false
     readonly property var visibleIds: root.canvasController?.visibleIds ?? []
     readonly property var hiddenIds: root.canvasController?.hiddenIds ?? []
@@ -138,6 +139,7 @@ Rectangle {
         if (key === "weeklyPlanner") return Translation.tr("Planner")
         if (key === "music") return Translation.tr("Music")
         if (key === "spacedRepetition") return Translation.tr("Review")
+        if (key === "exercisesTracker") return Translation.tr("Exercises")
         const tabs = root.tabController?.customTabs ?? []
         for (let i = 0; i < tabs.length; ++i) {
             if (String(tabs[i]?.id ?? "") === key)
@@ -147,36 +149,49 @@ Rectangle {
     }
 
     function pageIcon(pageId): string {
-        const key = String(pageId)
-        if (key === "dashboard") return "dashboard"
-        if (key === "weeklyPlanner") return "calendar_view_week"
-        if (key === "music") return "library_music"
-        if (key === "spacedRepetition") return "psychology"
-        return "tab"
+        return TabPolicy.iconFor(Config.options?.dashboard?.tabIcons, pageId)
     }
 
     function switchDashboardTab(pageId): void {
         if (!root.tabController || pageId === root.tabController.currentPageId)
             return
+        const targetId = String(pageId)
+        const currentId = String(root.tabController.currentPageId ?? "")
+        const targetIsCustom = targetId.startsWith("custom-")
+        const currentIsCustom = currentId.startsWith("custom-")
         const editor = root.canvasController
+
+        // Built-in tabs ("dashboard", "music", "weeklyPlanner", "spacedRepetition",
+        // "exercisesTracker") share dashboardCanvas as their edit controller.
+        // Switching between them while dashboardCanvas is already editing must NOT
+        // call commitEditMode(); simply switch the visible tab in place.
+        if (!targetIsCustom && !currentIsCustom && editor?.editMode) {
+            root.tabController.selectPage(targetId)
+            return
+        }
+
+        // Transitions involving a custom tab switch canvas controllers. Hold
+        // _pendingNewEditId across commitEditMode() so editMode never drops to
+        // false (preventing the Edit Stage docks from closing or redirecting).
+        const wasEditing = Boolean(root.editing)
+        if (wasEditing)
+            root.tabController._pendingNewEditId = targetId
         if (editor?.editMode) {
             editor.commitEditMode()
-            if (editor.editMode)
-                return
-        }
-        const editableTarget = pageId === "dashboard" || String(pageId).startsWith("custom-")
-        if (editableTarget)
-            root.tabController._pendingNewEditId = pageId
-        root.tabController.selectPage(pageId)
-        if (pageId === "dashboard") {
-            Qt.callLater(() => {
-                if (root.tabController?.currentPageId === "dashboard"
-                        && root.tabController?.canvasController
-                        && !root.tabController.canvasController.editMode) {
+            if (editor.editMode) {
+                if (wasEditing)
                     root.tabController._pendingNewEditId = ""
-                    root.tabController.canvasController.beginEditMode()
-                }
-            })
+                return
+            }
+        }
+        root.tabController.selectPage(targetId)
+        if (wasEditing) {
+            const nextEditor = root.tabController.canvasController
+            if (nextEditor) {
+                if (!nextEditor.editMode)
+                    nextEditor.beginEditMode()
+                root.tabController._pendingNewEditId = ""
+            }
         }
     }
 
@@ -855,9 +870,285 @@ Rectangle {
             anchors.fill: parent
             visible: root.tabController !== null && root.effectiveDockTab === "tabs"
 
+            Item {
+                id: tabsIconPickerTray
+                objectName: root.splitSideDocks ? "" : "dashboardBottomTabIconPicker"
+                anchors.fill: parent
+                visible: tabIconController.open
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    spacing: 6
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        spacing: 6
+
+                        RippleButton {
+                            objectName: root.splitSideDocks ? "" : "dashboardToolbarTabIconBack"
+                            Layout.alignment: Qt.AlignVCenter
+                            implicitWidth: Math.ceil(backRow.implicitWidth + 14)
+                            implicitHeight: 28
+                            buttonRadius: Appearance.rounding.small
+                            colBackground: ColorUtils.tonalStep(root.colCardBase, root.tonalDir * 0.022)
+                            colBackgroundHover: root.colHoverTonal
+                            onClicked: {
+                                bottomTabIconInput.focus = false
+                                tabIconController.open = false
+                            }
+                            contentItem: Item {
+                                Row {
+                                    id: backRow
+                                    anchors.centerIn: parent
+                                    spacing: 4
+                                    MaterialSymbol {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: "arrow_back"
+                                        iconSize: 14 * Appearance.fontSizeScale
+                                        color: Appearance.colors.colOnLayer1
+                                    }
+                                    StyledText {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: Translation.tr("Back")
+                                        font.pixelSize: Appearance.font.pixelSize.smallest
+                                        font.weight: Font.Medium
+                                        color: Appearance.colors.colOnLayer1
+                                    }
+                                }
+                            }
+                            StyledToolTip { text: Translation.tr("Close") }
+                        }
+
+                        Flickable {
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: 0
+                            implicitHeight: 28
+                            contentWidth: bottomTabTargetRow.implicitWidth
+                            contentHeight: height
+                            clip: true
+                            flickableDirection: Flickable.HorizontalFlick
+                            boundsBehavior: Flickable.StopAtBounds
+                            interactive: contentWidth > width
+
+                            Row {
+                                id: bottomTabTargetRow
+                                anchors.verticalCenter: parent.verticalCenter
+                                spacing: 4
+
+                                Repeater {
+                                    model: tabIconController.pageIds
+                                    delegate: RippleButton {
+                                        required property string modelData
+                                        readonly property bool selected:
+                                            tabIconController.effectiveTabId === modelData
+                                        objectName: root.splitSideDocks
+                                            ? "" : ("dashboardToolbarIconTab_" + modelData)
+                                        implicitWidth: Math.min(124, Math.ceil(bottomTabChipIcon.implicitWidth + 4 + bottomTabChipLabel.implicitWidth + 16))
+                                        implicitHeight: 28
+                                        buttonRadius: Appearance.rounding.small
+                                        toggled: selected
+                                        colBackground: ColorUtils.tonalStep(root.colCardBase, root.tonalDir * 0.020)
+                                        colBackgroundHover: root.colHoverTonal
+                                        colBackgroundToggled: Appearance.colors.colPrimaryContainer
+                                        colBackgroundToggledHover: Appearance.colors.colPrimaryContainerHover
+                                        onClicked: {
+                                            bottomTabIconInput.focus = false
+                                            tabIconController.targetTabId = modelData
+                                        }
+                                        contentItem: Item {
+                                            RowLayout {
+                                                anchors.centerIn: parent
+                                                width: Math.min(implicitWidth, Math.max(0, parent.width - 10))
+                                                spacing: 4
+                                                MaterialSymbol {
+                                                    id: bottomTabChipIcon
+                                                    Layout.alignment: Qt.AlignVCenter
+                                                    text: root.pageIcon(modelData)
+                                                    iconSize: 13 * Appearance.fontSizeScale
+                                                    fill: selected ? 1 : 0
+                                                    color: selected
+                                                        ? Appearance.colors.colOnPrimaryContainer
+                                                        : Appearance.colors.colOnLayer1
+                                                }
+                                                StyledText {
+                                                    id: bottomTabChipLabel
+                                                    Layout.fillWidth: true
+                                                    Layout.minimumWidth: 0
+                                                    text: root.pageTitle(modelData)
+                                                    font.pixelSize: Appearance.font.pixelSize.smallest
+                                                    font.weight: selected ? Font.DemiBold : Font.Medium
+                                                    elide: Text.ElideRight
+                                                    maximumLineCount: 1
+                                                    color: selected
+                                                        ? Appearance.colors.colOnPrimaryContainer
+                                                        : Appearance.colors.colOnLayer1
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        TextField {
+                            id: bottomTabIconInput
+                            objectName: root.splitSideDocks ? "" : "dashboardToolbarTabIconInput"
+                            Layout.preferredWidth: 160
+                            Layout.minimumWidth: 110
+                            implicitHeight: 28
+                            hoverEnabled: true
+                            focusPolicy: Qt.StrongFocus
+                            selectByMouse: true
+                            cursorVisible: activeFocus
+                            font.pixelSize: Appearance.font.pixelSize.smallest
+                            verticalAlignment: TextInput.AlignVCenter
+                            leftPadding: 10
+                            rightPadding: 10
+                            color: root.abyssMode
+                                ? AbyssStyle.textColor : Appearance.colors.colOnLayer1
+                            placeholderTextColor: root.abyssMode
+                                ? AbyssStyle.textColorMuted : Appearance.colors.colSubtext
+                            selectionColor: Appearance.colors.colPrimaryContainer
+                            selectedTextColor: Appearance.colors.colOnPrimaryContainer
+                            placeholderText: Translation.tr("Symbol (default: %1)")
+                                .arg(tabIconController.effectiveDefaultIcon)
+                            readonly property string boundValue: tabIconController.effectiveHasOverride
+                                ? tabIconController.effectiveCurrentIcon : ""
+                            Component.onCompleted: text = boundValue
+                            onBoundValueChanged: if (!activeFocus && text !== boundValue) text = boundValue
+                            onPressed: bottomTabIconInput.forceActiveFocus()
+                            onAccepted: {
+                                tabIconController.applyIcon(
+                                    tabIconController.effectiveTabId, text)
+                                focus = false
+                            }
+                            onEditingFinished: {
+                                if (tabIconController.open)
+                                    tabIconController.applyIcon(
+                                        tabIconController.effectiveTabId, text)
+                            }
+                            Keys.onEscapePressed: event => {
+                                focus = false
+                                tabIconController.open = false
+                                event.accepted = true
+                            }
+
+                            cursorDelegate: Rectangle {
+                                width: 2
+                                color: root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary
+                                visible: bottomTabIconInput.activeFocus
+                            }
+
+                            background: Rectangle {
+                                radius: Appearance.rounding.small
+                                color: ColorUtils.tonalStep(root.colCardBase, root.tonalDir * 0.022)
+                                border.width: bottomTabIconInput.activeFocus ? 1.5 : 1
+                                border.color: bottomTabIconInput.activeFocus
+                                    ? (root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary)
+                                    : Qt.alpha(Appearance.colors.colOutlineVariant, 0.36)
+                            }
+                        }
+
+                        RippleButton {
+                            objectName: root.splitSideDocks ? "" : "dashboardToolbarTabIconReset"
+                            visible: tabIconController.effectiveHasOverride
+                            Layout.alignment: Qt.AlignVCenter
+                            implicitWidth: 28
+                            implicitHeight: 28
+                            buttonRadius: Appearance.rounding.small
+                            colBackground: ColorUtils.tonalStep(root.colCardBase, root.tonalDir * 0.022)
+                            colBackgroundHover: root.colHoverTonal
+                            onClicked: {
+                                bottomTabIconInput.text = ""
+                                bottomTabIconInput.focus = false
+                                tabIconController.applyIcon(
+                                    tabIconController.effectiveTabId, "")
+                            }
+                            contentItem: Item {
+                                MaterialSymbol {
+                                    anchors.centerIn: parent
+                                    text: "restart_alt"
+                                    iconSize: 15 * Appearance.fontSizeScale
+                                    color: Appearance.colors.colSubtext
+                                }
+                            }
+                            StyledToolTip { text: Translation.tr("Reset tab icon to default") }
+                        }
+                    }
+
+                    Flickable {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 28
+                        contentWidth: bottomTabPresetsRow.implicitWidth
+                        contentHeight: height
+                        clip: true
+                        flickableDirection: Flickable.HorizontalFlick
+                        boundsBehavior: Flickable.StopAtBounds
+                        interactive: contentWidth > width
+
+                        WheelHandler {
+                            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                            onWheel: event => {
+                                const delta = Math.abs(event.pixelDelta.x) > Math.abs(event.pixelDelta.y)
+                                    ? event.pixelDelta.x
+                                    : (event.pixelDelta.y !== 0 ? event.pixelDelta.y : event.angleDelta.y * 0.4)
+                                const maxX = Math.max(0, parent.contentWidth - parent.width)
+                                parent.contentX = Math.max(0, Math.min(maxX, parent.contentX - delta))
+                                event.accepted = true
+                            }
+                        }
+
+                        Row {
+                            id: bottomTabPresetsRow
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: 4
+
+                            Repeater {
+                                model: TabPolicy.presetTabIcons
+                                delegate: RippleButton {
+                                    required property string modelData
+                                    readonly property bool chosen:
+                                        tabIconController.effectiveCurrentIcon === modelData
+                                    objectName: root.splitSideDocks
+                                        ? "" : ("dashboardToolbarTabIconPreset_" + modelData)
+                                    implicitWidth: 30
+                                    implicitHeight: 30
+                                    buttonRadius: Appearance.rounding.small
+                                    toggled: chosen
+                                    colBackground: ColorUtils.tonalStep(root.colCardBase, root.tonalDir * 0.020)
+                                    colBackgroundHover: root.colHoverTonal
+                                    colBackgroundToggled: Appearance.colors.colPrimaryContainer
+                                    colBackgroundToggledHover: Appearance.colors.colPrimaryContainerHover
+                                    onClicked: {
+                                        bottomTabIconInput.focus = false
+                                        tabIconController.applyIcon(
+                                            tabIconController.effectiveTabId, modelData)
+                                    }
+                                    contentItem: Item {
+                                        MaterialSymbol {
+                                            anchors.centerIn: parent
+                                            text: modelData
+                                            iconSize: 16 * Appearance.fontSizeScale
+                                            fill: chosen ? 1 : 0
+                                            color: chosen
+                                                ? Appearance.colors.colOnPrimaryContainer
+                                                : Appearance.colors.colOnLayer1
+                                        }
+                                    }
+                                    StyledToolTip { text: modelData }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             Flickable {
                 id: tabsControlsViewport
                 anchors.fill: parent
+                visible: !tabIconController.open
                 contentWidth: tabsControlsRow.implicitWidth
                 contentHeight: height
                 clip: true
@@ -926,6 +1217,7 @@ Rectangle {
                     }
 
                     DockControlCard {
+                        objectName: root.splitSideDocks ? "" : "dashboardToolbarActionDefaultTab"
                         cardHeight: root.compactHeight ? 72 : 90
                         readonly property bool isDefaultPage:
                             String(Config.options?.dashboard?.defaultTabId ?? "")
@@ -944,6 +1236,18 @@ Rectangle {
                         }
                     }
 
+                    DockControlCard {
+                        objectName: root.splitSideDocks ? "" : "dashboardToolbarActionTabIcon"
+                        cardHeight: root.compactHeight ? 72 : 90
+                        iconName: tabIconController.effectiveCurrentIcon
+                        titleText: Translation.tr("Tab Icon")
+                        subtitleText: root.pageTitle(tabIconController.effectiveTabId)
+                        toggled: tabIconController.open
+                        tooltipText: Translation.tr("Customize tab indicator icons")
+                        onClicked: tabIconController.openFor(
+                            root.tabController?.currentPageId ?? "")
+                    }
+
                     Rectangle {
                         visible: (root.tabController?.pageIds?.length ?? 0) > 0
                         anchors.verticalCenter: parent.verticalCenter
@@ -959,6 +1263,7 @@ Rectangle {
                             readonly property string pageKey: String(modelData)
                             readonly property bool current:
                                 String(root.tabController?.currentPageId ?? "") === pageKey
+                            objectName: root.splitSideDocks ? "" : ("dashboardBottomPageCard_" + pageKey)
                             cardHeight: root.compactHeight ? 72 : 90
                             iconName: root.pageIcon(pageKey)
                             titleText: root.pageTitle(pageKey)
@@ -1120,7 +1425,7 @@ Rectangle {
         visible: root.splitSideDocks && root.leftDockParent !== null && root.tabController !== null && root.visible
         enabled: root.enabled
         implicitWidth: Math.round(268 * Appearance.fontSizeScale)
-        implicitHeight: Math.min(560, Math.ceil(leftTabsHeader.implicitHeight + 6 * Appearance.fontSizeScale + leftTabsScrollContent.implicitHeight + 16))
+        implicitHeight: Math.min(640, Math.ceil(leftTabsHeader.implicitHeight + 6 * Appearance.fontSizeScale + leftTabsScrollContent.implicitHeight + 16))
         radius: root.stageSideHosted ? 0 : (root.abyssMode ? AbyssStyle.perimeterRadius : Appearance.rounding.large)
         color: root.stageSideHosted
             ? "transparent"
@@ -1251,23 +1556,294 @@ Rectangle {
                                 }
                             }
 
-                            AbyssSidePillButton {
-                                id: defaultTabButton
-                                readonly property bool isDefaultPage:
-                                    String(Config.options?.dashboard?.defaultTabId ?? "")
-                                    === String(root.tabController?.currentPageId ?? "")
+                            RowLayout {
                                 Layout.fillWidth: true
                                 Layout.minimumWidth: 0
-                                active: isDefaultPage
-                                iconName: "push_pin"
-                                labelText: isDefaultPage
-                                    ? Translation.tr("Default tab")
-                                    : Translation.tr("Pin default")
-                                tooltipText: Translation.tr("Open this tab after inactivity")
-                                onClicked: {
-                                    const cur = String(root.tabController?.currentPageId ?? "")
-                                    if (cur.length > 0)
-                                        root.tabController?.setDefaultTab(cur)
+                                spacing: 6
+
+                                AbyssSidePillButton {
+                                    id: defaultTabButton
+                                    objectName: root.splitSideDocks ? "dashboardToolbarActionDefaultTab" : ""
+                                    readonly property bool isDefaultPage:
+                                        String(Config.options?.dashboard?.defaultTabId ?? "")
+                                        === String(root.tabController?.currentPageId ?? "")
+                                    Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
+                                    active: isDefaultPage
+                                    iconName: "push_pin"
+                                    labelText: isDefaultPage
+                                        ? Translation.tr("Default tab")
+                                        : Translation.tr("Pin default")
+                                    tooltipText: Translation.tr("Open this tab after inactivity")
+                                    onClicked: {
+                                        const cur = String(root.tabController?.currentPageId ?? "")
+                                        if (cur.length > 0)
+                                            root.tabController?.setDefaultTab(cur)
+                                    }
+                                }
+
+                                AbyssSidePillButton {
+                                    id: tabIconToggleButton
+                                    objectName: root.splitSideDocks ? "dashboardToolbarActionTabIcon" : ""
+                                    Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
+                                    active: tabIconController.open
+                                    iconName: tabIconController.effectiveCurrentIcon
+                                    labelText: Translation.tr("Tab Icon")
+                                    tooltipText: Translation.tr("Customize tab indicator icons")
+                                    onClicked: {
+                                        if (tabIconController.open) {
+                                            tabIconController.open = false
+                                        } else {
+                                            tabIconController.openFor(
+                                                root.tabController?.currentPageId ?? "")
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    AbyssSideCard {
+                        id: leftTabIconCard
+                        objectName: "dashboardLeftTabIconPicker"
+                        visible: tabIconController.open
+                        Layout.fillWidth: true
+                        implicitHeight: leftIconPickerCol.implicitHeight + 16
+
+                        ColumnLayout {
+                            id: leftIconPickerCol
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.top: parent.top
+                            anchors.margins: 8
+                            spacing: 6
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                Layout.minimumWidth: 0
+                                spacing: 6
+
+                                MaterialSymbol {
+                                    text: tabIconController.effectiveCurrentIcon
+                                    iconSize: 15 * Appearance.fontSizeScale
+                                    fill: 1
+                                    color: Appearance.colors.colPrimary
+                                }
+
+                                StyledText {
+                                    Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
+                                    text: Translation.tr("Icon · %1").arg(
+                                        root.pageTitle(tabIconController.effectiveTabId))
+                                    font.pixelSize: Appearance.font.pixelSize.smaller
+                                    font.weight: Font.DemiBold
+                                    color: Appearance.colors.colOnLayer1
+                                    elide: Text.ElideRight
+                                }
+
+                                RippleButton {
+                                    objectName: root.splitSideDocks ? "dashboardToolbarTabIconReset" : ""
+                                    visible: tabIconController.effectiveHasOverride
+                                    implicitWidth: 26
+                                    implicitHeight: 24
+                                    buttonRadius: Appearance.rounding.small
+                                    colBackground: ColorUtils.tonalStep(root.colCardBase, root.tonalDir * 0.022)
+                                    colBackgroundHover: root.colHoverTonal
+                                    onClicked: {
+                                        leftTabIconInput.text = ""
+                                        leftTabIconInput.focus = false
+                                        tabIconController.applyIcon(
+                                            tabIconController.effectiveTabId, "")
+                                    }
+                                    contentItem: Item {
+                                        MaterialSymbol {
+                                            anchors.centerIn: parent
+                                            text: "restart_alt"
+                                            iconSize: 14 * Appearance.fontSizeScale
+                                            color: Appearance.colors.colSubtext
+                                        }
+                                    }
+                                    StyledToolTip { text: Translation.tr("Reset tab icon to default") }
+                                }
+
+                                RippleButton {
+                                    implicitWidth: 24
+                                    implicitHeight: 24
+                                    buttonRadius: Appearance.rounding.full
+                                    colBackground: "transparent"
+                                    colBackgroundHover: root.colHoverTonal
+                                    onClicked: {
+                                        leftTabIconInput.focus = false
+                                        tabIconController.open = false
+                                    }
+                                    contentItem: Item {
+                                        MaterialSymbol {
+                                            anchors.centerIn: parent
+                                            text: "close"
+                                            iconSize: 14 * Appearance.fontSizeScale
+                                            color: Appearance.colors.colSubtext
+                                        }
+                                    }
+                                    StyledToolTip { text: Translation.tr("Close") }
+                                }
+                            }
+
+                            Flow {
+                                Layout.fillWidth: true
+                                spacing: 4
+
+                                Repeater {
+                                    model: tabIconController.pageIds
+                                    delegate: RippleButton {
+                                        required property string modelData
+                                        readonly property bool selected:
+                                            tabIconController.effectiveTabId === modelData
+                                        objectName: root.splitSideDocks
+                                            ? ("dashboardToolbarIconTab_" + modelData) : ""
+                                        implicitWidth: Math.min(116, Math.ceil(leftTabChipIcon.implicitWidth + 4 + leftTabChipLabel.implicitWidth + 16))
+                                        implicitHeight: 24
+                                        buttonRadius: Appearance.rounding.small
+                                        toggled: selected
+                                        colBackground: ColorUtils.tonalStep(root.colCardBase, root.tonalDir * 0.020)
+                                        colBackgroundHover: root.colHoverTonal
+                                        colBackgroundToggled: Appearance.colors.colPrimaryContainer
+                                        colBackgroundToggledHover: Appearance.colors.colPrimaryContainerHover
+                                        onClicked: {
+                                            leftTabIconInput.focus = false
+                                            tabIconController.targetTabId = modelData
+                                        }
+                                        contentItem: Item {
+                                            RowLayout {
+                                                anchors.centerIn: parent
+                                                width: Math.min(implicitWidth, Math.max(0, parent.width - 10))
+                                                spacing: 4
+                                                MaterialSymbol {
+                                                    id: leftTabChipIcon
+                                                    Layout.alignment: Qt.AlignVCenter
+                                                    text: root.pageIcon(modelData)
+                                                    iconSize: 13 * Appearance.fontSizeScale
+                                                    fill: selected ? 1 : 0
+                                                    color: selected
+                                                        ? Appearance.colors.colOnPrimaryContainer
+                                                        : Appearance.colors.colOnLayer1
+                                                }
+                                                StyledText {
+                                                    id: leftTabChipLabel
+                                                    Layout.fillWidth: true
+                                                    Layout.minimumWidth: 0
+                                                    text: root.pageTitle(modelData)
+                                                    font.pixelSize: Appearance.font.pixelSize.smallest
+                                                    font.weight: selected ? Font.DemiBold : Font.Medium
+                                                    elide: Text.ElideRight
+                                                    maximumLineCount: 1
+                                                    color: selected
+                                                        ? Appearance.colors.colOnPrimaryContainer
+                                                        : Appearance.colors.colOnLayer1
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            TextField {
+                                id: leftTabIconInput
+                                objectName: root.splitSideDocks ? "dashboardToolbarTabIconInput" : ""
+                                Layout.fillWidth: true
+                                Layout.minimumWidth: 0
+                                implicitHeight: 30
+                                hoverEnabled: true
+                                focusPolicy: Qt.StrongFocus
+                                selectByMouse: true
+                                cursorVisible: activeFocus
+                                font.pixelSize: Appearance.font.pixelSize.smallest
+                                verticalAlignment: TextInput.AlignVCenter
+                                leftPadding: 10
+                                rightPadding: 10
+                                color: root.abyssMode
+                                    ? AbyssStyle.textColor : Appearance.colors.colOnLayer1
+                                placeholderTextColor: root.abyssMode
+                                    ? AbyssStyle.textColorMuted : Appearance.colors.colSubtext
+                                selectionColor: Appearance.colors.colPrimaryContainer
+                                selectedTextColor: Appearance.colors.colOnPrimaryContainer
+                                placeholderText: Translation.tr("Symbol (default: %1)")
+                                    .arg(tabIconController.effectiveDefaultIcon)
+                                readonly property string boundValue: tabIconController.effectiveHasOverride
+                                    ? tabIconController.effectiveCurrentIcon : ""
+                                Component.onCompleted: text = boundValue
+                                onBoundValueChanged: if (!activeFocus && text !== boundValue) text = boundValue
+                                onPressed: leftTabIconInput.forceActiveFocus()
+                                onAccepted: {
+                                    tabIconController.applyIcon(
+                                        tabIconController.effectiveTabId, text)
+                                    focus = false
+                                }
+                                onEditingFinished: {
+                                    if (tabIconController.open)
+                                        tabIconController.applyIcon(
+                                            tabIconController.effectiveTabId, text)
+                                }
+                                Keys.onEscapePressed: event => {
+                                    focus = false
+                                    tabIconController.open = false
+                                    event.accepted = true
+                                }
+
+                                cursorDelegate: Rectangle {
+                                    width: 2
+                                    color: root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary
+                                    visible: leftTabIconInput.activeFocus
+                                }
+
+                                background: Rectangle {
+                                    radius: Appearance.rounding.small
+                                    color: ColorUtils.tonalStep(root.colCardBase, root.tonalDir * 0.022)
+                                    border.width: leftTabIconInput.activeFocus ? 1.5 : 1
+                                    border.color: leftTabIconInput.activeFocus
+                                        ? (root.abyssMode ? AbyssStyle.accent : Appearance.colors.colPrimary)
+                                        : Qt.alpha(Appearance.colors.colOutlineVariant, 0.36)
+                                }
+                            }
+
+                            Flow {
+                                Layout.fillWidth: true
+                                spacing: 4
+
+                                Repeater {
+                                    model: TabPolicy.presetTabIcons
+                                    delegate: RippleButton {
+                                        required property string modelData
+                                        readonly property bool chosen:
+                                            tabIconController.effectiveCurrentIcon === modelData
+                                        objectName: root.splitSideDocks
+                                            ? ("dashboardToolbarTabIconPreset_" + modelData) : ""
+                                        implicitWidth: 28
+                                        implicitHeight: 28
+                                        buttonRadius: Appearance.rounding.small
+                                        toggled: chosen
+                                        colBackground: ColorUtils.tonalStep(root.colCardBase, root.tonalDir * 0.020)
+                                        colBackgroundHover: root.colHoverTonal
+                                        colBackgroundToggled: Appearance.colors.colPrimaryContainer
+                                        colBackgroundToggledHover: Appearance.colors.colPrimaryContainerHover
+                                        onClicked: {
+                                            leftTabIconInput.focus = false
+                                            tabIconController.applyIcon(
+                                                tabIconController.effectiveTabId, modelData)
+                                        }
+                                        contentItem: Item {
+                                            MaterialSymbol {
+                                                anchors.centerIn: parent
+                                                text: modelData
+                                                iconSize: 15 * Appearance.fontSizeScale
+                                                fill: chosen ? 1 : 0
+                                                color: chosen
+                                                    ? Appearance.colors.colOnPrimaryContainer
+                                                    : Appearance.colors.colOnLayer1
+                                            }
+                                        }
+                                        StyledToolTip { text: modelData }
+                                    }
                                 }
                             }
                         }
@@ -1322,6 +1898,7 @@ Rectangle {
                                     id: pagePill
                                     required property var modelData
                                     readonly property string pageKey: String(modelData)
+                                    objectName: root.splitSideDocks ? ("dashboardLeftPagePill_" + pagePill.pageKey) : ""
                                     readonly property bool current:
                                         String(root.tabController?.currentPageId ?? "") === pageKey
                                     readonly property bool isDefault:
@@ -1363,17 +1940,43 @@ Rectangle {
 
                                     RowLayout {
                                         anchors.fill: parent
-                                        anchors.leftMargin: 9
+                                        anchors.leftMargin: 7
                                         anchors.rightMargin: 9
                                         spacing: 6
+                                        z: 2
 
-                                        MaterialSymbol {
-                                            text: root.pageIcon(pagePill.pageKey)
-                                            iconSize: 15 * Appearance.fontSizeScale
-                                            fill: pagePill.current ? 1 : 0
-                                            color: pagePill.current
-                                                ? Appearance.colors.colOnPrimaryContainer
-                                                : Appearance.colors.colSubtext
+                                        RippleButton {
+                                            objectName: root.splitSideDocks
+                                                ? ("dashboardLeftPageIconButton_" + pagePill.pageKey) : ""
+                                            Layout.alignment: Qt.AlignVCenter
+                                            implicitWidth: 22
+                                            implicitHeight: 22
+                                            buttonRadius: Appearance.rounding.full
+                                            colBackground: (tabIconController.open
+                                                && tabIconController.effectiveTabId === pagePill.pageKey)
+                                                ? Appearance.colors.colPrimaryContainer
+                                                : (pagePill.current
+                                                    ? "transparent"
+                                                    : ColorUtils.tonalStep(root.colCardBase, root.tonalDir * 0.022))
+                                            colBackgroundHover: root.colHoverTonal
+                                            onClicked: tabIconController.openFor(pagePill.pageKey)
+                                            contentItem: Item {
+                                                MaterialSymbol {
+                                                    anchors.centerIn: parent
+                                                    text: root.pageIcon(pagePill.pageKey)
+                                                    iconSize: 14 * Appearance.fontSizeScale
+                                                    fill: pagePill.current ? 1 : 0
+                                                    color: (tabIconController.open
+                                                        && tabIconController.effectiveTabId === pagePill.pageKey)
+                                                        || pagePill.current
+                                                        ? Appearance.colors.colOnPrimaryContainer
+                                                        : Appearance.colors.colOnLayer1
+                                                }
+                                            }
+                                            StyledToolTip {
+                                                text: Translation.tr("Change %1 icon")
+                                                    .arg(root.pageTitle(pagePill.pageKey))
+                                            }
                                         }
 
                                         StyledText {
@@ -2170,6 +2773,50 @@ Rectangle {
         StyledToolTip {
             position: "top"
             text: tool.tooltipText
+        }
+    }
+
+    QtObject {
+        id: tabIconController
+        property bool open: false
+        property string targetTabId: ""
+        readonly property var pageIds: root.tabController?.pageIds ?? []
+        readonly property string effectiveTabId: {
+            const ids = pageIds
+            if (targetTabId.length > 0 && ids.indexOf(targetTabId) !== -1)
+                return targetTabId
+            const cur = String(root.tabController?.currentPageId ?? "")
+            if (cur.length > 0 && ids.indexOf(cur) !== -1)
+                return cur
+            return ids.length > 0 ? String(ids[0]) : "dashboard"
+        }
+        readonly property string effectiveDefaultIcon: TabPolicy.defaultIconFor(effectiveTabId)
+        readonly property string effectiveCurrentIcon: root.pageIcon(effectiveTabId)
+        readonly property bool effectiveHasOverride: TabPolicy.hasCustomIcon(
+            Config.options?.dashboard?.tabIcons ?? [], effectiveTabId)
+
+        function applyIcon(pageId, iconName) {
+            const pid = String(pageId ?? "").trim()
+            if (!pid.length)
+                return
+            const next = TabPolicy.setTabIcon(
+                Config.options?.dashboard?.tabIcons ?? [], pid, iconName)
+            Config.setNestedValue("dashboard.tabIcons", next)
+        }
+
+        function openFor(pageId) {
+            const pid = String(pageId ?? "").trim()
+            if (pid.length > 0)
+                targetTabId = pid
+            open = true
+        }
+    }
+
+    Connections {
+        target: root
+        function onEditingChanged() {
+            if (!root.editing)
+                tabIconController.open = false
         }
     }
 }

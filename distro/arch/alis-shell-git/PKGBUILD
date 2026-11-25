@@ -51,7 +51,7 @@ optdepends=(
   'mpv: media playback'
   'mpd: local Music library and queue backend'
   'mpd-mpris: optional external MPD MPRIS bridge (built-in MPRIS provided by alis-mpdd)'
-  'nautilus: default file manager integration'
+  'gtk4: runtime library for built-in Alis Files manager'
   'nm-connection-editor: default network settings GUI'
   'pavucontrol: advanced audio mixer UI'
   'plasma-browser-integration: browser MPRIS sessions and artwork'

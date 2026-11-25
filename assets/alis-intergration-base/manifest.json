@@ -1,0 +1,135 @@
+{
+  "id": "alis-intergration",
+  "version": "1.0.0",
+  "host": "Alis",
+  "hostApi": 1,
+  "session": "AlisSession.qml",
+  "pluginsDir": "plugins",
+  "integrations": [
+    "tlp",
+    "thinkfan",
+    "nexus",
+    "spaced_repetition",
+    "exercises_tracker",
+    "alis_files"
+  ],
+  "plugins": [
+    {
+      "id": "tlp",
+      "name": "TLP",
+      "icon": "battery_saver",
+      "payloadDir": "plugins/tlp",
+      "helpersScope": "tlp",
+      "capabilities": [
+        {
+          "id": "power",
+          "name": "Power",
+          "settings": "tlp",
+          "waffleSettings": "tlpWaffle"
+        }
+      ]
+    },
+    {
+      "id": "thinkfan",
+      "name": "Thinkfan",
+      "icon": "mode_fan",
+      "payloadDir": "plugins/thinkfan",
+      "helpersScope": "thinkfan",
+      "capabilities": [
+        {
+          "id": "cooling",
+          "name": "Cooling",
+          "settings": "thinkfan"
+        }
+      ]
+    },
+    {
+      "id": "nexus",
+      "name": "Nexus",
+      "icon": "hub",
+      "payloadDir": "plugins/nexus",
+      "capabilities": [
+        {
+          "id": "workspace",
+          "name": "Nexus & Vault",
+          "settings": "nexus"
+        }
+      ]
+    },
+    {
+      "id": "spaced_repetition",
+      "name": "Spaced Repetition",
+      "icon": "school",
+      "payloadDir": "plugins/spaced_repetition",
+      "capabilities": [
+        {
+          "id": "vocabulary",
+          "name": "Vocabulary & Cards",
+          "settings": "spacedRepetition"
+        }
+      ]
+    },
+    {
+      "id": "exercises_tracker",
+      "name": "Exercises Tracker",
+      "icon": "fitness_center",
+      "payloadDir": "plugins/exercises_tracker",
+      "capabilities": [
+        {
+          "id": "workouts",
+          "name": "Workouts & Body Tracker",
+          "settings": "exercisesTracker"
+        }
+      ]
+    },
+    {
+      "id": "alis_files",
+      "name": "Alis Files",
+      "icon": "folder_open",
+      "payloadDir": "plugins/alis_files",
+      "capabilities": [
+        {
+          "id": "files",
+          "name": "File Manager",
+          "settings": "alisFiles"
+        }
+      ]
+    }
+  ],
+  "settings": {
+    "tlp": "plugins/tlp/modules/settings/TlpPowerSettings.qml",
+    "nexus": "plugins/nexus/modules/settings/NexusThemeSettings.qml",
+    "nexusTodo": "plugins/nexus/modules/settings/NexusTodoSettings.qml",
+    "tlpRow": "plugins/tlp/modules/settings/TlpSettingRow.qml",
+    "tlpWaffle": "plugins/tlp/modules/waffle/settings/WTlpPowerSettings.qml",
+    "tlpWaffleRow": "plugins/tlp/modules/waffle/settings/WTlpSettingRow.qml",
+    "thinkfan": "plugins/thinkfan/modules/settings/ThinkfanSettings.qml",
+    "spacedRepetition": "plugins/spaced_repetition/modules/settings/DashboardSpacedRepetitionSettings.qml",
+    "exercisesTracker": "plugins/exercises_tracker/modules/settings/DashboardExercisesTrackerSettings.qml",
+    "alisFiles": "plugins/alis_files/modules/settings/AlisFilesSettings.qml"
+  },
+  "views": {
+    "nexusWorkspace": "plugins/nexus/modules/nexus/NexusWorkspace.qml",
+    "alisFilesWorkspace": "plugins/alis_files/modules/files/AlisFilesOverlayWorkspace.qml",
+    "spacedRepetitionDashboard": "plugins/spaced_repetition/modules/dashboard/DashboardSpacedRepetition.qml",
+    "exercisesTrackerDashboard": "plugins/exercises_tracker/modules/dashboard/DashboardExercisesTracker.qml"
+  },
+  "backends": {
+    "managedTodo": "plugins/nexus/services/NexusTodoBackend.qml",
+    "dailyTodo": "plugins/nexus/services/DailyNoteTodoBackend.qml"
+  },
+  "scripts": {
+    "spacedRepetitionLookup": "plugins/spaced_repetition/scripts/integrations/lookup_word_level.py",
+    "exercisesTrackerHelper": "plugins/exercises_tracker/scripts/integrations/exercises_tracker.py",
+    "alisFilesInstaller": "plugins/alis_files/scripts/install_alis_files.py"
+  },
+  "derivedFrom": {
+    "repository": "llocphann/Alis",
+    "sourceSha": "6abf56328350b5871f1c626b2752d5e25d658539"
+  },
+  "uiDerivedFrom": {
+    "repository": "llocphann/Alis",
+    "sourceSha": "53af215df39bce6cf7fda5c226bbb37bb14f6b9e"
+  },
+  "name": "Alis-Intergration"
+}

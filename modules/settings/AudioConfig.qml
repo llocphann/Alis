@@ -30,19 +30,23 @@ ContentPage {
                 spacing: 10
 
                 RippleButton {
+                    Layout.alignment: Qt.AlignVCenter
                     implicitWidth: 34
                     implicitHeight: 34
-                    buttonRadius: Appearance.rounding.full
+                    buttonRadius: 10
                     toggled: root.outputMuted
-                    colBackground: Appearance.colors.colLayer2
-                    colBackgroundHover: Appearance.colors.colLayer2Hover
+                    colBackground: SettingsMaterialPreset.controlSurface
+                    colBackgroundHover: SettingsMaterialPreset.controlSurfaceHover
+                    colBackgroundToggled: SettingsMaterialPreset.pillSelectedColor
+                    colBackgroundToggledHover: SettingsMaterialPreset.pillSelectedHoverColor
                     onClicked: Audio.toggleMute()
 
                     contentItem: MaterialSymbol {
-                        anchors.centerIn: parent
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
                         text: root.outputMuted ? "volume_off" : "volume_up"
                         iconSize: Appearance.font.pixelSize.normal
-                        color: root.outputMuted ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer1
+                        color: root.outputMuted ? SettingsMaterialPreset.pillSelectedTextColor : SettingsMaterialPreset.textColor
                     }
 
                     StyledToolTip {
@@ -53,6 +57,7 @@ ContentPage {
                 SettingsSliderRow {
                     Layout.fillWidth: true
                     Layout.minimumWidth: 0
+                    compactStacked: true
                     icon: ""
                     text: Translation.tr("Output volume")
                     from: 0
@@ -145,19 +150,23 @@ ContentPage {
                 spacing: 10
 
                 RippleButton {
+                    Layout.alignment: Qt.AlignVCenter
                     implicitWidth: 34
                     implicitHeight: 34
-                    buttonRadius: Appearance.rounding.full
+                    buttonRadius: 10
                     toggled: Audio.micMuted
-                    colBackground: Appearance.colors.colLayer2
-                    colBackgroundHover: Appearance.colors.colLayer2Hover
+                    colBackground: SettingsMaterialPreset.controlSurface
+                    colBackgroundHover: SettingsMaterialPreset.controlSurfaceHover
+                    colBackgroundToggled: SettingsMaterialPreset.pillSelectedColor
+                    colBackgroundToggledHover: SettingsMaterialPreset.pillSelectedHoverColor
                     onClicked: Audio.toggleMicMute()
 
                     contentItem: MaterialSymbol {
-                        anchors.centerIn: parent
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
                         text: Audio.micMuted ? "mic_off" : "mic"
                         iconSize: Appearance.font.pixelSize.normal
-                        color: Audio.micMuted ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer1
+                        color: Audio.micMuted ? SettingsMaterialPreset.pillSelectedTextColor : SettingsMaterialPreset.textColor
                     }
 
                     StyledToolTip {
@@ -168,6 +177,7 @@ ContentPage {
                 SettingsSliderRow {
                     Layout.fillWidth: true
                     Layout.minimumWidth: 0
+                    compactStacked: true
                     icon: ""
                     text: Translation.tr("Input volume")
                     from: 0
@@ -365,14 +375,21 @@ ContentPage {
                 }
             }
 
-            SettingsSliderRow {
+            SettingsPresetRow {
                 icon: "notification_sound"
                 text: Translation.tr("System sound volume")
                 from: 0
                 to: 1
                 stepSize: 0.05
                 value: Config.options?.sounds?.volume ?? 0.5
-                displayValue: Math.round((Config.options?.sounds?.volume ?? 0.5) * 100) + "%"
+                displayValue: Math.round(liveValue * 100) + "%"
+                presets: [
+                    { label: "0%", value: 0.0 },
+                    { label: "25%", value: 0.25 },
+                    { label: "50%", value: 0.5 },
+                    { label: "75%", value: 0.75 },
+                    { label: "100%", value: 1.0 }
+                ]
                 onMoved: nextVal => Config.setNestedValue("sounds.volume", nextVal)
             }
         }

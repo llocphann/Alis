@@ -20,9 +20,14 @@ Item {
     property bool warning: normalizedPercentage * 100 >= warningThreshold
     property bool caution: cautionThreshold > 0 && normalizedPercentage * 100 >= cautionThreshold && !warning
 
+    readonly property bool verticalContent: Math.abs(root.contentRotation) === 90
+    readonly property int valuePixelSize: Math.round(
+        (verticalContent ? Appearance.font.pixelSize.normal * 0.92 : Appearance.font.pixelSize.small)
+        * Appearance.sizes.barModuleScale)
+
     RowLayout {
         id: resourceRowLayout
-        spacing: 2 * Appearance.sizes.barModuleScale
+        spacing: (root.verticalContent ? 1 : 2) * Appearance.sizes.barModuleScale
         layoutDirection: root.contentRotation < 0 ? Qt.RightToLeft : Qt.LeftToRight
         x: shown ? 0 : -resourceRowLayout.width
         anchors {
@@ -35,7 +40,7 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             lineWidth: Math.round(Appearance.rounding.unsharpen * Appearance.sizes.barModuleScale)
             value: root.normalizedPercentage
-            implicitSize: Math.round(20 * Appearance.sizes.barModuleScale)
+            implicitSize: Math.round((root.verticalContent ? 21 : 20) * Appearance.sizes.barModuleScale)
             colPrimary: root.warning ? Appearance.colors.colError
                 : root.caution ? Appearance.colors.colTertiary
                 : Appearance.colors.colOnSurfaceVariant
@@ -67,7 +72,8 @@ Item {
             TextMetrics {
                 id: fullPercentageTextMetrics
                 text: "100"
-                font.pixelSize: Math.round(Appearance.font.pixelSize.small * Appearance.sizes.barModuleScale)
+                font.pixelSize: root.valuePixelSize
+                font.weight: root.verticalContent ? Font.Medium : Font.Normal
             }
 
             StyledText {
@@ -80,9 +86,9 @@ Item {
                     enabled: Appearance.animationsEnabled
                     ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
                 }
-                font.pixelSize: Math.round(Appearance.font.pixelSize.small * Appearance.sizes.barModuleScale)
+                font.pixelSize: root.valuePixelSize
                 font.family: Appearance.font.family.main
-                font.weight: Font.Normal
+                font.weight: root.verticalContent ? Font.Medium : Font.Normal
                 font.italic: false
                 rotation: -root.contentRotation
                 text: `${Math.round(root.normalizedPercentage * 100).toString()}`

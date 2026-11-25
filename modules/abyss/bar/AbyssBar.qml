@@ -16,6 +16,7 @@ Item {
     property var draftPlacements: null
     property var draftOptions: null
     property bool editing: false
+    property bool edgebarBlocked: false
     // Selection is owned by Alis Settings, not the layout editor. The editor
     // can still display and reposition dormant modules in Edgebar Hover mode.
     readonly property var launcherModes: ({
@@ -432,6 +433,7 @@ Item {
             onModuleIconHitSizeChanged: invalidateInputRegion()
             readonly property var geometry: root.presentedLayoutRecords.find(rec => rec.id === modelData)
             editing: root.editing
+            edgebarBlocked: root.edgebarBlocked
             liquidController: root.liquidController
             attachedEdge: placement?.edge ?? "top"
             cornerWrap: placement?.cornerWrap === true && (geometry === undefined || geometry.cornerWrap === true)
@@ -450,7 +452,7 @@ Item {
                         : Layout.cornerEdges(wrapCorner).horizontal)
                     : "")
             contentScale: cornerWrap
-                ? Math.max(0.6, Math.min(1.8, wrapThickness / Math.max(1, 32 * Appearance.fontSizeScale)))
+                ? Math.max(0.25, Math.min(2.6, wrapThickness / Math.max(1, 32 * Appearance.fontSizeScale)))
                 : (naturalSpan > 0 ? (((geometry?.designSpan ?? geometry?.span) ?? 0) / naturalSpan) : 1)
             function syncMeasuredSpan(): void {
                 if (!root)

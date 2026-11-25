@@ -8,6 +8,7 @@ import Quickshell.Wayland
 import qs
 import qs.services
 import qs.modules.common
+import qs.modules.common.widgets as Widgets
 import qs.modules.abyss.bar
 import qs.modules.abyss.looks
 import "looks/AbyssGeometry.js" as Geometry
@@ -111,33 +112,80 @@ Scope {
                 root.quickNotesEditorOutput = ""
         }
     }
+    property bool _closingHeavyOverlays: false
+    function yieldCompanionOnAllOutputs(): void {
+        for (const host of (root.outputHosts ?? [])) {
+            try {
+                if (host && typeof host.yieldCompanion === "function")
+                    host.yieldCompanion()
+            } catch (_e) {}
+        }
+    }
+    // Mutual exclusion among heavy overlays (Dashboard / Settings / Nexus / Overview / Control Panel)
+    function closeOtherHeavyOverlays(exceptKind: string): void {
+        if (root._closingHeavyOverlays)
+            return
+        root._closingHeavyOverlays = true
+        try {
+            if (exceptKind !== "dashboard" && GlobalStates.dashboardOpen)
+                GlobalStates.dashboardOpen = false
+            if (exceptKind !== "settings" && GlobalStates.settingsOverlayOpen)
+                GlobalStates.settingsOverlayOpen = false
+            if (exceptKind !== "controls" && GlobalStates.controlPanelOpen)
+                GlobalStates.controlPanelOpen = false
+            if (exceptKind !== "overview" && GlobalStates.overviewOpen)
+                GlobalStates.overviewOpen = false
+            if (exceptKind !== "nexus" && AlisIntergration.nexus?.isOpen && (AlisIntergration.nexus?.overlayMode ?? true))
+                AlisIntergration.nexus.close()
+            if (exceptKind !== "files" && AlisIntergration.alisFiles?.isOpen && (AlisIntergration.alisFiles?.overlayMode ?? true))
+                AlisIntergration.alisFiles.close()
+            root.yieldCompanionOnAllOutputs()
+        } finally {
+            root._closingHeavyOverlays = false
+        }
+    }
     Connections {
         target: GlobalStates
         function onDashboardOpenChanged(): void {
             if (GlobalStates.dashboardOpen) {
                 root.largeTargetOutput = GlobalStates.resolveOutputName("",[])
-                if (AlisIntergration.nexus?.isOpen && (AlisIntergration.nexus?.overlayMode ?? true))
-                    AlisIntergration.nexus.close()
+                root.closeOtherHeavyOverlays("dashboard")
             }
         }
         function onSettingsOverlayOpenChanged(): void {
-            if (GlobalStates.settingsOverlayOpen && AlisIntergration.nexus?.isOpen && (AlisIntergration.nexus?.overlayMode ?? true))
-                AlisIntergration.nexus.close()
+            if (GlobalStates.settingsOverlayOpen)
+                root.closeOtherHeavyOverlays("settings")
         }
         function onWallpaperSelectorOpenChanged(): void {
             if (GlobalStates.wallpaperSelectorOpen && AlisIntergration.nexus?.isOpen && (AlisIntergration.nexus?.overlayMode ?? true))
                 AlisIntergration.nexus.close()
+            if (GlobalStates.wallpaperSelectorOpen && AlisIntergration.alisFiles?.isOpen && (AlisIntergration.alisFiles?.overlayMode ?? true))
+                AlisIntergration.alisFiles.close()
         }
         function onWallpaperLauncherOpenChanged(): void {
             if (GlobalStates.wallpaperLauncherOpen && AlisIntergration.nexus?.isOpen && (AlisIntergration.nexus?.overlayMode ?? true))
                 AlisIntergration.nexus.close()
+            if (GlobalStates.wallpaperLauncherOpen && AlisIntergration.alisFiles?.isOpen && (AlisIntergration.alisFiles?.overlayMode ?? true))
+                AlisIntergration.alisFiles.close()
         }
         function onCoverflowSelectorOpenChanged(): void {
             if (GlobalStates.coverflowSelectorOpen && AlisIntergration.nexus?.isOpen && (AlisIntergration.nexus?.overlayMode ?? true))
                 AlisIntergration.nexus.close()
+            if (GlobalStates.coverflowSelectorOpen && AlisIntergration.alisFiles?.isOpen && (AlisIntergration.alisFiles?.overlayMode ?? true))
+                AlisIntergration.alisFiles.close()
         }
-        function onControlPanelOpenChanged(): void { if (GlobalStates.controlPanelOpen) root.largeTargetOutput = GlobalStates.resolveOutputName("",[]) }
-        function onOverviewOpenChanged(): void { if (GlobalStates.overviewOpen) GlobalStates.clipboardOpen = false }
+        function onControlPanelOpenChanged(): void {
+            if (GlobalStates.controlPanelOpen) {
+                root.largeTargetOutput = GlobalStates.resolveOutputName("",[])
+                root.closeOtherHeavyOverlays("controls")
+            }
+        }
+        function onOverviewOpenChanged(): void {
+            if (GlobalStates.overviewOpen) {
+                GlobalStates.clipboardOpen = false
+                root.closeOtherHeavyOverlays("overview")
+            }
+        }
         function onClipboardOpenChanged(): void {
             if (GlobalStates.clipboardOpen) {
                 GlobalStates.abyssClipboardTargetOutput = GlobalStates.resolveOutputName("",[])
@@ -151,10 +199,17 @@ Scope {
         function onIsOpenChanged(): void {
             if (AlisIntergration.nexus?.isOpen && (AlisIntergration.nexus?.overlayMode ?? true)) {
                 root.largeTargetOutput = GlobalStates.resolveOutputName("",[])
-                GlobalStates.dashboardOpen = false
-                GlobalStates.settingsOverlayOpen = false
-                GlobalStates.controlPanelOpen = false
-                GlobalStates.overviewOpen = false
+                root.closeOtherHeavyOverlays("nexus")
+            }
+        }
+    }
+    Connections {
+        target: AlisIntergration.alisFiles
+        ignoreUnknownSignals: true
+        function onIsOpenChanged(): void {
+            if (AlisIntergration.alisFiles?.isOpen && (AlisIntergration.alisFiles?.overlayMode ?? true)) {
+                root.largeTargetOutput = GlobalStates.resolveOutputName("",[])
+                root.closeOtherHeavyOverlays("files")
             }
         }
     }
@@ -824,6 +879,7 @@ Scope {
             readonly property var paintInsets: (physicalOsdResident || physicalPolkitResident) ? physicalInsets : nativeInsets
             readonly property bool editorOpen: GlobalStates.abyssEditing && GlobalStates.abyssEditorTargetOutput === outputName
             readonly property bool nexusOpen: nexusBody.open
+            readonly property bool filesOpen: filesBody.open
             readonly property bool dashboardStageEditing: (dashboardBody.open
                     && ((dashboardBody.contentItem.item?.editMode ?? false)
                         || (dashboardBody.contentItem.item?.tabNamingActive ?? false)))
@@ -933,46 +989,34 @@ Scope {
                 return 0
             }
             onRawStageDockWidthChanged: {
-                if (window.editStageMode.length > 0 && window.rawStageDockWidth > 200) {
+                if (window.editStageMode.length > 0 && window.rawStageDockWidth > 200)
                     window.latchedStageDockWidth = Math.round(window.rawStageDockWidth)
-                    if (window.editStageProgress <= 0.0001)
-                        window.animatedStageDockWidth = window.latchedStageDockWidth
-                }
             }
             onRawStageDockHeightChanged: {
-                if (window.editStageMode.length > 0 && window.rawStageDockHeight > 40) {
+                if (window.editStageMode.length > 0 && window.rawStageDockHeight > 40)
                     window.latchedStageDockHeight = Math.round(window.rawStageDockHeight)
-                    if (window.editStageProgress <= 0.0001)
-                        window.animatedStageDockHeight = window.latchedStageDockHeight
-                }
             }
             onRawStageLeftDockWidthChanged: {
                 if ((window.editStageMode === "abyss" || window.editStageMode === "dashboard") && window.rawStageLeftDockWidth > 160) {
                     window.latchedStageLeftDockWidth = Math.round(window.rawStageLeftDockWidth)
-                    if (window.editStageProgress <= 0.0001)
-                        window.animatedStageLeftDockWidth = window.latchedStageLeftDockWidth
+                    if (window.editStageProgress > 0.0001 && !window._coalescingStageSync)
+                        window.syncDesktopEditStage()
                 }
             }
             onRawStageLeftDockHeightChanged: {
-                if ((window.editStageMode === "abyss" || window.editStageMode === "dashboard") && window.rawStageLeftDockHeight > 120) {
+                if ((window.editStageMode === "abyss" || window.editStageMode === "dashboard") && window.rawStageLeftDockHeight > 120)
                     window.latchedStageLeftDockHeight = Math.round(window.rawStageLeftDockHeight)
-                    if (window.editStageProgress <= 0.0001)
-                        window.animatedStageLeftDockHeight = window.latchedStageLeftDockHeight
-                }
             }
             onRawStageRightDockWidthChanged: {
                 if ((window.editStageMode === "abyss" || window.editStageMode === "dashboard" || window.widgetManagerRightOpen) && window.rawStageRightDockWidth > 160) {
                     window.latchedStageRightDockWidth = Math.round(window.rawStageRightDockWidth)
-                    if (window.editStageProgress <= 0.0001)
-                        window.animatedStageRightDockWidth = window.latchedStageRightDockWidth
+                    if (window.editStageProgress > 0.0001 && !window._coalescingStageSync)
+                        window.syncDesktopEditStage()
                 }
             }
             onRawStageRightDockHeightChanged: {
-                if ((window.editStageMode === "abyss" || window.editStageMode === "dashboard" || window.widgetManagerRightOpen) && window.rawStageRightDockHeight > 120) {
+                if ((window.editStageMode === "abyss" || window.editStageMode === "dashboard" || window.widgetManagerRightOpen) && window.rawStageRightDockHeight > 120)
                     window.latchedStageRightDockHeight = Math.round(window.rawStageRightDockHeight)
-                    if (window.editStageProgress <= 0.0001)
-                        window.animatedStageRightDockHeight = window.latchedStageRightDockHeight
-                }
             }
             property real animatedStageDockWidth: window.latchedStageDockWidth
             Behavior on animatedStageDockWidth {
@@ -1014,6 +1058,26 @@ Scope {
                         window._stageAnimArmed = true
                 }
             }
+            Connections {
+                target: stageActiveWindowsLoader.item ?? null
+                ignoreUnknownSignals: true
+                function onCaptureReadyChanged(): void {
+                    if (window.editStageMode === "wallpaper"
+                            && (stageActiveWindowsLoader.item?.captureReady ?? false)
+                            && !window._stageAnimArmed) {
+                        stageAnimArmTimer.stop()
+                        window._stageAnimArmed = true
+                    }
+                }
+                function onCaptureFailedChanged(): void {
+                    if (window.editStageMode === "wallpaper"
+                            && (stageActiveWindowsLoader.item?.captureFailed ?? false)
+                            && !window._stageAnimArmed) {
+                        stageAnimArmTimer.stop()
+                        window._stageAnimArmed = true
+                    }
+                }
+            }
             property real editStageProgress: (window.editStageMode.length > 0 && window._stageAnimArmed) ? 1 : 0
             Behavior on editStageProgress {
                 enabled: AbyssStyle.motionEnabled
@@ -1038,31 +1102,15 @@ Scope {
                         window.latchedStageDockWidth = Math.round(window.rawStageDockWidth)
                     if (window.rawStageDockHeight > 40)
                         window.latchedStageDockHeight = Math.round(window.rawStageDockHeight)
-                    if (window.editStageProgress <= 0.0001) {
-                        window.animatedStageDockWidth = window.latchedStageDockWidth
-                        window.animatedStageDockHeight = window.latchedStageDockHeight
-                    }
                     if (window.editStageMode === "abyss" || window.editStageMode === "dashboard") {
-                        if (window.rawStageLeftDockWidth > 160) {
+                        if (window.rawStageLeftDockWidth > 160)
                             window.latchedStageLeftDockWidth = Math.round(window.rawStageLeftDockWidth)
-                            if (window.editStageProgress <= 0.0001)
-                                window.animatedStageLeftDockWidth = window.latchedStageLeftDockWidth
-                        }
-                        if (window.rawStageLeftDockHeight > 120) {
+                        if (window.rawStageLeftDockHeight > 120)
                             window.latchedStageLeftDockHeight = Math.round(window.rawStageLeftDockHeight)
-                            if (window.editStageProgress <= 0.0001)
-                                window.animatedStageLeftDockHeight = window.latchedStageLeftDockHeight
-                        }
-                        if (window.rawStageRightDockWidth > 160) {
+                        if (window.rawStageRightDockWidth > 160)
                             window.latchedStageRightDockWidth = Math.round(window.rawStageRightDockWidth)
-                            if (window.editStageProgress <= 0.0001)
-                                window.animatedStageRightDockWidth = window.latchedStageRightDockWidth
-                        }
-                        if (window.rawStageRightDockHeight > 120) {
+                        if (window.rawStageRightDockHeight > 120)
                             window.latchedStageRightDockHeight = Math.round(window.rawStageRightDockHeight)
-                            if (window.editStageProgress <= 0.0001)
-                                window.animatedStageRightDockHeight = window.latchedStageRightDockHeight
-                        }
                     } else if (window.widgetManagerRightOpen) {
                         if (window.rawStageRightDockWidth > 160)
                             window.latchedStageRightDockWidth = Math.round(window.rawStageRightDockWidth)
@@ -1099,32 +1147,25 @@ Scope {
                 if (window.editStageMode.length > 0) {
                     const freshEntry = window.retainedEditStageMode.length === 0 && window.editStageProgress <= 0.0001
                     window.retainedEditStageMode = window.editStageMode
-                    if (window.rawStageDockWidth > 200) {
+                    if (window.rawStageDockWidth > 200)
                         window.latchedStageDockWidth = Math.round(window.rawStageDockWidth)
-                        window.animatedStageDockWidth = window.latchedStageDockWidth
-                    }
-                    if (window.rawStageDockHeight > 40) {
+                    if (window.rawStageDockHeight > 40)
                         window.latchedStageDockHeight = Math.round(window.rawStageDockHeight)
-                        window.animatedStageDockHeight = window.latchedStageDockHeight
-                    }
-                    if (window.rawStageLeftDockWidth > 160) {
+                    if (window.rawStageLeftDockWidth > 160)
                         window.latchedStageLeftDockWidth = Math.round(window.rawStageLeftDockWidth)
-                        window.animatedStageLeftDockWidth = window.latchedStageLeftDockWidth
-                    }
-                    if (window.rawStageLeftDockHeight > 120) {
+                    if (window.rawStageLeftDockHeight > 120)
                         window.latchedStageLeftDockHeight = Math.round(window.rawStageLeftDockHeight)
-                        window.animatedStageLeftDockHeight = window.latchedStageLeftDockHeight
-                    }
-                    if (window.rawStageRightDockWidth > 160) {
+                    if (window.rawStageRightDockWidth > 160)
                         window.latchedStageRightDockWidth = Math.round(window.rawStageRightDockWidth)
-                        window.animatedStageRightDockWidth = window.latchedStageRightDockWidth
-                    }
-                    if (window.rawStageRightDockHeight > 120) {
+                    if (window.rawStageRightDockHeight > 120)
                         window.latchedStageRightDockHeight = Math.round(window.rawStageRightDockHeight)
-                        window.animatedStageRightDockHeight = window.latchedStageRightDockHeight
-                    }
                     if (freshEntry && AbyssStyle.motionEnabled) {
+                        const waitStageCapture = window.editStageMode === "wallpaper"
+                            && window.desktopHasApps
+                            && !(stageActiveWindowsLoader.item?.captureReady ?? false)
+                            && !(stageActiveWindowsLoader.item?.captureFailed ?? false)
                         window._stageAnimArmed = false
+                        stageAnimArmTimer.interval = waitStageCapture ? 220 : 16
                         stageAnimArmTimer.restart()
                     } else {
                         stageAnimArmTimer.stop()
@@ -1194,10 +1235,10 @@ Scope {
             // Polkit overrides and the existing shaped input mask.
             readonly property bool abyssOwnsPolkit: Config.ready
                 && (Config.options?.enabledPanels ?? []).includes("abyssPolkit")
-            WlrLayershell.layer: GlobalStates.settingsNativeDialogOpen ? WlrLayer.Bottom : (PolkitService.active && !polkitBody.open) ? WlrLayer.Top : (window.physicalOsdResident || window.physicalPolkitResident || (CompositorService.isNiri && window.presented) || window.editorOpen || Boolean(window.editStageVisible) || wallpaperBody.open || (keyboardBody.open && (Config.options?.osk?.keepOnTop ?? false)) || utility.open || liquid.popupsOpen || toastBody.open || polkitBody.open || dialogBody.open || companionExtension.editing || settings.open || dashboardBody.open || Boolean(window.nexusOpen) || controls.open || (window.fullscreenCovered && window.presented)) ? WlrLayer.Overlay : WlrLayer.Top
+            WlrLayershell.layer: GlobalStates.settingsNativeDialogOpen ? WlrLayer.Bottom : (PolkitService.active && !polkitBody.open) ? WlrLayer.Top : (window.physicalOsdResident || window.physicalPolkitResident || (CompositorService.isNiri && window.presented) || window.editorOpen || Boolean(window.editStageVisible) || wallpaperBody.open || (keyboardBody.open && (Config.options?.osk?.keepOnTop ?? false)) || utility.open || liquid.popupsOpen || toastBody.open || polkitBody.open || dialogBody.open || companionExtension.editing || settings.open || dashboardBody.open || Boolean(window.nexusOpen) || Boolean(window.filesOpen) || controls.open || (window.fullscreenCovered && window.presented)) ? WlrLayer.Overlay : WlrLayer.Top
             WlrLayershell.keyboardFocus: !(window.presented || polkitBody.open) || !field.ready || GlobalStates.regionSelectorOpen || GlobalStates.settingsNativeDialogOpen || (PolkitService.active && !polkitBody.open) || window.overviewDragging || companionExtension.curiosityOwned
                 ? WlrKeyboardFocus.None
-                : (window.editorOpen || window.wallpaperStageEditing || (utility.presented && (utility.ready || utility.loadingPresentationActive)) || liquid.popupExclusiveFocus || (popup.presented && (popup.contentItem.item?.keyboardFocus ?? false)) || (polkitBody.presented && (polkitBody.ready || polkitBody.loadingPresentationActive)) || (dialogBody.presented && dialogBody.ready) || (aux.presented && (aux.ready || aux.loadingPresentationActive)) || (wallpaperBody.presented && (wallpaperBody.ready || wallpaperBody.loadingPresentationActive)) || (clipboardBody.presented && (clipboardBody.ready || clipboardBody.loadingPresentationActive)) || (settings.presented && (settings.ready || settings.loadingPresentationActive)) || (dashboardBody.presented && (dashboardBody.ready || dashboardBody.loadingPresentationActive)) || (nexusBody.presented && (nexusBody.ready || nexusBody.loadingPresentationActive)) || (controls.presented && (controls.ready || controls.loadingPresentationActive)) || (companionExtension.editing && !companionExtension.keyboardFocusOnDemand)) ? WlrKeyboardFocus.Exclusive
+                : (window.editorOpen || window.wallpaperStageEditing || (utility.presented && (utility.ready || utility.loadingPresentationActive)) || liquid.popupExclusiveFocus || (popup.presented && (popup.contentItem.item?.keyboardFocus ?? false)) || (polkitBody.presented && (polkitBody.ready || polkitBody.loadingPresentationActive)) || (dialogBody.presented && dialogBody.ready) || (aux.presented && (aux.ready || aux.loadingPresentationActive)) || (wallpaperBody.presented && (wallpaperBody.ready || wallpaperBody.loadingPresentationActive)) || (clipboardBody.presented && (clipboardBody.ready || clipboardBody.loadingPresentationActive)) || (settings.presented && (settings.ready || settings.loadingPresentationActive)) || (dashboardBody.presented && (dashboardBody.ready || dashboardBody.loadingPresentationActive)) || (nexusBody.presented && (nexusBody.ready || nexusBody.loadingPresentationActive)) || (filesBody.presented && (filesBody.ready || filesBody.loadingPresentationActive)) || (controls.presented && (controls.ready || controls.loadingPresentationActive)) || (companionExtension.editing && !companionExtension.keyboardFocusOnDemand)) ? WlrKeyboardFocus.Exclusive
                 : (window.widgetStageEditing || companionExtension.keyboardFocusOnDemand || liquid.popupOnDemandFocus || (leftPanel.presented && (leftPanel.ready || leftPanel.loadingPresentationActive)) || (rightPanel.presented && (rightPanel.ready || rightPanel.loadingPresentationActive)) || (popup.presented && popup.ready && popup.activeKind !== "dockAppMenu") || (notification.presented && notification.ready && notification.contentKind === "center"))
                     ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
             anchors { top: true; bottom: true; left: true; right: true }
@@ -1249,14 +1290,15 @@ Scope {
                 Region { x: notification.inputBounds.x; y: notification.inputBounds.y; width: window.presented && field.ready ? notification.inputBounds.width : 0; height: notification.inputBounds.height }
                 Region { x: toastBody.inputBounds.x; y: toastBody.inputBounds.y; width: window.presented && field.ready ? toastBody.inputBounds.width : 0; height: toastBody.inputBounds.height }
                 Region { x: osd.inputBounds.x; y: osd.inputBounds.y; width: (window.presented || window.physicalOsdResident) && field.ready ? osd.inputBounds.width : 0; height: osd.inputBounds.height }
-                Region { x: dashboardBody.inputBounds.x; y: dashboardBody.inputBounds.y; width: window.presented && field.ready ? dashboardBody.inputBounds.width : 0; height: dashboardBody.inputBounds.height }
+                Region { x: dashboardBody.inputBounds.x; y: dashboardBody.inputBounds.y; width: window.presented && field.ready && !PolkitService.active ? dashboardBody.inputBounds.width : 0; height: dashboardBody.inputBounds.height }
                 Region { x: nexusBody.inputBounds.x; y: nexusBody.inputBounds.y; width: window.presented && field.ready && !GlobalStates.settingsNativeDialogOpen && !GlobalStates.regionSelectorOpen && !GlobalStates.annotationEditorOpen && !PolkitService.active ? nexusBody.inputBounds.width : 0; height: nexusBody.inputBounds.height }
-                Region { x: controls.inputBounds.x; y: controls.inputBounds.y; width: window.presented && field.ready ? controls.inputBounds.width : 0; height: controls.inputBounds.height }
+                Region { x: filesBody.inputBounds.x; y: filesBody.inputBounds.y; width: window.presented && field.ready && !GlobalStates.settingsNativeDialogOpen && !GlobalStates.regionSelectorOpen && !GlobalStates.annotationEditorOpen && !PolkitService.active ? filesBody.inputBounds.width : 0; height: filesBody.inputBounds.height }
+                Region { x: controls.inputBounds.x; y: controls.inputBounds.y; width: window.presented && field.ready && !PolkitService.active ? controls.inputBounds.width : 0; height: controls.inputBounds.height }
                 Region { x: settings.inputBounds.x; y: settings.inputBounds.y; width: window.presented && field.ready && !GlobalStates.settingsNativeDialogOpen && !PolkitService.active ? settings.inputBounds.width : 0; height: settings.inputBounds.height }
-                Region { x: aux.inputBounds.x; y: aux.inputBounds.y; width: window.presented && field.ready ? aux.inputBounds.width : 0; height: aux.inputBounds.height }
+                Region { x: aux.inputBounds.x; y: aux.inputBounds.y; width: window.presented && field.ready && !PolkitService.active ? aux.inputBounds.width : 0; height: aux.inputBounds.height }
                 Region {x:keyboardBody.inputBounds.x;y:keyboardBody.inputBounds.y;width:window.presented && field.ready ? keyboardBody.inputBounds.width : 0;height:keyboardBody.inputBounds.height}
                 Region { x:wallpaperBody.inputBounds.x;y:wallpaperBody.inputBounds.y;width:window.presented && field.ready && !GlobalStates.settingsNativeDialogOpen && !PolkitService.active ? wallpaperBody.inputBounds.width : 0;height:wallpaperBody.inputBounds.height }
-                Region { x: clipboardBody.inputBounds.x; y: clipboardBody.inputBounds.y; width: window.presented && field.ready ? clipboardBody.inputBounds.width : 0; height: clipboardBody.inputBounds.height }
+                Region { x: clipboardBody.inputBounds.x; y: clipboardBody.inputBounds.y; width: window.presented && field.ready && !PolkitService.active ? clipboardBody.inputBounds.width : 0; height: clipboardBody.inputBounds.height }
                 Region { x: polkitBody.inputBounds.x; y: polkitBody.inputBounds.y; width: window.presented && field.ready ? polkitBody.inputBounds.width : 0; height: polkitBody.inputBounds.height }
                 Region {
                     readonly property bool morphingStage: window.editStageVisible && window.editStageProgress < 0.999
@@ -1269,6 +1311,11 @@ Scope {
                 Region { x: 0; y: 0; width: window.presented && field.ready && window.editStageVisible && window.editStageProgress >= 0.999 ? window.width : 0; height: Math.max(0, Math.ceil(window.editCard.y)) }
                 Region { x: 0; y: Math.floor(window.editCard.bottom); width: window.presented && field.ready && window.editStageVisible && window.editStageProgress >= 0.999 ? window.width : 0; height: Math.max(0, window.height - Math.floor(window.editCard.bottom)) }
                 Region { x: Math.floor(window.editCard.x); y: Math.floor(window.editCard.y); width: window.presented && field.ready && window.stageCapturesDesktop && window.editStageProgress >= 0.999 ? Math.ceil(window.editCard.width) : 0; height: Math.ceil(window.editCard.height) }
+            }
+            function yieldCompanion(): void {
+                companionExtension.yieldToUser()
+                if (companionExtension.popupOpen && !companionExtension.editing)
+                    companionExtension.handleEscape()
             }
             function closeGenericPopup(expectedKind = ""): void {
                 const expected = String(expectedKind ?? "")
@@ -1283,6 +1330,7 @@ Scope {
                     GlobalStates.abyssDockMenuOwnerId = ""
                     GlobalStates.abyssDockMenuTriggerHovered = false
                 }
+                GlobalStates.abyssPopupTransient = false
                 GlobalStates.abyssPopupKind = ""
             }
             function closePopup(): void {
@@ -1345,7 +1393,7 @@ Scope {
             readonly property bool anyInteractiveBodyPresented: aux.presented
                 || clipboardBody.presented || leftPanel.presented
                 || rightPanel.presented || popup.presented || dashboardBody.presented
-                || nexusBody.presented || settings.presented || controls.presented || wallpaperBody.presented
+                || nexusBody.presented || filesBody.presented || settings.presented || controls.presented || wallpaperBody.presented
                 || window.wallpaperStageEditing
                 || window.widgetStageEditing
                 || utility.presented || polkitBody.presented || dialogBody.presented || window.editorOpen
@@ -1353,7 +1401,7 @@ Scope {
             readonly property bool anyBodyVisualResident: aux.visualResident
                 || clipboardBody.visualResident || leftPanel.visualResident
                 || rightPanel.visualResident || popup.visualResident || dashboardBody.visualResident
-                || nexusBody.visualResident || settings.visualResident || controls.visualResident || wallpaperBody.visualResident
+                || nexusBody.visualResident || filesBody.visualResident || settings.visualResident || controls.visualResident || wallpaperBody.visualResident
                 || window.wallpaperStageEditing
                 || utility.visualResident || polkitBody.visualResident || dialogBody.visualResident || notification.visualResident || osd.visualResident
             function presentedBodyHostForItem(item: Item): var {
@@ -1367,6 +1415,7 @@ Scope {
                     aux.presented ? aux : null,
                     dashboardBody.presented ? dashboardBody : null,
                     nexusBody.presented ? nexusBody : null,
+                    filesBody.presented ? filesBody : null,
                     settings.presented ? settings : null,
                     controls.presented ? controls : null,
                     leftPanel.presented ? leftPanel : null,
@@ -1415,8 +1464,12 @@ Scope {
                 if (!(window.presented || polkitBody.open) || !field.ready || !window.anyInteractiveBodyPresented
                         || GlobalStates.regionSelectorOpen || GlobalStates.annotationEditorOpen)
                     return
-                if (window.isFocusInsidePresentedBody(window.activeWindowFocusItem))
+                if (polkitBody.presented && polkitBody.acceptsInput && polkitBody.ready) {
+                    if (window.presentedBodyHostForItem(window.activeWindowFocusItem) === polkitBody)
+                        return
+                } else if (window.isFocusInsidePresentedBody(window.activeWindowFocusItem)) {
                     return
+                }
                 if ((editorLoader.item?.visible ?? false) && editorLoader.item.enabled) {
                     editorLoader.item.forceActiveFocus()
                     if (window.isFocusInsidePresentedBody(window.activeWindowFocusItem))
@@ -1453,6 +1506,7 @@ Scope {
                     aux,
                     settings,
                     nexusBody,
+                    filesBody,
                     dashboardBody,
                     controls,
                     popup
@@ -1503,6 +1557,7 @@ Scope {
                 context: Qt.WindowShortcut
                 autoRepeat: false
                 enabled: window.presented && field.ready
+                    && !GlobalStates.settingsNativeDialogOpen
                     && (window.anyInteractiveBodyPresented || window.widgetStageEditing)
                     && !dashboardEditEscapeShortcut.enabled
                     && !liquid.popupExclusiveFocus
@@ -1528,8 +1583,18 @@ Scope {
                         window.ensureEscapeFocus()
                         return
                     }
+                    if (filesBody.presented
+                            && typeof filesBody.contentItem?.item?.forwardKeyEvent === "function"
+                            && filesBody.contentItem.item.forwardKeyEvent(event)) {
+                        window.ensureEscapeFocus()
+                        return
+                    }
                 }
                 function triggerEscape(event = null): void {
+                    if (GlobalStates.settingsNativeDialogOpen) {
+                        if (event) event.accepted = true
+                        return
+                    }
                     window.dashboardEscapeFallbackCount++
                     if (polkitBody.presented) {
                         PolkitService.cancel()
@@ -1564,6 +1629,13 @@ Scope {
                         window.ensureEscapeFocus()
                         return
                     }
+                    if (filesBody.presented
+                            && typeof filesBody.contentItem?.item?.handleEscape === "function"
+                            && filesBody.contentItem.item.handleEscape()) {
+                        if (event) event.accepted = true
+                        window.ensureEscapeFocus()
+                        return
+                    }
                     if (aux.presented
                             && typeof aux.contentItem?.item?.handleEscape === "function"
                             && aux.contentItem.item.handleEscape()) {
@@ -1589,16 +1661,23 @@ Scope {
                             && typeof stageWallpaperLoader.item?.handleEscape === "function"
                             && stageWallpaperLoader.item.handleEscape()) {
                         if (event) event.accepted = true
+                        if (GlobalStates.wallpaperLauncherOpen)
+                            window.ensureEscapeFocus()
                         return
                     }
                     if (wallpaperBody.presented
                             && typeof wallpaperBody.contentItem?.item?.handleEscape === "function"
                             && wallpaperBody.contentItem.item.handleEscape()) {
                         if (event) event.accepted = true
+                        if (GlobalStates.wallpaperLauncherOpen)
+                            window.ensureEscapeFocus()
                         return
                     }
                     if (editorLoader.item?.visible ?? false) {
-                        editorLoader.item.finish(false)
+                        if (editorLoader.item.handleEscape)
+                            editorLoader.item.handleEscape()
+                        else
+                            editorLoader.item.finish(false)
                         if (event) event.accepted = true
                         return
                     }
@@ -1616,6 +1695,8 @@ Scope {
                     GlobalStates.settingsOverlayOpen = false
                     if (AlisIntergration.nexus?.isOpen && (AlisIntergration.nexus?.overlayMode ?? true))
                         AlisIntergration.nexus.close()
+                    if (AlisIntergration.alisFiles?.isOpen && (AlisIntergration.alisFiles?.overlayMode ?? true))
+                        AlisIntergration.alisFiles.close()
                     GlobalStates.clipboardOpen = false
                     GlobalStates.overviewOpen = false
                     GlobalStates.wallpaperLauncherOpen = false
@@ -1670,6 +1751,7 @@ Scope {
                 basePaintInsets: window.paintInsets
                 edge: root.barEdge
                 editing: (editorLoader.item?.visible ?? false) || window.widgetStageEditing
+                edgebarBlocked: corners.blocked
                 draggedIds: (editorLoader.item?._dragging ?? false) ? (editorLoader.item?.targetIds ?? []) : []
                 draftPlacements: (editorLoader.item?.visible ?? false) ? (editorLoader.item?.draft ?? null) : null
                 draftOptions: (editorLoader.item?.visible ?? false) ? (editorLoader.item?.draftOptions ?? null) : null
@@ -1701,14 +1783,17 @@ Scope {
                     const same = GlobalStates.abyssPopupKind === kind
                         && GlobalStates.abyssPopupTargetOutput === window.outputName
                     // Utilities is hover-owned. A click while it is already open
-                    // is an idempotent keep-open action, not a surprising toggle-close.
-                    if (kind === "utilities" && same)
+                    // is an idempotent keep-open action that promotes intent to explicit.
+                    if (kind === "utilities" && same) {
+                        GlobalStates.abyssPopupTransient = false
                         return
+                    }
                     window.closeGenericPopup()
                     if (!same) {
                         GlobalStates.abyssPopupTargetOutput = window.outputName
                         GlobalStates.abyssPopupAlong = along
                         GlobalStates.abyssPopupEdge = edge
+                        GlobalStates.abyssPopupTransient = false
                         GlobalStates.abyssPopupKind = kind
                     }
                 }
@@ -1718,10 +1803,15 @@ Scope {
                         && GlobalStates.abyssPopupTargetOutput === window.outputName
                     if (same)
                         return
+                    // Explicit/clicked generic popups outrank transient hover sweeps (A2 #3).
+                    if (GlobalStates.abyssPopupKind.length > 0 && !GlobalStates.abyssPopupTransient
+                            && GlobalStates.abyssPopupTargetOutput === window.outputName)
+                        return
                     window.closeGenericPopup()
                     GlobalStates.abyssPopupTargetOutput = window.outputName
                     GlobalStates.abyssPopupAlong = along
                     GlobalStates.abyssPopupEdge = edge
+                    GlobalStates.abyssPopupTransient = true
                     GlobalStates.abyssPopupKind = kind
                 }
                 onPopupHoverStateChanged: (kind,edge,along,hovered) => {
@@ -1820,6 +1910,7 @@ Scope {
                 presentationItem: field
                 dialogHost: dialogBody
                 fifoCloseStepMs: AbyssStyle.motionEnabled ? 160 : 1
+                connectionSoftness: AbyssStyle.connectionDepth
                 edgeInsets: window.paintInsets
                 externalBlockers: companionExtension.obstacleRects
                 moduleRecords: bar.visible ? bar.deformations : []
@@ -1879,36 +1970,144 @@ Scope {
             readonly property bool sidebarRevealAvailable: window.presented && field.ready && !window.editorOpen && !window.editStageVisible
                 && (Config.options?.abyss?.sidebars?.hoverEnabled ?? true)
                 && Geometry.targets(window.outputName,Config.options?.sidebar?.screenList ?? [],Quickshell.screens.map(s=>s.name))
-            readonly property bool sidebarOpeningAllowed: !utility.open && !settings.open && !nexusBody.open
+            readonly property bool sidebarOpeningAllowed: !utility.open
                 && !controls.open && !clipboardBody.open && !dialogBody.open && !GlobalStates.settingsNativeDialogOpen
                 && !PolkitService.active && !GlobalStates.regionSelectorOpen
-            readonly property bool leftEdgebarPopupOpen: corners.notesOpen
+            function edgebarLocation(role): var {
+                const targetRole = String(role ?? "")
+                for (const k of ["0", "1", "2", "3"]) {
+                    const h = liquid.popupHosts[k]
+                    if (h && h.open && h.vacancyRole === targetRole) {
+                        const e = String(h.edge ?? "")
+                        const horiz = Geometry.horizontal(e)
+                        const sp = Math.max(1, Number(h.span ?? 420))
+                        const center = Number(h.along ?? 0) + sp * 0.5
+                        return {
+                            edge: e,
+                            span: sp,
+                            cx: horiz ? center : (e === "left" ? 0 : window.width),
+                            cy: horiz ? (e === "top" ? 0 : window.height) : center
+                        }
+                    }
+                }
+                const isNotes = targetRole === "quickNotes"
+                const moduleKind = isNotes ? "notesTimers" : "notificationActivity"
+                const cfgWidth = isNotes
+                    ? Number(Config.options?.quickNotes?.popupWidth ?? 420)
+                    : Number(Config.options?.notificationCenter?.popupWidth ?? 420)
+                const cfgHeight = isNotes
+                    ? Number(Config.options?.quickNotes?.popupHeight ?? 300)
+                    : Number(Config.options?.notificationCenter?.popupHeight ?? 560)
+                const edgebarMode = isNotes ? corners.notesEdgebarMode : corners.centerEdgebarMode
+                if (edgebarMode) {
+                    const p = isNotes ? corners.notesPlacement : corners.centerPlacement
+                    const e = String(p?.edge ?? (isNotes ? "left" : "right"))
+                    return {
+                        edge: e,
+                        span: Geometry.horizontal(e) ? cfgWidth : cfgHeight,
+                        cx: Number(p?.x ?? 0) + Number(p?.width ?? 14) * 0.5,
+                        cy: Number(p?.y ?? 0) + Number(p?.height ?? 14) * 0.5
+                    }
+                }
+                const rec = (bar.layoutRecords ?? []).find(r => r && r.kind === moduleKind)
+                if (rec) {
+                    const e = window.positionEdge(moduleKind, String(rec.edge ?? root.barEdge ?? "top"))
+                    const horiz = Geometry.horizontal(e)
+                    const recH = Geometry.horizontal(String(rec.edge ?? e))
+                    const cx = rec.content ? Number(rec.content.x ?? 0) + Number(rec.content.width ?? 0) * 0.5
+                        : (recH ? window.width * Number(rec.position ?? 0.5) : (e === "left" ? 0 : window.width))
+                    const cy = rec.content ? Number(rec.content.y ?? 0) + Number(rec.content.height ?? 0) * 0.5
+                        : (!recH ? window.height * Number(rec.position ?? 0.5) : (e === "top" ? 0 : window.height))
+                    return {
+                        edge: e,
+                        span: horiz ? cfgWidth : cfgHeight,
+                        cx: horiz ? cx : (e === "left" ? 0 : window.width),
+                        cy: horiz ? (e === "top" ? 0 : window.height) : cy
+                    }
+                }
+                const fallbackEdge = isNotes ? "left" : "right"
+                return {
+                    edge: fallbackEdge,
+                    span: cfgHeight,
+                    cx: fallbackEdge === "left" ? 0 : window.width,
+                    cy: window.height * 0.5
+                }
+            }
+            function edgebarLocationPairsWithEdge(loc, sidebarEdge, sidebarDepth = 460): bool {
+                const e = String(loc?.edge ?? "")
+                const se = String(sidebarEdge ?? "")
+                if (!e || !se) return false
+                if (e === se) return true
+                if (Geometry.horizontal(e) === Geometry.horizontal(se)) return false
+                if (window.width <= 0 || window.height <= 0) return false
+                const depth = Math.max(320, Number(sidebarDepth ?? 460))
+                const halfSpan = Math.max(120, Number(loc?.span ?? 420) * 0.5)
+                const inset = Number(window.nativeInsets?.[se] ?? 10)
+                if (se === "left" || se === "right") {
+                    const cx = Number(loc?.cx ?? (window.width * 0.5))
+                    const nearDist = se === "left"
+                        ? Math.max(0, (cx - halfSpan) - (inset + depth))
+                        : Math.max(0, (window.width - inset - depth) - (cx + halfSpan))
+                    return nearDist <= 220
+                }
+                const cy = Number(loc?.cy ?? (window.height * 0.5))
+                const nearDist = se === "top"
+                    ? Math.max(0, (cy - halfSpan) - (inset + depth))
+                    : Math.max(0, (window.height - inset - depth) - (cy + halfSpan))
+                return nearDist <= 220
+            }
+            readonly property var quickNotesLocation: window.edgebarLocation("quickNotes")
+            readonly property var notificationCenterLocation: window.edgebarLocation("notificationCenter")
+            readonly property bool quickNotesPairsLeft: window.edgebarLocationPairsWithEdge(window.quickNotesLocation, leftPanel.edge, leftPanel.depth)
+            readonly property bool quickNotesPairsRight: window.edgebarLocationPairsWithEdge(window.quickNotesLocation, rightPanel.edge, rightPanel.depth)
+            readonly property bool notificationCenterPairsLeft: window.edgebarLocationPairsWithEdge(window.notificationCenterLocation, leftPanel.edge, leftPanel.depth)
+            readonly property bool notificationCenterPairsRight: window.edgebarLocationPairsWithEdge(window.notificationCenterLocation, rightPanel.edge, rightPanel.depth)
+            readonly property bool quickNotesPopupOpen: corners.notesOpen
                 || ["0","1","2","3"].some(k => {
                     const h = liquid.popupHosts[k]
                     return Boolean(h && h.open && h.vacancyRole === "quickNotes")
                 })
-            readonly property bool rightEdgebarPopupOpen: corners.centerOpen
+            readonly property bool notificationCenterPopupOpen: corners.centerOpen
                 || ["0","1","2","3"].some(k => {
                     const h = liquid.popupHosts[k]
                     return Boolean(h && h.open && h.vacancyRole === "notificationCenter")
                 })
+            readonly property bool leftEdgebarPopupOpen:
+                (window.quickNotesPairsLeft && window.quickNotesPopupOpen)
+                || (window.notificationCenterPairsLeft && window.notificationCenterPopupOpen)
+            readonly property bool rightEdgebarPopupOpen:
+                (window.quickNotesPairsRight && window.quickNotesPopupOpen)
+                || (window.notificationCenterPairsRight && window.notificationCenterPopupOpen)
             readonly property bool overviewPopupOpen: (aux.open && GlobalStates.overviewMode === "taskview")
                 || ["0","1","2","3"].some(k => {
                     const h = liquid.popupHosts[k]
                     return Boolean(h && h.open && h.presentationKind === "workspaces")
                 })
-            readonly property bool leftEdgebarDirectInteracting: corners.notesDirectInteracting
+            readonly property bool quickNotesDirectInteracting: corners.notesDirectInteracting
                 || Boolean(bar.hoveredModuleKinds["notesTimers"])
                 || ["0","1","2","3"].some(k => {
                     const h = liquid.popupHosts[k]
-                    return Boolean(h && h.open && h.vacancyRole === "quickNotes" && (h.directHovered || h.contentFocused))
+                    return Boolean(h && h.open && h.vacancyRole === "quickNotes"
+                        && (h.directHovered || h.contentFocused
+                            || Boolean(h.hostedPopup?.entryBridgeHeld)
+                            || Boolean(h.hostedPopup?.popupPinned)
+                            || Boolean(h.hostedPopup?.editorFocused)))
                 })
-            readonly property bool rightEdgebarDirectInteracting: corners.centerDirectInteracting
+            readonly property bool notificationCenterDirectInteracting: corners.centerDirectInteracting
                 || Boolean(bar.hoveredModuleKinds["notificationActivity"])
                 || ["0","1","2","3"].some(k => {
                     const h = liquid.popupHosts[k]
-                    return Boolean(h && h.open && h.vacancyRole === "notificationCenter" && (h.directHovered || h.contentFocused))
+                    return Boolean(h && h.open && h.vacancyRole === "notificationCenter"
+                        && (h.directHovered || h.contentFocused
+                            || Boolean(h.hostedPopup?.entryBridgeHeld)
+                            || Boolean(h.hostedPopup?.exitGraceHeld)))
                 })
+            readonly property bool leftEdgebarDirectInteracting:
+                (window.quickNotesPairsLeft && window.quickNotesDirectInteracting)
+                || (window.notificationCenterPairsLeft && window.notificationCenterDirectInteracting)
+            readonly property bool rightEdgebarDirectInteracting:
+                (window.quickNotesPairsRight && window.quickNotesDirectInteracting)
+                || (window.notificationCenterPairsRight && window.notificationCenterDirectInteracting)
             readonly property bool overviewDirectInteracting: Boolean(bar.hoveredModuleKinds["workspaces"])
                 || (aux.open && GlobalStates.overviewMode === "taskview" && (aux.vacancyHovered || aux.contentFocused))
                 || ["0","1","2","3"].some(k => {
@@ -1973,7 +2172,7 @@ Scope {
                 width: horizontal ? triggerSpan : triggerThickness
                 height: horizontal ? triggerThickness : triggerSpan
                 openingAllowed: window.sidebarOpeningAllowed
-                closeBlocked: GlobalStates.activeContextMenuCount>0 || polkitBody.open || dialogBody.open || dashboardBody.open || nexusBody.open || aux.open || GlobalStates.settingsNativeDialogOpen
+                closeBlocked: GlobalStates.activeContextMenuCount>0 || polkitBody.open || dialogBody.open || GlobalStates.settingsNativeDialogOpen
                 z: 220
             }
             SidebarReveal {
@@ -1988,6 +2187,7 @@ Scope {
                 peerHovered: window.leftEdgebarDirectInteracting || window.overviewDirectInteracting
                 onRevealRequested: GlobalStates.openSidebarLeft(window.outputName, true)
                 onHideRequested: if (GlobalStates.sidebarLeftPresentationOutput===window.outputName) GlobalStates.closeSidebarLeft()
+                onEdgeHoveredChanged: if (edgeHovered && !leftPanel.backgroundPreload) leftPanel.backgroundPreload = true
             }
             SidebarReveal {
                 id: rightReveal
@@ -2001,13 +2201,15 @@ Scope {
                 peerHovered: window.rightEdgebarDirectInteracting || window.overviewDirectInteracting
                 onRevealRequested: GlobalStates.openSidebarRight(window.outputName, true)
                 onHideRequested: if (GlobalStates.sidebarRightPresentationOutput===window.outputName) GlobalStates.closeSidebarRight()
+                onEdgeHoveredChanged: if (edgeHovered && !rightPanel.backgroundPreload) rightPanel.backgroundPreload = true
             }
             AbyssCorners {
                 id:corners;anchors.fill:parent;controller:liquid;outputName:window.outputName
                 attachmentThickness:window.nativeInsets.bottom
+                edgeInsets:window.nativeInsets
                 quickNotesEditorOutput: root.quickNotesEditorOutput
                 presentationEnabled:window.presented && field.ready && !window.editorOpen && !window.editStageVisible
-                blocked:settings.open || dashboardBody.open || nexusBody.open || utility.open || controls.open || aux.open || clipboardBody.open
+                blocked:settings.open || dashboardBody.open || nexusBody.open || filesBody.open || utility.open || controls.open || aux.open || clipboardBody.open
                     || GlobalStates.settingsNativeDialogOpen || PolkitService.active || GlobalStates.regionSelectorOpen
                 onQuickNotesEditorLeaseChanged:(outputName,focused)=>
                     root.setQuickNotesEditorOutput(outputName,focused)
@@ -2049,9 +2251,9 @@ Scope {
                 // Reveal clips a final-size Sidebar; controls never reflow per frame.
                 stableContentSize: true
                 monotonicNotificationReveal: true
-                showLoadingSurface: true
-                loadingTitle: Translation.tr("Sidebar")
-                loadingIcon: "view_sidebar"
+                showLoadingSurface: false
+                warmContent: true
+                retainAfterFirstOpen: true
                 // Its painted padding/shoulders also retain the hover lease.
                 includeEdgeConnection: true
                 identity: "leftPanel"
@@ -2067,7 +2269,19 @@ Scope {
                     window.width,window.height)
                 outputName: window.outputName
                 vacancyRole: "featureSidebar"
-                minimumDepth: Math.min(depth, 180)
+                cooperativePeer: true
+                placementCanShiftLaterally: false
+                placementCanShiftPerpendicular: true
+                readonly property bool explicitOrFocused:
+                    !GlobalStates.sidebarLeftTransient || GlobalStates.sidebarLeftHoldOpen
+                property bool _latchedExplicitIntent: false
+                onSemanticOpenChanged: _latchedExplicitIntent = semanticOpen ? explicitOrFocused : false
+                Component.onCompleted: _latchedExplicitIntent = semanticOpen ? explicitOrFocused : false
+                placementIntent: _latchedExplicitIntent ? "explicit" : "hover"
+                readonly property real minBodyWidth: Math.max(320, Number(contentItem.item?.minimumUsefulWidth ?? 320))
+                readonly property real minBodyHeight: Math.max(320, Number(contentItem.item?.minimumUsefulHeight ?? 320))
+                minimumSpan: Math.min(span, Geometry.horizontal(edge) ? minBodyWidth : minBodyHeight)
+                minimumDepth: Math.min(depth, Geometry.horizontal(edge) ? minBodyHeight : minBodyWidth)
                 placementPriority: window.overviewPopupOpen
                     && ((leftPanel.open && rightPanel.open)
                         || (window.earliestOverviewOrder > 0
@@ -2085,6 +2299,16 @@ Scope {
                 span:Geometry.horizontal(edge) ? bodyWidth : bodyHeight
                 depth:Geometry.horizontal(edge) ? bodyHeight : bodyWidth
                 source: "content/AbyssLeftContent.qml"
+                onPlacementVisibleChanged: {
+                    if (leftPanel.open && !leftPanel.placementVisible && !leftPanel.explicitOrFocused) {
+                        Qt.callLater(() => {
+                            if (leftPanel.open && !leftPanel.placementVisible && !leftPanel.explicitOrFocused) {
+                                leftReveal.release()
+                                GlobalStates.closeSidebarLeft()
+                            }
+                        })
+                    }
+                }
                 onCloseRequested: GlobalStates.closeSidebarLeft()
             }
             AbyssBodyHost {
@@ -2092,9 +2316,9 @@ Scope {
                 // Reveal clips a final-size Sidebar; controls never reflow per frame.
                 stableContentSize: true
                 monotonicNotificationReveal: true
-                showLoadingSurface: true
-                loadingTitle: Translation.tr("Quick Panel")
-                loadingIcon: "tune"
+                showLoadingSurface: false
+                warmContent: true
+                retainAfterFirstOpen: true
                 includeEdgeConnection: true
                 identity: "rightPanel"
                 connectionSourceRect: rightReveal.available
@@ -2108,7 +2332,19 @@ Scope {
                     window.width,window.height)
                 outputName: window.outputName
                 vacancyRole: "systemSidebar"
-                minimumDepth: Math.min(depth, 180)
+                cooperativePeer: true
+                placementCanShiftLaterally: false
+                placementCanShiftPerpendicular: true
+                readonly property bool explicitOrFocused:
+                    !GlobalStates.sidebarRightTransient
+                property bool _latchedExplicitIntent: false
+                onSemanticOpenChanged: _latchedExplicitIntent = semanticOpen ? explicitOrFocused : false
+                Component.onCompleted: _latchedExplicitIntent = semanticOpen ? explicitOrFocused : false
+                placementIntent: _latchedExplicitIntent ? "explicit" : "hover"
+                readonly property real minBodyWidth: Math.max(360, Number(contentItem.item?.minimumUsefulWidth ?? 360))
+                readonly property real minBodyHeight: Math.max(420, Number(contentItem.item?.minimumUsefulHeight ?? 420))
+                minimumSpan: Math.min(span, Geometry.horizontal(edge) ? minBodyWidth : minBodyHeight)
+                minimumDepth: Math.min(depth, Geometry.horizontal(edge) ? minBodyHeight : minBodyWidth)
                 placementPriority: window.overviewPopupOpen
                     && ((leftPanel.open && rightPanel.open)
                         || (window.earliestOverviewOrder > 0
@@ -2126,6 +2362,16 @@ Scope {
                 span:Geometry.horizontal(edge) ? bodyWidth : bodyHeight
                 depth:Geometry.horizontal(edge) ? bodyHeight : bodyWidth
                 source: "content/AbyssRightContent.qml"
+                onPlacementVisibleChanged: {
+                    if (rightPanel.open && !rightPanel.placementVisible && !rightPanel.explicitOrFocused) {
+                        Qt.callLater(() => {
+                            if (rightPanel.open && !rightPanel.placementVisible && !rightPanel.explicitOrFocused) {
+                                rightReveal.release()
+                                GlobalStates.closeSidebarRight()
+                            }
+                        })
+                    }
+                }
                 onCloseRequested: GlobalStates.closeSidebarRight()
             }
             AbyssGenericPopupPresenter {
@@ -2140,6 +2386,7 @@ Scope {
                 obstacles: window.sideObstacles
 
                 requestedKind: GlobalStates.abyssPopupKind
+                transientOpen: GlobalStates.abyssPopupTransient
                 requestedOpen: window.presented && field.ready
                     && (Config.options?.enabledPanels ?? []).includes("abyssPopup")
                     && requestedKind.length > 0
@@ -2196,6 +2443,8 @@ Scope {
                     stackPolicy: "pyramid"
                     semanticOpenOverride:
                         hostedPopup?.liquidSemanticVisible ?? false
+                    readonly property bool followEdgebarCornerAnchor:
+                        Boolean(hostedPopup?._liquidAnchor?.edgebarCornerAnchor)
                     readonly property var configuredPresentation:
                         window?.presentation(presentationKind) ?? ({})
                     readonly property string configuredJoinedEdge:
@@ -2212,25 +2461,71 @@ Scope {
                                     window?.presentation("notificationCenter") ?? ({}),edge,along,span,
                                     window?.width ?? 0,window?.height ?? 0)
                                 : ""
-                    joinedEdge: configuredJoinedEdge.length > 0
-                        ? configuredJoinedEdge
-                        : unifiedConfiguredJoinedEdge.length > 0
-                            ? unifiedConfiguredJoinedEdge
-                            : (hostedPopup?._liquidAnchor?.popupJoinedEdge ?? "")
+                    joinedEdge: followEdgebarCornerAnchor
+                        ? (hostedPopup?._liquidAnchor?.popupJoinedEdge ?? "")
+                        : (configuredJoinedEdge.length > 0
+                            ? configuredJoinedEdge
+                            : unifiedConfiguredJoinedEdge.length > 0
+                                ? unifiedConfiguredJoinedEdge
+                                : (hostedPopup?._liquidAnchor?.popupJoinedEdge ?? ""))
                     controller: liquid
                     anchors.fill: parent
-                    edge: window?.positionEdge(presentationKind,
-                        hostedPopup?._attachmentEdge ?? root?.barEdge ?? "top") ?? "top"
+                    edge: followEdgebarCornerAnchor
+                        ? (hostedPopup?._attachmentEdge ?? root?.barEdge ?? "bottom")
+                        : (window?.positionEdge(presentationKind,
+                            hostedPopup?._attachmentEdge ?? root?.barEdge ?? "top") ?? "top")
                     outputName: window.outputName
                     preserveAspect: presentationKind === "workspaces"
+                    readonly property bool isEdgebarRole:
+                        (vacancyRole === "quickNotes" || vacancyRole === "notificationCenter")
+                    readonly property bool pairsWithLeftSidebar:
+                        vacancyRole === "quickNotes" ? window.quickNotesPairsLeft
+                        : vacancyRole === "notificationCenter" ? window.notificationCenterPairsLeft
+                        : false
+                    readonly property bool pairsWithRightSidebar:
+                        vacancyRole === "quickNotes" ? window.quickNotesPairsRight
+                        : vacancyRole === "notificationCenter" ? window.notificationCenterPairsRight
+                        : false
+                    readonly property bool sameEdgeAsPairedSidebar:
+                        (pairsWithLeftSidebar && edge === leftPanel.edge)
+                        || (pairsWithRightSidebar && edge === rightPanel.edge)
+                    placementCanShiftLaterally: !isEdgebarRole || !sameEdgeAsPairedSidebar
+                    maxLateralShift: {
+                        if (!placementCanShiftLaterally) return 0
+                        const baseShift = Math.min(240, Math.max(120, span * 0.6))
+                        if (!isEdgebarRole) return baseShift
+                        const peerDepth = Math.max(
+                            pairsWithLeftSidebar ? Number(leftPanel.depth ?? 0) : 0,
+                            pairsWithRightSidebar ? Number(rightPanel.depth ?? 0) : 0)
+                        const axisLen = Geometry.horizontal(edge) ? window.width : window.height
+                        return Math.min(Math.max(baseShift, axisLen * 0.45), Math.max(baseShift, peerDepth + 64))
+                    }
+                    readonly property bool explicitOrFocusedPopup:
+                        !popupFifoAutoClosable
+                        || Boolean(hostedPopup?.popupPinned)
+                        || Boolean(hostedPopup?.editorFocused)
+                        || Boolean(hostedPopup?.todoDialogOpen)
+                        || Boolean(hostedPopup?.explicitForThisOutput)
+                        || Boolean(hostedPopup?.keyboardInteraction)
+                    property bool _latchedExplicitIntent: false
+                    onSemanticOpenChanged: _latchedExplicitIntent = semanticOpen ? explicitOrFocusedPopup : false
+                    placementIntent: _latchedExplicitIntent ? "explicit" : "hover"
                     placementPriority: presentationKind === "workspaces"
                         ? ((leftPanel.open && rightPanel.open)
                             || !(window.earliestSidebarOrder > 0
                                 && (styledPopupHost.activationOrder <= 0 || window.earliestSidebarOrder < styledPopupHost.activationOrder))
                             ? 2 : 1)
-                        : (vacancyRole === "quickNotes" || vacancyRole === "notificationCenter")
-                            ? 1
-                            : 0
+                        : isEdgebarRole
+                            ? (pairsWithLeftSidebar && !pairsWithRightSidebar
+                                ? leftPanel.placementPriority
+                                : pairsWithRightSidebar && !pairsWithLeftSidebar
+                                    ? rightPanel.placementPriority
+                                    : (leftPanel.open && !rightPanel.open
+                                        ? leftPanel.placementPriority
+                                        : rightPanel.open && !leftPanel.open
+                                            ? rightPanel.placementPriority
+                                            : Math.max(leftPanel.placementPriority, rightPanel.placementPriority)))
+                            : (_latchedExplicitIntent ? 1 : 0)
                     vacancyRole: (presentationKind === "quickNotes" || presentationKind === "notesTimers")
                         ? "quickNotes"
                         : ((presentationKind === "notificationCenter" || presentationKind === "notificationActivity")
@@ -2295,23 +2590,64 @@ Scope {
                             ? Qt.rect(region.x,region.y,region.width,region.height)
                             : Qt.rect(0,0,0,0)
                     }
-                    along: window?.positionAlong(presentationKind,edge,span,
-                        (Geometry.horizontal(edge)
+                    along: {
+                        const fallbackAlong = (Geometry.horizontal(edge)
                             ? anchorBounds.x+anchorBounds.width/2
-                            : anchorBounds.y+anchorBounds.height/2)-span/2) ?? 0
+                            : anchorBounds.y+anchorBounds.height/2)-span/2
+                        return followEdgebarCornerAnchor
+                            ? fallbackAlong
+                            : (window?.positionAlong(presentationKind,edge,span,fallbackAlong) ?? 0)
+                    }
                     obstacles: window.sideObstacles
 
                     onPopupEntryChanged: {
                         retainedPlacement = null
                         activationOrder = 0
                         resetPyramidMotion()
+                        _latchedExplicitIntent = semanticOpen ? explicitOrFocusedPopup : false
                         if (semanticOpen) markOpened(true)
                     }
+                    readonly property bool hostPlacementEvicted:
+                        styledPopupHost.semanticOpen && !styledPopupHost.placementVisible
+                    property var _evictionTrackedPopup: null
+                    function _syncPopupEvictionState(): void {
+                        const current = styledPopupHost.hostedPopup
+                        if (styledPopupHost._evictionTrackedPopup
+                                && styledPopupHost._evictionTrackedPopup !== current) {
+                            if (styledPopupHost._evictionTrackedPopup._placementEvicted !== undefined)
+                                styledPopupHost._evictionTrackedPopup._placementEvicted = false
+                        }
+                        styledPopupHost._evictionTrackedPopup = current
+                        if (current && current._placementEvicted !== undefined)
+                            current._placementEvicted = styledPopupHost.hostPlacementEvicted
+                    }
+                    onHostPlacementEvictedChanged: styledPopupHost._syncPopupEvictionState()
+                    onPlacementVisibleChanged: {
+                        styledPopupHost._syncPopupEvictionState()
+                        // Evicted hover-only StyledPopups close cleanly so they never resurrect later.
+                        // Pinned, explicit, or text-focused popups stay temporarily hidden and auto-restore.
+                        if (styledPopupHost.semanticOpen && !styledPopupHost.placementVisible
+                                && !styledPopupHost.explicitOrFocusedPopup && hostedPopup) {
+                            const evictedPopup = hostedPopup
+                            Qt.callLater(() => {
+                                if (styledPopupHost.semanticOpen && !styledPopupHost.placementVisible
+                                        && !styledPopupHost.explicitOrFocusedPopup && styledPopupHost.hostedPopup === evictedPopup)
+                                    evictedPopup.dismissPresentation()
+                            })
+                        }
+                    }
                     onCloseRequested: hostedPopup?.dismissPresentation()
-                    Component.onCompleted:
+                    Component.onCompleted: {
+                        _latchedExplicitIntent = semanticOpen ? explicitOrFocusedPopup : false
                         liquid.registerPopupHost(index,styledPopupHost)
-                    Component.onDestruction:
+                    }
+                    Component.onDestruction: {
+                        if (styledPopupHost._evictionTrackedPopup
+                                && styledPopupHost._evictionTrackedPopup._placementEvicted !== undefined)
+                            styledPopupHost._evictionTrackedPopup._placementEvicted = false
+                        styledPopupHost._evictionTrackedPopup = null
                         liquid.unregisterPopupHost(index,styledPopupHost)
+                    }
 
                     readonly property bool directHovered:
                         popupContentHover.hovered
@@ -2324,8 +2660,8 @@ Scope {
                             ?? (Boolean(hostedPopup?.hoverActivates ?? true)
                                 && !(hostedPopup?.alternativeVisibleCondition ?? false)))
                     readonly property bool pairedSidebarHovered:
-                        open && ((vacancyRole === "quickNotes" && window.leftSidebarDirectInteracting)
-                            || (vacancyRole === "notificationCenter" && window.rightSidebarDirectInteracting)
+                        open && ((pairsWithLeftSidebar && window.leftSidebarDirectInteracting)
+                            || (pairsWithRightSidebar && window.rightSidebarDirectInteracting)
                             || (presentationKind === "workspaces" && (window.leftSidebarDirectInteracting || window.rightSidebarDirectInteracting)))
                     readonly property bool effectiveContentHovered:
                         popupContentHover.hovered || pairedSidebarHovered
@@ -2348,6 +2684,7 @@ Scope {
                         _syncFifoHover()
                     }
                     onHostedPopupChanged: {
+                        styledPopupHost._syncPopupEvictionState()
                         if (hostedPopup)
                             hostedPopup._contentHovered = effectiveContentHovered
                         _syncFifoHover()
@@ -2419,8 +2756,8 @@ Scope {
                 open: window.presented && field.ready && GlobalStates.shellEntryReady && (!GlobalStates.widgetEditMode || DesktopEditStage.hosted(window.outputName))
                     && (Config.options?.enabledPanels ?? []).includes("abyssDock") && (Config.options?.dock?.enable ?? true)
                     && Geometry.targets(window.outputName,Config.options?.dock?.screenList ?? [],Quickshell.screens.map(s => s.name))
-                    && !window.editorOpen && !settings.open && !dashboardBody.open && !nexusBody.open && !controls.open
-                    && !aux.open && !clipboardBody.open && !utility.open
+                    && !window.editorOpen && !settings.visualResident && !dashboardBody.visualResident && !nexusBody.visualResident && !filesBody.visualResident && !controls.visualResident
+                    && !aux.visualResident && !clipboardBody.visualResident && !utility.visualResident
                     && (GlobalStates.abyssPopupKind === "dockAppMenu"
                         || popup.activeKind === "dockAppMenu"
                         || attachedPopupHold
@@ -2635,7 +2972,12 @@ Scope {
                 edge: window.positionEdge(presentationKind,"bottom")
                 outputName: window.outputName
                 preserveAspect: GlobalStates.overviewMode === "taskview"
-                minimumDepth: Math.min(depth, GlobalStates.overviewMode === "taskview" ? 140 : 360)
+                cooperativeShrink: GlobalStates.overviewMode !== "taskview"
+                placementIntent: "overlay"
+                minimumSpan: Math.min(span, GlobalStates.overviewMode === "taskview"
+                    ? 520 : (Geometry.horizontal(edge) ? Math.max(680, Math.round(window.width * 0.48)) : Math.max(460, Math.round(window.height * 0.56))))
+                minimumDepth: Math.min(depth, GlobalStates.overviewMode === "taskview"
+                    ? 140 : (Geometry.horizontal(edge) ? Math.max(460, Math.round(window.height * 0.56)) : Math.max(680, Math.round(window.width * 0.48))))
                 placementPriority: GlobalStates.overviewMode !== "taskview"
                     ? 3
                     : ((leftPanel.open && rightPanel.open)
@@ -2673,6 +3015,14 @@ Scope {
                 open: window.presented && field.ready && GlobalStates.settingsOverlayOpen
                     && GlobalStates.settingsOverlayPresentationOutput === window.outputName
                 largeSurface: true
+                cooperativeShrink: true
+                placementIntent: "overlay"
+                minimumSpan: Math.min(span, Geometry.horizontal(edge)
+                    ? Math.max(680, Math.round(window.width * 0.48))
+                    : Math.max(460, Math.round(window.height * 0.56)))
+                minimumDepth: Math.min(depth, Geometry.horizontal(edge)
+                    ? Math.max(460, Math.round(window.height * 0.56))
+                    : Math.max(680, Math.round(window.width * 0.48)))
                 edgeInsets: window.bodyInsets(edge,along,span)
                 readonly property real _dashSpan: Geometry.horizontal(edge)
                     ? Math.round(window.width * (Config.options?.dashboard?.widthRatio ?? 0.72) + 40)
@@ -2718,6 +3068,14 @@ Scope {
                 open: window.presented && field.ready && GlobalStates.dashboardOpen
                     && root.largeTargetOutput === window.outputName && (Config.options?.enabledPanels ?? []).includes("iiDashboard")
                 largeSurface: true
+                cooperativeShrink: true
+                placementIntent: "overlay"
+                minimumSpan: Math.min(span, Geometry.horizontal(edge)
+                    ? Math.max(680, Math.round(window.width * 0.48))
+                    : Math.max(460, Math.round(window.height * 0.56)))
+                minimumDepth: Math.min(depth, Geometry.horizontal(edge)
+                    ? Math.max(460, Math.round(window.height * 0.56))
+                    : Math.max(680, Math.round(window.width * 0.48)))
                 edgeInsets: window.bodyInsets(edge,along,span)
                 span: Geometry.horizontal(edge) ? window.width*(Config.options?.dashboard?.widthRatio ?? .72)+40 : window.height*(Config.options?.dashboard?.heightRatio ?? .72)+40
                 along: window.positionAlong(identity,edge,span,((Geometry.horizontal(edge) ? window.width : window.height)-span)/2)
@@ -2746,12 +3104,56 @@ Scope {
                     && Boolean(AlisIntergration.nexus?.overlayMode ?? true)
                     && root.largeTargetOutput === window.outputName
                 largeSurface: true
+                cooperativeShrink: true
+                placementIntent: "overlay"
+                minimumSpan: Math.min(span, Geometry.horizontal(edge)
+                    ? Math.max(760, Math.round(window.width * 0.52))
+                    : Math.max(520, Math.round(window.height * 0.6)))
+                minimumDepth: Math.min(depth, Geometry.horizontal(edge)
+                    ? Math.max(520, Math.round(window.height * 0.6))
+                    : Math.max(760, Math.round(window.width * 0.52)))
                 edgeInsets: window.bodyInsets(edge,along,span)
                 span: Geometry.horizontal(edge) ? Math.min(1680,Math.max(960,window.width*.9)) : Math.min(1080,Math.max(720,window.height*.9))
                 along: window.positionAlong(identity,edge,span,((Geometry.horizontal(edge) ? window.width : window.height)-span)/2)
                 depth: Geometry.horizontal(edge) ? Math.min(1080,Math.max(720,window.height*.9)) : Math.min(1680,Math.max(960,window.width*.9))
                 source: "content/AbyssNexusContent.qml"
                 onCloseRequested: if (AlisIntergration.nexus) AlisIntergration.nexus.close()
+            }
+            AbyssBodyHost {
+                id: filesBody
+                stableContentSize: true
+                showLoadingSurface: true
+                loadingTitle: Translation.tr("Files")
+                loadingIcon: "folder_open"
+                warmContent: Boolean(AlisIntergration.alisFilesEnabled)
+                retainAfterFirstOpen: Boolean(AlisIntergration.alisFilesEnabled)
+                idleUnloadEnabled: !window._keepPanelsWarm
+                monotonicNotificationReveal: true
+                identity: "files"
+                controller: liquid
+                anchors.fill: parent
+                edge: window.positionEdge(identity,"bottom")
+                outputName: window.outputName
+                open: window.presented && field.ready
+                    && Boolean(AlisIntergration.alisFilesEnabled)
+                    && Boolean(AlisIntergration.alisFiles?.isOpen)
+                    && Boolean(AlisIntergration.alisFiles?.overlayMode ?? true)
+                    && root.largeTargetOutput === window.outputName
+                largeSurface: true
+                cooperativeShrink: true
+                placementIntent: "overlay"
+                minimumSpan: Math.min(span, Geometry.horizontal(edge)
+                    ? Math.max(760, Math.round(window.width * 0.52))
+                    : Math.max(520, Math.round(window.height * 0.6)))
+                minimumDepth: Math.min(depth, Geometry.horizontal(edge)
+                    ? Math.max(520, Math.round(window.height * 0.6))
+                    : Math.max(760, Math.round(window.width * 0.52)))
+                edgeInsets: window.bodyInsets(edge,along,span)
+                span: Geometry.horizontal(edge) ? Math.min(1680,Math.max(960,window.width*.9)) : Math.min(1080,Math.max(720,window.height*.9))
+                along: window.positionAlong(identity,edge,span,((Geometry.horizontal(edge) ? window.width : window.height)-span)/2)
+                depth: Geometry.horizontal(edge) ? Math.min(1080,Math.max(720,window.height*.9)) : Math.min(1680,Math.max(960,window.width*.9))
+                source: "content/AbyssFilesContent.qml"
+                onCloseRequested: if (AlisIntergration.alisFiles) AlisIntergration.alisFiles.close()
             }
             AbyssBodyHost {
                 id: controls
@@ -2766,6 +3168,10 @@ Scope {
                 anchors.fill: parent
                 edge: window.positionEdge(identity,"right")
                 outputName: window.outputName
+                cooperativeShrink: true
+                placementIntent: "overlay"
+                minimumSpan: Math.min(span, Geometry.horizontal(edge) ? 360 : 480)
+                minimumDepth: Math.min(depth, Geometry.horizontal(edge) ? 480 : 360)
                 open: window.presented && field.ready && GlobalStates.controlPanelOpen
                     && root.largeTargetOutput === window.outputName && (Config.options?.enabledPanels ?? []).includes("iiControlPanel")
                 edgeInsets: window.bodyInsets(edge,along,span)
@@ -2948,8 +3354,10 @@ Scope {
             AbyssBodyHost {
                 id: polkitBody
                 stableContentSize: true
+                placementCanResize: false
                 z: 25
                 placementPriority: 5
+                placementIntent: "modal"
                 identity: "polkit"
                 objectName: "abyssPolkitBody"
                 controller: liquid
@@ -3006,11 +3414,13 @@ Scope {
                 && !GlobalStates.abyssColdPerimeterRecreatePending
                 && !GlobalStates.screenLocked
                 && root.largeTargetOutput === window.outputName
-            readonly property bool warmupIdle: warmupTargetOutput
+            readonly property bool sidebarWarmupIdle: warmupTargetOutput
                 && !window.anyInteractiveBodyPresented
                 && !window.anyBodyVisualResident
                 && !liquid.popupsOpen
+            readonly property bool warmupIdle: sidebarWarmupIdle
                 && !companionExtension.motionBusy
+            readonly property bool _warmupSidebarsPending: window._warmupCursor < 2
             readonly property bool _keepPanelsWarm: Boolean(Config.options?.performance?.keepPanelsWarm ?? false)
             property int _warmupCursor: 0
             property bool _editStageWarmReady: false
@@ -3028,7 +3438,8 @@ Scope {
                 { host: rightPanel, enabled: (Config.options?.enabledPanels ?? []).includes("abyssSidebarRight") },
                 { host: dashboardBody, enabled: window._keepPanelsWarm && (Config.options?.enabledPanels ?? []).includes("iiDashboard") },
                 { host: settings, enabled: window._keepPanelsWarm },
-                { host: nexusBody, enabled: window._keepPanelsWarm && Boolean(AlisIntergration.nexusEnabled) }
+                { host: nexusBody, enabled: window._keepPanelsWarm && Boolean(AlisIntergration.nexusEnabled) },
+                { host: filesBody, enabled: window._keepPanelsWarm && Boolean(AlisIntergration.alisFilesEnabled) }
             ]
             Connections {
                 target: AlisIntergration
@@ -3037,6 +3448,13 @@ Scope {
                         const nexusIdx = window._warmupQueue.findIndex(e => e.host === nexusBody);
                         if (nexusIdx >= 0 && window._warmupCursor > nexusIdx)
                             window._warmupCursor = nexusIdx;
+                    }
+                }
+                function onAlisFilesEnabledChanged() {
+                    if (window._keepPanelsWarm && AlisIntergration.alisFilesEnabled && !filesBody.backgroundPreload) {
+                        const filesIdx = window._warmupQueue.findIndex(e => e.host === filesBody);
+                        if (filesIdx >= 0 && window._warmupCursor > filesIdx)
+                            window._warmupCursor = filesIdx;
                     }
                 }
             }
@@ -3049,11 +3467,13 @@ Scope {
             }
             Timer {
                 id: backgroundWarmupTimer
-                interval: window._warmupCursor === 0 ? 3200 : 1100
+                interval: window._warmupCursor === 0 ? 350
+                    : (window._warmupCursor === 1 ? 450 : 1200)
                 repeat: true
-                running: window.warmupIdle && (window._warmupCursor < window._warmupQueue.length || (window._keepPanelsWarm && !window._editStageWarmReady))
+                running: (window._warmupSidebarsPending ? window.sidebarWarmupIdle : window.warmupIdle)
+                    && (window._warmupCursor < window._warmupQueue.length || (window._keepPanelsWarm && !window._editStageWarmReady))
                 onTriggered: {
-                    if (!window.warmupIdle)
+                    if (!(window._warmupSidebarsPending ? window.sidebarWarmupIdle : window.warmupIdle))
                         return
                     while (window._warmupCursor < window._warmupQueue.length) {
                         const entry = window._warmupQueue[window._warmupCursor]
@@ -3178,6 +3598,24 @@ Scope {
                             stageDesktopWallpaperFallback._displayedSource = String(source);
                             stageDesktopWallpaperFallback._activeSlot = 1;
                         }
+                    }
+                }
+            }
+            Loader {
+                id: stageActiveWindowsLoader
+                objectName: "stageActiveWindowsLoader"
+                z: -1.5
+                anchors.fill: parent
+                active: (window.wallpaperStageEditing
+                        || (window.editStageVisible && window.displayEditStageMode === "wallpaper"))
+                    && window.desktopHasApps
+                sourceComponent: Component {
+                    AbyssStageActiveWindows {
+                        captureScreen: window.screen
+                        outputName: window.outputName
+                        edgeInsets: window.nativeInsets
+                        stageVisible: window.editStageVisible
+                        activeSession: window.wallpaperStageEditing
                     }
                 }
             }
@@ -3438,6 +3876,26 @@ Scope {
                     }
                 }
             }
+            property bool _stageWallpaperOpenedOnce: false
+            Timer {
+                id: stageWallpaperIdleUnloadTimer
+                interval: 240000
+                repeat: false
+                running: !window._keepPanelsWarm && window._stageWallpaperOpenedOnce && !window.wallpaperStageEditing
+                onTriggered: {
+                    window._stageWallpaperOpenedOnce = false
+                    MemoryPressureService.requestIdleGc()
+                }
+            }
+            Connections {
+                target: MemoryPressureService
+                function onPressureExceeded(): void {
+                    if (!window._keepPanelsWarm && window._stageWallpaperOpenedOnce && !window.wallpaperStageEditing) {
+                        window._stageWallpaperOpenedOnce = false
+                        MemoryPressureService.requestIdleGc()
+                    }
+                }
+            }
             Item {
                 id: stageEditDock
                 objectName: "abyssStageEditDock"
@@ -3506,14 +3964,27 @@ Scope {
                     objectName: "stageWallpaperDockHost"
                     anchors.fill: parent
                     visible: window.displayEditStageMode === "wallpaper" && window.editStageVisible
+                    Widgets.AlisLoadingScreen {
+                        objectName: "stageWallpaperLoadingScreen"
+                        anchors.fill: parent
+                        z: 20
+                        loading: stageWallpaperDockContainer.visible && stageWallpaperLoader.status !== Loader.Ready
+                        title: Translation.tr("Wallpaper")
+                        icon: "wallpaper"
+                        fillSurface: false
+                    }
                     Loader {
                         id: stageWallpaperLoader
                         anchors.fill: parent
+                        asynchronous: (Quickshell.env("QT_QUICK_BACKEND") !== "software") && status !== Loader.Ready
                         active: DesktopEditStage.wallpaperStageEnabled
-                            && (window.wallpaperStageEditing || (window.displayEditStageMode === "wallpaper" && window.editStageVisible))
                             && GlobalStates.deferredPanelsReady
+                            && (window._stageWallpaperOpenedOnce
+                                || ((window.wallpaperStageEditing || (window.displayEditStageMode === "wallpaper" && window.editStageVisible))
+                                    && (window.editStageProgress >= 0.85 || !AbyssStyle.motionEnabled || Quickshell.env("QT_QUICK_BACKEND") === "software")))
                         source: "content/AbyssWallpaperContent.qml"
                         onLoaded: {
+                            window._stageWallpaperOpenedOnce = true
                             if (item) {
                                 item.embedded = true
                                 item.outputName = Qt.binding(() => window.outputName)

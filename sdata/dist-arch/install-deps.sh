@@ -309,8 +309,8 @@ OFFICIAL_PACKAGES=(
   # Emoji font (CRITICAL — overview search, notifications, etc.)
   noto-fonts-emoji
 
-  # File manager
-  nautilus
+  # File manager runtime (Alis Files built locally via GTK4-rs)
+  gtk4
 
   # Polkit daemon (Alis ships a built-in Quickshell Polkit authentication agent)
   polkit

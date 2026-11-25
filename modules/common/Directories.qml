@@ -69,6 +69,7 @@ Singleton {
     property string spacedRepetitionPath: `${Directories.stateUserPath}/spaced-repetition.json`
     property string conflictCachePath: `${Directories.cachePath}/conflict-killer`
     property string notificationsPath: `${Directories.stateUserPath}/notifications.json`
+    property string batteryHistoryPath: `${Directories.stateUserPath}/battery-health-history.json`
     property string calendarSyncCachePath: `${Directories.stateUserPath}/calendar-sync-cache.json`
     property string generatedMaterialThemePath: `${Directories.stateUserPath}/generated/colors.json`
     property string generatedPalettePath: `${Directories.stateUserPath}/generated/palette.json`

@@ -5,6 +5,6 @@ import qs.modules.common.widgets
 Rectangle {
     Layout.fillWidth: true
     height: 1
-    color: SettingsMaterialPreset.groupBorderColor
-    opacity: 0.6
+    color: SettingsMaterialPreset.plateDividerColor
+    opacity: 0.9
 }

@@ -229,12 +229,15 @@ function _buildSpanRecord(event, startIso, endIso, today, opts) {
     var occIdx = Number.isInteger(opts.occurrenceIndex) ? opts.occurrenceIndex : 0;
     var spanKey = source + ":" + String(event.id ?? event.uid ?? event.title ?? "") + ":" + occIdx + ":" + startIso + ":" + endIso;
 
+    var isHoliday = event.isHoliday === true || String(event.kind || "").toLowerCase() === "holiday";
+
     return {
         key: spanKey,
         id: event.id !== undefined && event.id !== null ? event.id : String(event.uid || event.iCalUID || event.title || ""),
         rawId: event.id,
         source: source,
         readOnly: source === "external",
+        isHoliday: isHoliday,
         occurrenceIndex: occIdx,
         recurrence: String(event.recurrence || "none").toLowerCase(),
         virtual: !!opts.virtual,
@@ -431,12 +434,19 @@ function projectYearBoard(events, anchorDate, mode, todayIso, searchQuery, optio
     var seenSpanKeys = {};
     var dayRecurringMap = {};
     var dayItemsMap = {};
+    var dayHolidaysMap = {};
     var recurringSeriesIds = {};
     var externalEventCount = 0;
+    var holidaySpanCount = 0;
 
     function addDayItem(iso, item) {
         if (!dayItemsMap[iso]) dayItemsMap[iso] = [];
         dayItemsMap[iso].push(item);
+    }
+
+    function addDayHoliday(iso, item) {
+        if (!dayHolidaysMap[iso]) dayHolidaysMap[iso] = [];
+        dayHolidaysMap[iso].push(item);
     }
 
     function addDayRecurring(iso, item) {
@@ -520,13 +530,14 @@ function projectYearBoard(events, anchorDate, mode, todayIso, searchQuery, optio
                 var barKey = source + ":" + String(span.id) + ":" + span.startIso + ":" + span.endIso;
                 if (seenSpanKeys[barKey]) continue;
                 seenSpanKeys[barKey] = true;
+                if (span.isHoliday) holidaySpanCount++;
                 spans.push(span);
 
                 var bCur = sIso;
                 var bGuard = 0;
                 while (bCur <= eIso && bGuard < 400) {
                     bGuard++;
-                    addDayItem(bCur, {
+                    var dayEntry = {
                         key: span.key + ":" + bCur,
                         id: span.id,
                         rawId: span.rawId,
@@ -538,11 +549,14 @@ function projectYearBoard(events, anchorDate, mode, todayIso, searchQuery, optio
                         recurrence: recMode,
                         source: source,
                         readOnly: span.readOnly,
+                        isHoliday: span.isHoliday === true,
                         occurrenceIndex: span.occurrenceIndex,
                         isRecurring: false,
                         span: span,
                         sourceEvent: ev
-                    });
+                    };
+                    addDayItem(bCur, dayEntry);
+                    if (span.isHoliday) addDayHoliday(bCur, dayEntry);
                     bCur = addDaysIso(bCur, 1);
                 }
             }
@@ -633,8 +647,11 @@ function projectYearBoard(events, anchorDate, mode, todayIso, searchQuery, optio
         var daysWithRecurring = row.days.map(function(dayCell) {
             var recItems = dayRecurringMap[dayCell.iso] || [];
             var allItems = dayItemsMap[dayCell.iso] || [];
+            var holItems = dayHolidaysMap[dayCell.iso] || [];
             return Object.assign({}, dayCell, {
                 recurringItems: recItems,
+                holidays: holItems,
+                isHoliday: holItems.length > 0,
                 dayItemCount: allItems.length
             });
         });
@@ -693,10 +710,12 @@ function projectYearBoard(events, anchorDate, mode, todayIso, searchQuery, optio
         spans: spans,
         dayRecurringMap: dayRecurringMap,
         dayItemsMap: dayItemsMap,
+        dayHolidaysMap: dayHolidaysMap,
         summary: {
             planCount: spans.length,
             recurringCount: Object.keys(recurringSeriesIds).length,
             externalCount: externalEventCount,
+            holidayCount: holidaySpanCount,
             tripCount: tripCount,
             daysAway: daysAway,
             nextPlan: upcomingPlans.length > 0 ? upcomingPlans[0] : null,

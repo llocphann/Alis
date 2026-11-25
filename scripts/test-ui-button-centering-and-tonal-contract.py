@@ -23,8 +23,8 @@ QML_TARGETS = [
     ROOT / "modules/sidebarRight/pomodoro/CountdownTimer.qml",
     ROOT / "modules/dashboard/DashboardWeeklyPlanner.qml",
     ROOT / "modules/dashboard/DashboardYearlyPlanner.qml",
-    ROOT / "modules/dashboard/DashboardSpacedRepetition.qml",
-    INTERGRATION_ROOT / "modules/dashboard/DashboardExercisesTracker.qml",
+    INTERGRATION_ROOT / "plugins/spaced_repetition/modules/dashboard/DashboardSpacedRepetition.qml",
+    INTERGRATION_ROOT / "plugins/exercises_tracker/modules/dashboard/DashboardExercisesTracker.qml",
 ]
 
 
@@ -100,30 +100,27 @@ def check_static_contracts() -> None:
 
     # 3. Stepped solid tonal elevation invariant (Layer 1 matches Home Dashboard colLayer1Base, gentle steps, zero neutral washes / flat-card Gradients)
     tonal_synced_files = (
-        ROOT / "modules/dashboard/DashboardSpacedRepetition.qml",
         ROOT / "modules/dashboard/DashboardYearlyPlanner.qml",
         ROOT / "modules/dashboard/DashboardWeeklyPlanner.qml",
         ROOT / "modules/dashboard/DashboardMusic.qml",
         ROOT / "modules/dashboard/DashboardHeader.qml",
         ROOT / "modules/dashboard/DashboardEditToolbar.qml",
-        INTERGRATION_ROOT / "modules/dashboard/DashboardSpacedRepetition.qml",
-        INTERGRATION_ROOT / "modules/dashboard/DashboardExercisesTracker.qml",
+        INTERGRATION_ROOT / "plugins/spaced_repetition/modules/dashboard/DashboardSpacedRepetition.qml",
+        INTERGRATION_ROOT / "plugins/exercises_tracker/modules/dashboard/DashboardExercisesTracker.qml",
         COMPANION_ROOT / "modules/abyss/companion/AquaTalkCloud.qml",
         COMPANION_ROOT / "modules/abyss/companion/AquaSwarmPane.qml",
         COMPANION_ROOT / "modules/abyss/companion/AquaPocketPane.qml",
     )
     no_gradient_files = {
-        ROOT / "modules/dashboard/DashboardSpacedRepetition.qml",
-        INTERGRATION_ROOT / "modules/dashboard/DashboardSpacedRepetition.qml",
-        INTERGRATION_ROOT / "modules/dashboard/DashboardExercisesTracker.qml",
+        INTERGRATION_ROOT / "plugins/spaced_repetition/modules/dashboard/DashboardSpacedRepetition.qml",
+        INTERGRATION_ROOT / "plugins/exercises_tracker/modules/dashboard/DashboardExercisesTracker.qml",
         ROOT / "modules/dashboard/DashboardYearlyPlanner.qml",
         COMPANION_ROOT / "modules/abyss/companion/AquaSwarmPane.qml",
         COMPANION_ROOT / "modules/abyss/companion/AquaPocketPane.qml",
     }
     abyss_card_files = {
-        ROOT / "modules/dashboard/DashboardSpacedRepetition.qml",
-        INTERGRATION_ROOT / "modules/dashboard/DashboardSpacedRepetition.qml",
-        INTERGRATION_ROOT / "modules/dashboard/DashboardExercisesTracker.qml",
+        INTERGRATION_ROOT / "plugins/spaced_repetition/modules/dashboard/DashboardSpacedRepetition.qml",
+        INTERGRATION_ROOT / "plugins/exercises_tracker/modules/dashboard/DashboardExercisesTracker.qml",
         COMPANION_ROOT / "modules/abyss/companion/AquaSwarmPane.qml",
         COMPANION_ROOT / "modules/abyss/companion/AquaPocketPane.qml",
     }
@@ -185,14 +182,12 @@ def check_static_contracts() -> None:
                 "AquaTalkCloud.qml must not use low-alpha Qt.alpha(AbyssStyle.textColor, 0.0x) box fills"
             )
 
-    sr_marker = "property bool _captureLoaded: false"
-    alis_sr_src = (ROOT / "modules/dashboard/DashboardSpacedRepetition.qml").read_text(encoding="utf-8")
-    integ_sr_src = (INTERGRATION_ROOT / "modules/dashboard/DashboardSpacedRepetition.qml").read_text(encoding="utf-8")
-    assert sr_marker in alis_sr_src and sr_marker in integ_sr_src, (
-        "Both Alis and Alis-Intergration DashboardSpacedRepetition.qml must define _captureLoaded marker"
+    assert not (ROOT / "modules/dashboard/DashboardSpacedRepetition.qml").exists(), (
+        "Core Alis must not ship fallback DashboardSpacedRepetition.qml outside the plugin"
     )
-    assert alis_sr_src.split(sr_marker, 1)[1] == integ_sr_src.split(sr_marker, 1)[1], (
-        "DashboardSpacedRepetition.qml body diverged between Alis and Alis-Intergration"
+    integ_sr_src = (INTERGRATION_ROOT / "plugins/spaced_repetition/modules/dashboard/DashboardSpacedRepetition.qml").read_text(encoding="utf-8")
+    assert "property bool _captureLoaded: false" in integ_sr_src, (
+        "Plugin DashboardSpacedRepetition.qml must define _captureLoaded marker"
     )
 
     # 4. Hourglass-only Timers (no classic arc style or Key_T shortcut)
@@ -343,7 +338,7 @@ ShellRoot {
                 "modules/dashboard/DashboardMusic.qml",
                 "modules/dashboard/DashboardYearlyPlanner.qml",
                 "modules/dashboard/DashboardWeeklyPlanner.qml",
-                "modules/dashboard/DashboardSpacedRepetition.qml",
+                "optional/alis-intergration/plugins/spaced_repetition/modules/dashboard/DashboardSpacedRepetition.qml",
                 "optional/alis-companion/modules/abyss/companion/AquaPocketPane.qml",
                 "optional/alis-companion/modules/abyss/companion/AquaSwarmPane.qml",
                 "optional/alis-companion/modules/abyss/companion/AquaTalkCloud.qml"
@@ -405,6 +400,7 @@ ShellRoot {
         _install_offscreen_modules_overlay(folder, ROOT)
         (folder / "optional").mkdir(exist_ok=True)
         (folder / "optional" / "alis-companion").symlink_to(COMPANION_ROOT)
+        (folder / "optional" / "alis-intergration").symlink_to(INTERGRATION_ROOT)
         (folder / "shell.qml").write_text(shell_qml, encoding="utf-8")
         config = folder / "config" / "alis"
         config.mkdir(parents=True, exist_ok=True)

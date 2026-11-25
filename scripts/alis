@@ -58,7 +58,7 @@ for _alis_compat_helper in \
 done
 unset _alis_compat_helper
 
-qs_bin="/usr/bin/qs"
+qs_bin="${ALIS_QS_BIN:-/usr/bin/qs}"
 user_config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/alis"
 system_config_dir="${ALIS_SYSTEM_RUNTIME_DIR:-/usr/local/share/quickshell/alis}"
 fallback_system_config_dir="${ALIS_FALLBACK_SYSTEM_RUNTIME_DIR:-/usr/share/quickshell/alis}"
@@ -2736,10 +2736,34 @@ restart_shell() {
 
 open_settings() {
     local dir="$1"
+    local force_overlay="${2:-0}"
 
     if ! ensure_running_instance "$dir"; then
         echo "Timed out waiting for Alis to start" >&2
         exit 1
+    fi
+
+    if [[ "$force_overlay" == "1" ]]; then
+        exec "$qs_bin" -p "$dir" ipc call settings openOverlay
+    fi
+
+    # If a standalone Settings window (settings.qml or waffleSettings.qml) is
+    # already open, Super+, / `alis settings` must toggle it closed rather than
+    # opening a duplicate Settings overlay on top of it.
+    local entry qml_path closed_any=0
+    for entry in settings.qml waffleSettings.qml; do
+        qml_path="$dir/$entry"
+        if [[ -f "$qml_path" ]] && has_instances "$qml_path"; then
+            kill_shell "$qml_path"
+            if ! wait_for_stop "$qml_path"; then
+                force_kill_qml_window "$qml_path"
+                wait_for_stop "$qml_path" || true
+            fi
+            closed_any=1
+        fi
+    done
+    if [[ "$closed_any" -eq 1 ]]; then
+        exit 0
     fi
 
     exec "$qs_bin" -p "$dir" ipc call settings open
@@ -4622,7 +4646,7 @@ case "$command_name" in
                     break
                     ;;
                 -h|--help)
-                    echo "Usage: alis files [-c PATH] [path...]" >&2
+                    echo "Usage: alis files [-c PATH] [toggle|overlay|close|--new|path...]" >&2
                     exit 0
                     ;;
                 *)
@@ -4630,6 +4654,38 @@ case "$command_name" in
                     ;;
             esac
         done
+        case "${1:-}" in
+            toggle|overlay|openOverlay|close)
+                _files_ipc_fn="${1:-toggle}"
+                [[ "$_files_ipc_fn" == "overlay" ]] && _files_ipc_fn="openOverlay"
+                require_qs
+                resolve_config_dir
+                if ensure_running_instance_for_ipc "$config_dir" "start"; then
+                    if "$qs_bin" -p "$config_dir" ipc call alis-files "$_files_ipc_fn" >/dev/null 2>&1; then
+                        exit 0
+                    fi
+                fi
+                if [[ "$_files_ipc_fn" == "close" ]]; then
+                    exit 0
+                fi
+                launch_configured_slot "fileManager" "Alis File Manager"
+                echo "No file manager found" >&2
+                exit 1
+                ;;
+        esac
+        if [[ $# -eq 0 && -z "${ALIS_LAUNCH_DRY_RUN:-}" ]]; then
+            _files_cfg="${XDG_CONFIG_HOME:-$HOME/.config}/alis/alis-files.json"
+            _use_overlay="true"
+            if [[ -f "$_files_cfg" ]] && command -v python3 >/dev/null 2>&1; then
+                _use_overlay="$(python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); print("false" if d.get("overlay_mode") is False else "true")' "$_files_cfg" 2>/dev/null || echo true)"
+            fi
+            if [[ "$_use_overlay" == "true" ]] && find_qs 2>/dev/null; then
+                resolve_config_dir 2>/dev/null || true
+                if [[ -n "${config_dir:-}" ]] && "$qs_bin" -p "$config_dir" ipc call alis-files toggle >/dev/null 2>&1; then
+                    exit 0
+                fi
+            fi
+        fi
         launch_configured_slot "fileManager" "Alis File Manager" "$@"
         echo "No file manager found" >&2
         exit 1
@@ -4871,11 +4927,16 @@ case "$command_name" in
         ;;
     settings|open)
         require_qs
+        force_overlay=0
         while [[ $# -gt 0 ]]; do
             case "$1" in
                 -c|--config)
                     parse_config_flag "$@"
                     shift 2
+                    ;;
+                --overlay)
+                    force_overlay=1
+                    shift
                     ;;
                 -h|--help)
                     usage
@@ -4888,7 +4949,7 @@ case "$command_name" in
             esac
         done
         resolve_config_dir
-        open_settings "$config_dir"
+        open_settings "$config_dir" "$force_overlay"
         ;;
     settings-window)
         require_qs

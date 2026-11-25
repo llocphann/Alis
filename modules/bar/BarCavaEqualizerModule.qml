@@ -187,7 +187,7 @@ Item {
         id: barsContainer
         anchors.centerIn: parent
         width: root.innerSpan
-        height: Math.min(root.configuredHeight, Math.max(12, root.hostCross - 6))
+        height: Math.min(root.configuredHeight, Math.max(6, root.hostCross - 4))
         rotation: root.vertical ? 90 : 0
         clip: true
 

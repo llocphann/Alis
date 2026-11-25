@@ -32,8 +32,12 @@ Item {
     // The corner layer-shell popup handles Escape as a window shortcut.
     // Avoid handling the same press in both the editor and its host.
     property bool externalEscapeHandling: false
+    // Set by popup hosts while temporarily suspended/evicted behind a modal
+    // overlay so losing ancestor enabled-state never exits editing mode.
+    property bool preserveEditingWhileSuspended: false
     property bool markdownEditing: !root.autoMarkdownReading
     readonly property bool markdownReading: root.autoMarkdownReading && !root.markdownEditing
+    readonly property bool editorActiveFocus: textArea.activeFocus
     property int _markdownFocusEpoch: 0
     property bool verticalDotNavigation: false
     property var _noteRailWheelState: NoteRailWheel.idle()
@@ -160,6 +164,8 @@ Item {
         if (!Notepad.ready)
             return
         root.markdownEditing = true
+        if (root.visible && root.enabled && scrollView.visible)
+            textArea.forceActiveFocus()
         const focusEpoch = ++root._markdownFocusEpoch
         Qt.callLater(() => {
             if (focusEpoch === root._markdownFocusEpoch
@@ -880,7 +886,8 @@ Item {
                                     // focus while its layer-shell keyboard lease upgrades.
                                     Qt.callLater(() => {
                                         if (!root.autoMarkdownReading || !root.markdownEditing
-                                                || textArea.activeFocus)
+                                                || textArea.activeFocus
+                                                || root.preserveEditingWhileSuspended)
                                             return
                                         root.releaseEditorFocus()
                                         root.editorDeactivated()

@@ -27,7 +27,7 @@ binds {
     Mod+Escape allow-inhibiting=false { toggle-keyboard-shortcuts-inhibit; }
 
     // Power off all monitors. Any input wakes them up.
-    Mod+Shift+O { power-off-monitors; }
+    Mod+Alt+O { power-off-monitors; }
 
     // ═══════════════════════════════════════════════════════════════════════
     // Alis shell overlays & tools
@@ -70,11 +70,12 @@ binds {
     Mod+Shift+T { spawn "alis" "terminal" "--new"; }
     Mod+Return { spawn "alis" "terminal"; }
     Mod+Shift+Return { spawn "alis" "terminal" "--new"; }
-    Super+E { spawn "alis" "files"; }
+    Super+E { spawn "alis" "files" "toggle"; }
     Super+Shift+E { spawn "alis" "files" "--new"; }
     Super+W { spawn "alis" "browser"; }
     Super+Shift+W { spawn "alis" "browser" "--new"; }
     Super+O { spawn "alis" "nexus" "toggle"; }
+    Super+Shift+O { spawn "alis" "nexus" "openWindow"; }
 
     // ═══════════════════════════════════════════════════════════════════════
     // Window management

@@ -1,12 +1,14 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import qs.modules.common
+import qs.modules.common.widgets
 import qs.services
 
-// In-page Settings search for Window, Rail and Focus. A query replaces the
-// page canvas rather than opening a popup that obscures the controls beneath.
+// Spotlight / command-palette live search results canvas for Settings.
+// Replaces the active page cleanly while keeping pages cached underneath.
 Item {
     id: root
 
@@ -39,49 +41,124 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        anchors.margins: 16
-        radius: Appearance.rounding.normal
-        color: Appearance.colors.colLayer1
+        anchors.margins: 12
+        radius: SettingsMaterialPreset.cardRadius
+        color: SettingsMaterialPreset.cardColor
         border.width: 1
-        border.color: Appearance.m3colors.m3outlineVariant
+        border.color: SettingsMaterialPreset.cardBorderColor
         clip: true
 
         ColumnLayout {
             anchors.fill: parent
-            anchors.margins: 14
-            spacing: 10
+            anchors.margins: 16
+            spacing: 12
 
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 10
 
-                MaterialSymbol {
-                    text: "manage_search"
-                    iconSize: 20
-                    color: Appearance.colors.colPrimary
-                    Layout.alignment: Qt.AlignVCenter
+                Rectangle {
+                    Layout.preferredWidth: 30
+                    Layout.preferredHeight: 30
+                    radius: 9
+                    color: SettingsMaterialPreset.accentTint
+                    border.width: 1
+                    border.color: SettingsMaterialPreset.accentBorder
+
+                    MaterialSymbol {
+                        anchors.centerIn: parent
+                        text: "manage_search"
+                        iconSize: 17
+                        color: Appearance.colors.colPrimary
+                    }
                 }
 
                 StyledText {
                     Layout.fillWidth: true
                     text: Translation.tr("Search results")
+                    font.family: SettingsMaterialPreset.fontFamily
                     font.pixelSize: Appearance.font.pixelSize.normal
                     font.weight: Font.DemiBold
-                    color: Appearance.colors.colOnLayer1
+                    color: SettingsMaterialPreset.textColor
                 }
 
-                StyledText {
-                    text: root.results.length.toString()
-                    font.pixelSize: Appearance.font.pixelSize.small
-                    color: Appearance.colors.colSubtext
+                // Subtle keyboard shortcut hint strip
+                Row {
+                    visible: root.results.length > 0 && root.width >= 520
+                    spacing: 6
+                    Layout.alignment: Qt.AlignVCenter
+
+                    Repeater {
+                        model: [
+                            { key: "↑↓", label: Translation.tr("Move") },
+                            { key: "↵", label: Translation.tr("Open") },
+                            { key: "Esc", label: Translation.tr("Clear") }
+                        ]
+
+                        delegate: Row {
+                            required property var modelData
+                            spacing: 4
+
+                            Rectangle {
+                                anchors.verticalCenter: parent.verticalCenter
+                                implicitWidth: hintKeyTxt.implicitWidth + 10
+                                implicitHeight: 20
+                                radius: 5
+                                color: SettingsMaterialPreset.controlSurface
+                                border.width: 1
+                                border.color: SettingsMaterialPreset.controlBorderColor
+
+                                StyledText {
+                                    id: hintKeyTxt
+                                    anchors.centerIn: parent
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                    text: modelData.key
+                                    font.pixelSize: Appearance.font.pixelSize.smallest
+                                    font.weight: Font.DemiBold
+                                    color: SettingsMaterialPreset.secondaryTextColor
+                                }
+                            }
+
+                            StyledText {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: modelData.label
+                                font.pixelSize: Appearance.font.pixelSize.smallest
+                                color: SettingsMaterialPreset.secondaryTextColor
+                                opacity: 0.85
+                            }
+                        }
+                    }
+                }
+
+                Rectangle {
+                    Layout.alignment: Qt.AlignVCenter
+                    implicitHeight: 24
+                    implicitWidth: Math.max(28, resultBadgeText.implicitWidth + 14)
+                    radius: height / 2
+                    color: SettingsMaterialPreset.accentTint
+                    border.width: 1
+                    border.color: SettingsMaterialPreset.accentBorder
+
+                    StyledText {
+                        id: resultBadgeText
+                        anchors.centerIn: parent
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        text: root.results.length.toString()
+                        font.family: Appearance.font.family.numbers
+                        font.features: ({ "tnum": 1 })
+                        font.pixelSize: Appearance.font.pixelSize.smaller
+                        font.weight: Font.DemiBold
+                        color: Appearance.colors.colPrimary
+                    }
                 }
             }
 
             Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 1
-                color: Appearance.m3colors.m3outlineVariant
-                opacity: 0.6
+                color: SettingsMaterialPreset.plateDividerColor
             }
 
             ListView {
@@ -95,6 +172,10 @@ Item {
                 boundsBehavior: Flickable.StopAtBounds
                 currentIndex: -1
                 onCountChanged: currentIndex = count > 0 ? 0 : -1
+
+                ScrollBar.vertical: StyledScrollBar {
+                    policy: ScrollBar.AsNeeded
+                }
 
                 Keys.onPressed: event => {
                     if (event.key === Qt.Key_Up) {
@@ -121,38 +202,58 @@ Item {
                     required property int index
 
                     width: resultsList.width
-                    implicitHeight: 60
-                    buttonRadius: Appearance.rounding.small
+                    implicitHeight: Math.round(54 * Appearance.fontSizeScale)
+                    buttonRadius: 10
                     colBackground: resultRow.ListView.isCurrentItem
-                        ? Appearance.colors.colLayer2 : "transparent"
-                    colBackgroundHover: Appearance.colors.colLayer2
+                        ? SettingsMaterialPreset.controlSurfaceHover : "transparent"
+                    colBackgroundHover: SettingsMaterialPreset.controlSurfaceHover
                     Keys.forwardTo: [resultsList]
                     onClicked: root.activated(modelData)
+
+                    Rectangle {
+                        visible: resultRow.ListView.isCurrentItem
+                        anchors.left: parent.left
+                        anchors.leftMargin: 3
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 3
+                        height: 22
+                        radius: 1.5
+                        color: Appearance.colors.colPrimary
+                    }
 
                     contentItem: RowLayout {
                         anchors.fill: parent
                         anchors.leftMargin: 12
                         anchors.rightMargin: 12
-                        spacing: 12
+                        spacing: 11
 
                         Rectangle {
-                            Layout.preferredWidth: 3
-                            Layout.preferredHeight: 25
-                            radius: 1.5
-                            color: Appearance.colors.colPrimary
-                            opacity: resultRow.ListView.isCurrentItem ? 1 : 0.35
-                        }
+                            Layout.preferredWidth: 32
+                            Layout.preferredHeight: 32
+                            Layout.alignment: Qt.AlignVCenter
+                            radius: 9
+                            color: resultRow.ListView.isCurrentItem
+                                ? SettingsMaterialPreset.accentTint
+                                : SettingsMaterialPreset.controlSurface
+                            border.width: 1
+                            border.color: resultRow.ListView.isCurrentItem
+                                ? SettingsMaterialPreset.accentBorder
+                                : SettingsMaterialPreset.controlBorderColor
 
-                        MaterialSymbol {
-                            text: root.iconForPage(resultRow.modelData.pageIndex)
-                            iconSize: 19
-                            color: Appearance.colors.colPrimary
+                            MaterialSymbol {
+                                anchors.centerIn: parent
+                                text: root.iconForPage(resultRow.modelData.pageIndex)
+                                iconSize: 17
+                                color: resultRow.ListView.isCurrentItem
+                                    ? Appearance.colors.colPrimary
+                                    : SettingsMaterialPreset.secondaryTextColor
+                            }
                         }
 
                         ColumnLayout {
                             Layout.fillWidth: true
                             Layout.minimumWidth: 0
-                            spacing: 3
+                            spacing: 2
 
                             Text {
                                 Layout.fillWidth: true
@@ -161,10 +262,10 @@ Item {
                                     || resultRow.modelData.label
                                     || resultRow.modelData.pageName || ""
                                 textFormat: Text.StyledText
-                                font.family: Appearance.font.family.main
+                                font.family: SettingsMaterialPreset.fontFamily
                                 font.pixelSize: Appearance.font.pixelSize.small
                                 font.weight: Font.Medium
-                                color: Appearance.colors.colOnLayer1
+                                color: SettingsMaterialPreset.textColor
                                 elide: Text.ElideRight
                                 wrapMode: Text.NoWrap
                             }
@@ -183,42 +284,100 @@ Item {
                                 text: sectionName && sectionName !== pageName
                                     ? pageName + " › " + sectionName : pageName
                                 font.pixelSize: Appearance.font.pixelSize.smaller
-                                color: Appearance.colors.colSubtext
+                                color: SettingsMaterialPreset.secondaryTextColor
                                 elide: Text.ElideRight
                                 wrapMode: Text.NoWrap
                             }
                         }
 
                         MaterialSymbol {
-                            text: "arrow_forward"
-                            iconSize: 17
-                            color: Appearance.colors.colSubtext
-                            opacity: resultRow.hovered
-                                || resultRow.ListView.isCurrentItem ? 1 : 0.5
+                            Layout.alignment: Qt.AlignVCenter
+                            text: "chevron_right"
+                            iconSize: 18
+                            color: resultRow.ListView.isCurrentItem
+                                ? Appearance.colors.colPrimary
+                                : SettingsMaterialPreset.secondaryTextColor
+                            opacity: resultRow.hovered || resultRow.ListView.isCurrentItem ? 1 : 0.45
                         }
                     }
                 }
             }
 
+            // Empty state
             Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 visible: root.results.length === 0
 
-                RowLayout {
+                ColumnLayout {
                     anchors.centerIn: parent
                     spacing: 10
 
-                    MaterialSymbol {
-                        text: "search_off"
-                        iconSize: 21
-                        color: Appearance.colors.colSubtext
+                    Rectangle {
+                        Layout.alignment: Qt.AlignHCenter
+                        width: 44
+                        height: 44
+                        radius: 13
+                        color: SettingsMaterialPreset.controlSurface
+                        border.width: 1
+                        border.color: SettingsMaterialPreset.controlBorderColor
+
+                        MaterialSymbol {
+                            anchors.centerIn: parent
+                            text: "search_off"
+                            iconSize: 22
+                            color: SettingsMaterialPreset.secondaryTextColor
+                        }
                     }
 
                     StyledText {
+                        Layout.alignment: Qt.AlignHCenter
+                        horizontalAlignment: Text.AlignHCenter
                         text: Translation.tr("No results found")
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.colors.colSubtext
+                        font.pixelSize: Appearance.font.pixelSize.normal
+                        font.weight: Font.Medium
+                        color: SettingsMaterialPreset.textColor
+                    }
+
+                    RippleButton {
+                        objectName: "settingsLiveSearchClearButton"
+                        Layout.alignment: Qt.AlignHCenter
+                        Accessible.name: Translation.tr("Clear search")
+                        implicitHeight: 32
+                        implicitWidth: clearEmptyRow.implicitWidth + 24
+                        buttonRadius: height / 2
+                        colBackground: SettingsMaterialPreset.controlSurface
+                        colBackgroundHover: SettingsMaterialPreset.controlSurfaceHover
+                        onClicked: {
+                            root.closeRequested()
+                            if (root.searchField)
+                                root.searchField.forceActiveFocus()
+                        }
+
+                        contentItem: Item {
+                            implicitWidth: clearEmptyRow.implicitWidth
+                            implicitHeight: clearEmptyRow.implicitHeight
+                            Row {
+                                id: clearEmptyRow
+                                anchors.centerIn: parent
+                                spacing: 6
+                                MaterialSymbol {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: "close"
+                                    iconSize: 15
+                                    color: SettingsMaterialPreset.textColor
+                                }
+                                StyledText {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                    text: Translation.tr("Clear search")
+                                    font.pixelSize: Appearance.font.pixelSize.smaller
+                                    font.weight: Font.Medium
+                                    color: SettingsMaterialPreset.textColor
+                                }
+                            }
+                        }
                     }
                 }
             }

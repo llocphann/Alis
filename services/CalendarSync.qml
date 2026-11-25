@@ -14,11 +14,100 @@ Singleton {
     id: root
 
     readonly property bool enabled: Config.options?.calendar?.externalSync?.enable ?? false
+    function normalizeUrl(rawUrl): string {
+        const trimmed = String(rawUrl ?? "").trim()
+        if (!trimmed) return ""
+        return trimmed.replace(/^webcals?:\/\//i, "https://")
+    }
+    function isHolidaySource(source): bool {
+        if (!source || typeof source !== "object") return false
+        if (source.isHoliday === true || source.kind === "holiday") return true
+        const url = String(source.url ?? "").toLowerCase()
+        return url.includes("%23holiday%40group.v.calendar.google.com")
+            || url.includes("#holiday@group.v.calendar.google.com")
+            || url.includes("/holidays/")
+    }
+    readonly property var holidayPresets: [
+        {
+            id: "preset_vn_vi",
+            name: "Vietnam Holidays (VI · Solar & Lunar)",
+            shortLabel: "Vietnam (VI)",
+            url: "https://calendar.google.com/calendar/ical/vi.vietnamese%23holiday%40group.v.calendar.google.com/public/basic.ics",
+            color: "#EA4335"
+        },
+        {
+            id: "preset_vn_en",
+            name: "Vietnam Holidays (EN · Solar & Lunar)",
+            shortLabel: "Vietnam (EN)",
+            url: "https://calendar.google.com/calendar/ical/en.vietnamese%23holiday%40group.v.calendar.google.com/public/basic.ics",
+            color: "#E67C73"
+        },
+        {
+            id: "preset_us",
+            name: "United States Holidays",
+            shortLabel: "United States",
+            url: "https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics",
+            color: "#4285F4"
+        },
+        {
+            id: "preset_jp",
+            name: "Japan Holidays",
+            shortLabel: "Japan",
+            url: "https://calendar.google.com/calendar/ical/en.japanese%23holiday%40group.v.calendar.google.com/public/basic.ics",
+            color: "#D81B60"
+        },
+        {
+            id: "preset_uk",
+            name: "United Kingdom Holidays",
+            shortLabel: "UK",
+            url: "https://calendar.google.com/calendar/ical/en.uk%23holiday%40group.v.calendar.google.com/public/basic.ics",
+            color: "#7986CB"
+        },
+        {
+            id: "preset_kr",
+            name: "South Korea Holidays",
+            shortLabel: "South Korea",
+            url: "https://calendar.google.com/calendar/ical/en.south_korea%23holiday%40group.v.calendar.google.com/public/basic.ics",
+            color: "#FF6D01"
+        },
+        {
+            id: "preset_sg",
+            name: "Singapore Holidays",
+            shortLabel: "Singapore",
+            url: "https://calendar.google.com/calendar/ical/en.singapore%23holiday%40group.v.calendar.google.com/public/basic.ics",
+            color: "#33B679"
+        },
+        {
+            id: "preset_de",
+            name: "Germany Holidays",
+            shortLabel: "Germany",
+            url: "https://calendar.google.com/calendar/ical/en.german%23holiday%40group.v.calendar.google.com/public/basic.ics",
+            color: "#F6BF26"
+        },
+        {
+            id: "preset_fr",
+            name: "France Holidays",
+            shortLabel: "France",
+            url: "https://calendar.google.com/calendar/ical/en.french%23holiday%40group.v.calendar.google.com/public/basic.ics",
+            color: "#8E24AA"
+        }
+    ]
     readonly property var sources: {
         const configured = Config.options?.calendar?.externalSync?.sources
-        if (!Array.isArray(configured))
+        if (!configured || typeof configured.length !== "number")
             return []
-        return configured.filter(source => source && typeof source === "object" && !Array.isArray(source))
+        const list = Array.from(configured)
+        return list
+            .filter(source => source && typeof source === "object" && !Array.isArray(source))
+            .map(source => {
+                const normUrl = root.normalizeUrl(source.url)
+                const holiday = root.isHolidaySource(source)
+                return Object.assign({}, source, {
+                    url: normUrl,
+                    isHoliday: holiday,
+                    kind: holiday ? "holiday" : (source.kind || "event")
+                })
+            })
     }
     readonly property int refreshMinutes: {
         const configured = Number(Config.options?.calendar?.externalSync?.refreshMinutes)
@@ -42,15 +131,14 @@ Singleton {
     // Cache file for persisting between sessions
     readonly property string cachePath: Directories.calendarSyncCachePath
 
+    property bool _initialFetchPending: false
     Component.onCompleted: {
         if (!root.enabled) {
             root.ready = true
             return
         }
+        root._initialFetchPending = root.sources.length > 0
         loadCache()
-        if (root.sources.length > 0) {
-            Qt.callLater(() => root.fetchAll())
-        }
     }
 
     // React to config changes — re-fetch when sources change
@@ -98,7 +186,39 @@ Singleton {
     property int _fetchIndex: -1
     property var _pendingSources: []
     property var _fetchedEvents: []
+    property var _previousEventsBySource: ({})
     property bool _fetchHadError: false
+
+    function _snapshotEventsBySource(): var {
+        const map = {}
+        const current = Array.isArray(root.events) ? root.events : []
+        for (let i = 0; i < current.length; ++i) {
+            const ev = current[i]
+            const sid = String(ev?.sourceId ?? "")
+            if (!sid) continue
+            if (!map[sid]) map[sid] = []
+            map[sid].push(ev)
+        }
+        return map
+    }
+
+    function _preserveCachedForSource(source, errMsg): void {
+        if (!source) return
+        let cached = root._previousEventsBySource[source.id]
+        if (!Array.isArray(cached) || cached.length === 0) {
+            cached = (Array.isArray(root.events) ? root.events : []).filter(e => String(e?.sourceId ?? "") === source.id)
+        }
+        const preserved = Array.isArray(cached) ? cached : []
+        if (preserved.length > 0)
+            root._fetchedEvents = root._fetchedEvents.concat(preserved)
+        root._updateSourceStatus(source.id, {
+            error: errMsg,
+            stale: preserved.length > 0,
+            cachedCount: preserved.length,
+            lastAttempt: new Date().toISOString()
+        })
+        root.sourceError(source.id, errMsg)
+    }
 
     function fetchAll(): void {
         if (!root.enabled || root.fetching) return
@@ -112,6 +232,7 @@ Singleton {
         }
 
         root.fetching = true
+        root._previousEventsBySource = root._snapshotEventsBySource()
         root._pendingSources = enabledSources
         root._fetchedEvents = []
         root._fetchHadError = false
@@ -192,8 +313,7 @@ Singleton {
             root._fetchHadError = true
             if (source) {
                 _log("Error fetching", source.name, ":", errMsg)
-                root._updateSourceStatus(source.id, { error: errMsg, lastFetch: new Date().toISOString() })
-                root.sourceError(source.id, errMsg)
+                root._preserveCachedForSource(source, errMsg)
             }
             root._fetchIndex++
             Qt.callLater(() => root._fetchNext())
@@ -215,14 +335,23 @@ Singleton {
                 const errMsg = code !== 0 ? `curl exited with code ${code}` : "Empty response"
                 root._fetchHadError = true
                 _log("Error fetching", source.name, ":", errMsg)
-                root._updateSourceStatus(source.id, { error: errMsg, lastFetch: new Date().toISOString() })
-                root.sourceError(source.id, errMsg)
+                root._preserveCachedForSource(source, errMsg)
+            } else if (!/BEGIN:VCALENDAR/i.test(rawBody)) {
+                const errMsg = "Invalid calendar response (missing BEGIN:VCALENDAR)"
+                root._fetchHadError = true
+                _log("Error fetching", source.name, ":", errMsg)
+                root._preserveCachedForSource(source, errMsg)
             } else {
                 try {
-                    const parsed = IcsParser.parseICS(rawBody, source.id, source.name, source.color)
+                    const holiday = root.isHolidaySource(source)
+                    const parsed = IcsParser.parseICS(rawBody, source.id, source.name, source.color, {
+                        isHoliday: holiday,
+                        kind: holiday ? "holiday" : "event"
+                    })
                     root._fetchedEvents = root._fetchedEvents.concat(parsed)
                     root._updateSourceStatus(source.id, {
                         error: "",
+                        stale: false,
                         lastFetch: new Date().toISOString(),
                         eventCount: parsed.length
                     })
@@ -231,8 +360,7 @@ Singleton {
                     const errMsg = `Parse error: ${e.message}`
                     root._fetchHadError = true
                     _log("Parse error for", source.name, ":", e.message)
-                    root._updateSourceStatus(source.id, { error: errMsg, lastFetch: new Date().toISOString() })
-                    root.sourceError(source.id, errMsg)
+                    root._preserveCachedForSource(source, errMsg)
                 }
             }
 
@@ -361,16 +489,48 @@ Singleton {
     }
 
     // Source management (called from Settings UI)
-    function addSource(name: string, url: string, color: string): void {
+    function addSource(name: string, url: string, color: string, isHoliday = false): void {
+        const cleanUrl = root.normalizeUrl(url)
+        if (!cleanUrl) return
+        const holiday = Boolean(isHoliday) || root.isHolidaySource({ url: cleanUrl })
         const newSource = {
             id: _generateId(),
-            name: name,
-            url: url,
+            name: String(name ?? "").trim() || "External Calendar",
+            url: cleanUrl,
             color: color || _nextColor(),
-            enabled: true
+            enabled: true,
+            isHoliday: holiday,
+            kind: holiday ? "holiday" : "event"
         }
         const updated = [...root.sources, newSource]
         Config.setNestedValue("calendar.externalSync.sources", updated)
+    }
+
+    function hasHolidayPreset(presetId: string): bool {
+        const preset = root.holidayPresets.find(p => p.id === presetId)
+        if (!preset) return false
+        const targetUrl = root.normalizeUrl(preset.url).toLowerCase()
+        return root.sources.some(s => s.enabled !== false && root.normalizeUrl(s.url).toLowerCase() === targetUrl)
+    }
+
+    function toggleHolidayPreset(presetId: string): void {
+        const preset = root.holidayPresets.find(p => p.id === presetId)
+        if (!preset) return
+        const targetUrl = root.normalizeUrl(preset.url).toLowerCase()
+        const existing = root.sources.find(s => root.normalizeUrl(s.url).toLowerCase() === targetUrl)
+        if (existing) {
+            if (existing.enabled) {
+                root.removeSource(existing.id)
+            } else {
+                if (!root.enabled)
+                    Config.setNestedValue("calendar.externalSync.enable", true)
+                root.toggleSource(existing.id, true)
+            }
+            return
+        }
+        if (!root.enabled)
+            Config.setNestedValue("calendar.externalSync.enable", true)
+        root.addSource(preset.name, preset.url, preset.color, true)
     }
 
     function removeSource(sourceId: string): void {
@@ -379,13 +539,20 @@ Singleton {
         // Clean cached events from this source
         root.events = root.events.filter(e => e.sourceId !== sourceId)
         root.eventsUpdated()
+        root.saveCache()
     }
 
     function updateSource(sourceId: string, updates: var): void {
         const sources = root.sources.map(source => Object.assign({}, source))
         const idx = sources.findIndex(s => s.id === sourceId)
         if (idx !== -1) {
-            sources[idx] = Object.assign({}, sources[idx], updates)
+            const cleanUpdates = Object.assign({}, updates)
+            if (typeof cleanUpdates.url === "string")
+                cleanUpdates.url = root.normalizeUrl(cleanUpdates.url)
+            sources[idx] = Object.assign({}, sources[idx], cleanUpdates)
+            const holiday = root.isHolidaySource(sources[idx])
+            sources[idx].isHoliday = holiday
+            sources[idx].kind = holiday ? "holiday" : "event"
             Config.setNestedValue("calendar.externalSync.sources", sources)
         }
     }
@@ -411,6 +578,7 @@ Singleton {
             return
 
         root.fetching = true
+        root._previousEventsBySource = root._snapshotEventsBySource()
         root._pendingSources = [source]
         root._fetchedEvents = root.events.filter(event => event.sourceId !== sourceId)
         root._fetchHadError = false
@@ -447,16 +615,35 @@ Singleton {
             const content = cacheFileView.text()
             if (!content || content.trim() === "") {
                 root.ready = true
+                if (root._initialFetchPending) {
+                    root._initialFetchPending = false
+                    if (root.enabled && root.sources.length > 0)
+                        Qt.callLater(() => root.fetchAll())
+                }
                 return
             }
             try {
                 const data = JSON.parse(content)
+                const holidayIds = {}
+                for (let sIdx = 0; sIdx < root.sources.length; ++sIdx) {
+                    if (root.isHolidaySource(root.sources[sIdx]))
+                        holidayIds[root.sources[sIdx].id] = true
+                }
                 root.events = Array.isArray(data?.events)
-                    ? data.events.filter(event => event && typeof event === "object" && !Array.isArray(event))
+                    ? data.events
+                        .filter(event => event && typeof event === "object" && !Array.isArray(event))
+                        .map(event => {
+                            const hol = event.isHoliday === true || event.kind === "holiday" || Boolean(holidayIds[event.sourceId])
+                            return Object.assign({}, event, {
+                                isHoliday: hol,
+                                kind: hol ? "holiday" : (event.kind || "event")
+                            })
+                        })
                     : []
                 root.sourceStatuses = data?.sourceStatuses && typeof data.sourceStatuses === "object"
                     && !Array.isArray(data.sourceStatuses) ? data.sourceStatuses : {}
                 root.ready = true
+                root.eventsUpdated()
                 _log("Loaded cache:", root.events.length, "events")
             } catch (e) {
                 _log("Cache parse error:", e.message)
@@ -464,12 +651,22 @@ Singleton {
                 root.sourceStatuses = {}
                 root.ready = true
             }
+            if (root._initialFetchPending) {
+                root._initialFetchPending = false
+                if (root.enabled && root.sources.length > 0)
+                    Qt.callLater(() => root.fetchAll())
+            }
         }
         onLoadFailed: (error) => {
             if (error === FileViewError.FileNotFound) {
                 _log("No cache file, starting fresh")
             }
             root.ready = true
+            if (root._initialFetchPending) {
+                root._initialFetchPending = false
+                if (root.enabled && root.sources.length > 0)
+                    Qt.callLater(() => root.fetchAll())
+            }
         }
     }
 

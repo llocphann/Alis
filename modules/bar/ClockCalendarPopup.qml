@@ -4,6 +4,12 @@ import qs.modules.sidebarRight.events
 StyledPopup {
     id: root
 
+    readonly property string effectiveAttachmentEdge: root.embeddedHost
+        ? String(root.embeddedHost.attachedEdge || "top")
+        : root._attachmentEdge
+    readonly property bool verticalLayout:
+        effectiveAttachmentEdge === "left" || effectiveAttachmentEdge === "right"
+
     // Inline editing stays inside the Events pane, but it still needs the
     // popup's keyboard grab while a text field is active.
     alternativeVisibleCondition: calendarContent.eventEditorActive
@@ -29,6 +35,7 @@ StyledPopup {
         ClockCalendarContent {
             id: calendarContent
             anchors.fill: parent
+            verticalLayout: root.verticalLayout
         }
     }
 }

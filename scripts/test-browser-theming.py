@@ -14,6 +14,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "colors" / "apply-browser-themes.py"
 BRIDGE = ROOT / "scripts" / "colors" / "alis-browser-theme-bridge.py"
+NATIVE_THEME = ROOT / "native" / "bin" / "alis-theme"
 
 
 def main() -> int:
@@ -155,98 +156,140 @@ def main() -> int:
         assert "user_color2" not in cd["browser"]["theme"]
 
         # Verify live SSE bridge broadcast + XPI endpoint + --disable reset
-        port_file = base / "bridge.port"
-        bridge_proc = subprocess.Popen(
-            [sys.executable, str(BRIDGE), "--state-dir", str(state), "--port", "0", "--port-file", str(port_file), "--no-lock"],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-        try:
-            for _ in range(40):
-                if port_file.is_file() and port_file.read_text().strip():
-                    break
-                time.sleep(0.05)
-            port = int(port_file.read_text().strip())
+        # Exercise both the native Rust bridge (preferred at runtime) and the Python fallback.
+        bridge_variants: list[tuple[str, list[str]]] = [
+            ("python", [sys.executable, str(BRIDGE)]),
+        ]
+        if NATIVE_THEME.is_file():
+            bridge_variants.insert(0, ("rust", [str(NATIVE_THEME), "--browser-bridge"]))
 
-            # Check /alis-browser-theme.xpi and /install HTTP endpoints
-            with urllib.request.urlopen(f"http://127.0.0.1:{port}/alis-browser-theme.xpi", timeout=2) as r:
-                assert r.status == 200
-                assert "application/x-xpinstall" in r.headers.get("Content-Type", "")
-                assert len(r.read()) > 500
-            with urllib.request.urlopen(f"http://127.0.0.1:{port}/install", timeout=2) as r:
-                assert r.status == 200
-                assert b"alis-browser-theme.xpi" in r.read()
-
-            received_events: list[dict] = []
-            stop_sse = threading.Event()
-
-            def sse_reader() -> None:
-                with urllib.request.urlopen(f"http://127.0.0.1:{port}/events", timeout=5) as stream:
-                    while not stop_sse.is_set():
-                        line = stream.readline().decode("utf-8")
-                        if not line:
-                            break
-                        if line.startswith("data: "):
-                            received_events.append(json.loads(line[6:].strip()))
-                            if len(received_events) >= 3:
-                                break
-
-            t = threading.Thread(target=sse_reader, daemon=True)
-            t.start()
-            for _ in range(40):
-                if len(received_events) >= 1:
-                    break
-                time.sleep(0.03)
-            assert len(received_events) >= 1, "SSE initial frame did not arrive"
-            assert received_events[0]["gecko_theme"]["colors"]["tab_line"] == "#ffb4ac"
-
-            # Change palette to Light Teal and apply with live refresh against bridge port
+        for variant_name, bridge_base_cmd in bridge_variants:
+            # Reset palette to dark coral before each variant run
             (gen / "app-palette.json").write_text(json.dumps({
-                "app_background": "#f2f8f9",
-                "app_surface": "#e6f1f3",
-                "app_surface_elevated": "#dcebef",
-                "app_surface_popup": "#d2e5ea",
-                "app_surface_hover": "#c7dfe5",
-                "app_foreground": "#102226",
-                "app_subtext": "#3f565b",
-                "app_accent": "#006876",
-                "app_on_accent": "#ffffff",
-                "app_accent_container": "#a1efff",
-                "app_border_subtle": "#b6cdd2",
-                "app_selection": "#a1efff",
-                "primary": "#006876",
-                "primary_container": "#a1efff",
+                "app_background": "#150e0e",
+                "app_surface": "#1a1110",
+                "app_surface_elevated": "#221716",
+                "app_surface_popup": "#291d1b",
+                "app_surface_hover": "#382b2a",
+                "app_foreground": "#f9e0dd",
+                "app_subtext": "#94817f",
+                "app_accent": "#ffb4ac",
+                "app_on_accent": "#61332f",
+                "app_accent_container": "#764540",
+                "app_border_subtle": "#554442",
+                "app_selection": "#6d4c49",
+                "primary": "#ffb4ac",
+                "primary_container": "#764540",
             }), encoding="utf-8")
-            (gen / "theme-meta.json").write_text(json.dumps({"mode": "light"}), encoding="utf-8")
-
+            (gen / "theme-meta.json").write_text(json.dumps({"mode": "dark"}), encoding="utf-8")
             subprocess.run(
-                [sys.executable, str(SCRIPT), "--home-dir", str(home), "--etc-dir", str(etc), "--state-dir", str(state), "--bridge-port", str(port)],
+                [sys.executable, str(SCRIPT), "--home-dir", str(home), "--etc-dir", str(etc), "--state-dir", str(state), "--no-live-refresh"],
                 check=True,
             )
-            for _ in range(40):
-                if len(received_events) >= 2:
-                    break
-                time.sleep(0.03)
-            assert len(received_events) >= 2, "Live SSE update did not arrive"
-            assert received_events[1]["enabled"] is True
-            assert received_events[1]["gecko_theme"]["colors"]["tab_line"] == "#006876"
-            assert received_events[1]["gecko_theme"]["properties"]["color_scheme"] == "light"
 
-            # Verify --disable rollback restores pre-existing user files/themes cleanly AND broadcasts enabled=false
-            subprocess.run(
-                [sys.executable, str(SCRIPT), "--disable", "--home-dir", str(home), "--etc-dir", str(etc), "--state-dir", str(state), "--bridge-port", str(port)],
-                check=True,
+            # Reject non-loopback bind host with exit code 2
+            bad_host = subprocess.run(
+                [*bridge_base_cmd, "--state-dir", str(state), "--host", "0.0.0.0", "--port", "0", "--no-lock"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
             )
-            for _ in range(40):
-                if len(received_events) >= 3:
-                    break
-                time.sleep(0.03)
-            assert len(received_events) >= 3, "Live SSE disable event did not arrive"
-            assert received_events[2]["enabled"] is False
-            stop_sse.set()
-        finally:
-            bridge_proc.terminate()
-            bridge_proc.wait(timeout=3)
+            assert bad_host.returncode == 2, f"{variant_name} bridge did not reject 0.0.0.0 (rc={bad_host.returncode})"
+
+            port_file = base / f"bridge-{variant_name}.port"
+            bridge_proc = subprocess.Popen(
+                [*bridge_base_cmd, "--state-dir", str(state), "--port", "0", "--port-file", str(port_file), "--no-lock"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            try:
+                for _ in range(40):
+                    if port_file.is_file() and port_file.read_text().strip():
+                        break
+                    time.sleep(0.05)
+                port = int(port_file.read_text().strip())
+
+                # Check /health, /alis-browser-theme.xpi and /install HTTP endpoints
+                with urllib.request.urlopen(f"http://127.0.0.1:{port}/health", timeout=2) as r:
+                    assert r.status == 200
+                    assert json.loads(r.read().decode("utf-8"))["ok"] is True
+                with urllib.request.urlopen(f"http://127.0.0.1:{port}/alis-browser-theme.xpi", timeout=2) as r:
+                    assert r.status == 200
+                    assert "application/x-xpinstall" in r.headers.get("Content-Type", "")
+                    assert len(r.read()) > 500
+                with urllib.request.urlopen(f"http://127.0.0.1:{port}/install", timeout=2) as r:
+                    assert r.status == 200
+                    assert b"alis-browser-theme.xpi" in r.read()
+
+                received_events: list[dict] = []
+                stop_sse = threading.Event()
+
+                def sse_reader() -> None:
+                    with urllib.request.urlopen(f"http://127.0.0.1:{port}/events", timeout=5) as stream:
+                        while not stop_sse.is_set():
+                            line = stream.readline().decode("utf-8")
+                            if not line:
+                                break
+                            if line.startswith("data: "):
+                                received_events.append(json.loads(line[6:].strip()))
+                                if len(received_events) >= 3:
+                                    break
+
+                t = threading.Thread(target=sse_reader, daemon=True)
+                t.start()
+                for _ in range(40):
+                    if len(received_events) >= 1:
+                        break
+                    time.sleep(0.03)
+                assert len(received_events) >= 1, f"{variant_name} SSE initial frame did not arrive"
+                assert received_events[0]["gecko_theme"]["colors"]["tab_line"] == "#ffb4ac"
+
+                # Change palette to Light Teal and apply with live refresh against bridge port
+                (gen / "app-palette.json").write_text(json.dumps({
+                    "app_background": "#f2f8f9",
+                    "app_surface": "#e6f1f3",
+                    "app_surface_elevated": "#dcebef",
+                    "app_surface_popup": "#d2e5ea",
+                    "app_surface_hover": "#c7dfe5",
+                    "app_foreground": "#102226",
+                    "app_subtext": "#3f565b",
+                    "app_accent": "#006876",
+                    "app_on_accent": "#ffffff",
+                    "app_accent_container": "#a1efff",
+                    "app_border_subtle": "#b6cdd2",
+                    "app_selection": "#a1efff",
+                    "primary": "#006876",
+                    "primary_container": "#a1efff",
+                }), encoding="utf-8")
+                (gen / "theme-meta.json").write_text(json.dumps({"mode": "light"}), encoding="utf-8")
+
+                subprocess.run(
+                    [sys.executable, str(SCRIPT), "--home-dir", str(home), "--etc-dir", str(etc), "--state-dir", str(state), "--bridge-port", str(port)],
+                    check=True,
+                )
+                for _ in range(40):
+                    if len(received_events) >= 2:
+                        break
+                    time.sleep(0.03)
+                assert len(received_events) >= 2, f"{variant_name} live SSE update did not arrive"
+                assert received_events[1]["enabled"] is True
+                assert received_events[1]["gecko_theme"]["colors"]["tab_line"] == "#006876"
+                assert received_events[1]["gecko_theme"]["properties"]["color_scheme"] == "light"
+
+                # Verify --disable rollback restores pre-existing user files/themes cleanly AND broadcasts enabled=false
+                subprocess.run(
+                    [sys.executable, str(SCRIPT), "--disable", "--home-dir", str(home), "--etc-dir", str(etc), "--state-dir", str(state), "--bridge-port", str(port)],
+                    check=True,
+                )
+                for _ in range(40):
+                    if len(received_events) >= 3:
+                        break
+                    time.sleep(0.03)
+                assert len(received_events) >= 3, f"{variant_name} live SSE disable event did not arrive"
+                assert received_events[2]["enabled"] is False
+                stop_sse.set()
+            finally:
+                bridge_proc.terminate()
+                bridge_proc.wait(timeout=3)
         vd_after = json.loads(viv_prefs.read_text())
         assert vd_after["vivaldi"]["theme"]["schedule"]["o_s"]["dark"] == "Vivaldi2"
         assert vd_after["vivaldi"]["theme"]["schedule"]["o_s"]["light"] == "custom-teal-id"

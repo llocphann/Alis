@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Window
 import qs.modules.bar as Bar
 import qs.modules.common
 import qs.modules.common.widgets
@@ -27,6 +28,22 @@ Bar.StyledPopup {
     // Popup ownership is local to this output. Do not reuse timer.pinnedToBar:
     // that persistent state controls the independent Bar timer indicator.
     property bool popupPinned: false
+    // Set by Abyss hosts while a blocking heavy overlay or modal (Dashboard,
+    // Settings, Nexus, Polkit, RegionSelector, etc.) covers this output.
+    // Actively-editing or pinned sessions suspend cleanly (flushing drafts and
+    // releasing exclusive keyboard focus) and auto-restore once unblocked;
+    // hover-only sessions close cleanly without resurrecting.
+    property bool externallyBlocked: false
+    property bool _suspendedByBlock: false
+    property bool _restoreEditorOnUnblock: false
+    property bool _restorePinnedOnUnblock: false
+    property bool _restoreTodoDialogOnUnblock: false
+    property var _suspendedTodoDraft: null
+    property bool _restoringTodoDialog: false
+    property bool _suspendingForBlock: false
+    property bool _refocusEditorWhenReady: false
+    property var _pendingBlockCapture: null
+    property int _pendingBlockCaptureGen: 0
     property int selectedMainTab: 0
     property int selectedNotesTab: 0
     // Notes/To-do is a transient child tray of the large Notes & To-do tab.
@@ -51,6 +68,7 @@ Bar.StyledPopup {
 
     readonly property bool todoDialogOpen: todoViewLoader.item?.showAddDialog ?? false
     property string cornerAttachmentEdge: "bottom"
+    property string cornerTangentEdge: ""
     property real cornerAttachmentThickness: Math.max(1, Math.min(32,
         Math.round(Config.options?.appearance?.screenEdge?.width ?? 10)))
     readonly property real requestedPopupWidth: Math.max(280, Math.min(720,
@@ -66,13 +84,15 @@ Bar.StyledPopup {
     property bool hoverAllowed: true
     hoverTarget: root.anchorItem
     barAutoHideHoldEnabled: false
+    tangentEdgeOverride: root.cornerTangentEdge
     attachmentEdgeOverride: root.cornerAttachmentEdge
     attachmentThicknessOverride: root.cornerAttachmentThickness
     hoverActivates: root.hoverAllowed
     alternativeVisibleCondition: root.editorFocused || root.todoDialogOpen
         || root.entryBridgeHeld || root.popupPinned || root.escapeArmed
+        || root._restoringTodoDialog
     fifoAutoClosable: root.hoverAllowed && !root.editorFocused && !root.todoDialogOpen
-        && !root.popupPinned && !root.escapeArmed
+        && !root.popupPinned && !root.escapeArmed && !root._restoringTodoDialog
     // Pre-arm click-to-focus before the first editor click. OnDemand does not
     // steal focus merely because the hover popup is visible.
     keyboardFocusOnDemand: true
@@ -100,11 +120,227 @@ Bar.StyledPopup {
         notesTrayHideTimer.stop()
         root.entryBridgeHeld = false
         root.notesTrayOpen = false
+        root._refocusEditorWhenReady = false
         if (notesViewLoader.item) {
             notesViewLoader.item.flushPendingSave()
             notesViewLoader.item.releaseEditorFocus()
         }
         root.editorFocused = false
+    }
+
+    function clearSuspendedSession(): void {
+        root._suspendedByBlock = false
+        root._restoreEditorOnUnblock = false
+        root._restorePinnedOnUnblock = false
+        root._restoreTodoDialogOnUnblock = false
+        root._suspendedTodoDraft = null
+        root._restoringTodoDialog = false
+        root._refocusEditorWhenReady = false
+        root._pendingBlockCapture = null
+        root._pendingBlockCaptureGen += 1
+    }
+
+    function _capturePendingTodoBeforeBlock(draft): void {
+        if (!root || !root._live || root._suspendingForBlock)
+            return
+        if (root.externallyBlocked) {
+            root._suspendedByBlock = true
+            root._restoreTodoDialogOnUnblock = true
+            root._suspendedTodoDraft = draft
+            return
+        }
+        const prev = root._pendingBlockCapture ?? ({})
+        root._pendingBlockCapture = {
+            editor: Boolean(prev.editor),
+            pinned: Boolean(prev.pinned),
+            todo: true,
+            todoDraft: draft
+        }
+        const captureGen = ++root._pendingBlockCaptureGen
+        Qt.callLater(() => {
+            if (root && root._live && captureGen === root._pendingBlockCaptureGen
+                    && !root.externallyBlocked)
+                root._pendingBlockCapture = null
+        })
+    }
+
+    function suspendForBlock(): void {
+        const captureEditor = root._restoreEditorOnUnblock
+            || root.editorFocused
+            || Boolean(root._pendingBlockCapture?.editor)
+        const capturePinned = root._restorePinnedOnUnblock
+            || root.popupPinned
+            || Boolean(root._pendingBlockCapture?.pinned)
+        const captureTodo = root._restoreTodoDialogOnUnblock
+            || root.todoDialogOpen
+            || root._restoringTodoDialog
+            || Boolean(root._pendingBlockCapture?.todo)
+        const captureTodoDraft = root.todoDialogOpen && todoViewLoader.item
+                && typeof todoViewLoader.item.captureAddDialogDraft === "function"
+            ? todoViewLoader.item.captureAddDialogDraft()
+            : (root._pendingBlockCapture?.todoDraft ?? root._suspendedTodoDraft)
+        root._pendingBlockCapture = null
+        root._pendingBlockCaptureGen += 1
+        if (captureEditor || capturePinned || captureTodo) {
+            root._suspendedByBlock = true
+            root._restoreEditorOnUnblock = captureEditor
+            root._restorePinnedOnUnblock = capturePinned
+            root._restoreTodoDialogOnUnblock = captureTodo
+            root._suspendedTodoDraft = captureTodo ? captureTodoDraft : null
+            if (root.presentationActive || root.editorFocused
+                    || root.popupPinned || root.todoDialogOpen
+                    || root._restoringTodoDialog || root._lingerVisible) {
+                root._suspendingForBlock = true
+                root.popupPinned = false
+                root._restoringTodoDialog = false
+                root.leaveEditorMode()
+                if (todoViewLoader.item)
+                    todoViewLoader.item.showAddDialog = false
+                root.dismissPresentation()
+                root._suspendingForBlock = false
+            }
+            return
+        }
+        root.clearSuspendedSession()
+        if (root.presentationActive || root._lingerVisible)
+            root.dismissPresentation()
+    }
+
+    function _applyPendingEditorFocus(): void {
+        if (!root || !root._live || !root._refocusEditorWhenReady
+                || root._placementEvicted || root.externallyBlocked
+                || !root.presentationActive || !root.editorFocused
+                || root.selectedMainTab !== 0 || root.selectedNotesTab !== 0
+                || !Notepad.ready || !notesViewLoader.item)
+            return
+        // Wait until AbyssSurfaceController._rehostPopup attaches contentRoot
+        // into the live presentation window before transferring activeFocus.
+        if (root._liquidController && (!contentRoot.parent || !contentRoot.Window.window))
+            return
+        root._refocusEditorWhenReady = false
+        notesViewLoader.item.focusEditor()
+    }
+
+    function _applyPendingTodoRestore(): void {
+        if (!root || !root._live || !root._restoringTodoDialog
+                || root._placementEvicted || root.externallyBlocked
+                || !root.presentationActive
+                || root.selectedMainTab !== 0 || root.selectedNotesTab !== 1
+                || !todoViewLoader.item)
+            return
+        if (root._liquidController && (!contentRoot.parent || !contentRoot.Window.window))
+            return
+        const draft = root._suspendedTodoDraft
+        root._suspendedTodoDraft = null
+        if (typeof todoViewLoader.item.restoreAddDialogDraft === "function")
+            todoViewLoader.item.restoreAddDialogDraft(draft)
+        else
+            todoViewLoader.item.showAddDialog = true
+        root._restoringTodoDialog = false
+    }
+
+    function _restoreSuspendedSession(): void {
+        const restoreEditor = root._restoreEditorOnUnblock
+        const restorePinned = root._restorePinnedOnUnblock
+        const restoreTodo = root._restoreTodoDialogOnUnblock
+        const todoDraft = root._suspendedTodoDraft
+        root._suspendedByBlock = false
+        root._restoreEditorOnUnblock = false
+        root._restorePinnedOnUnblock = false
+        root._restoreTodoDialogOnUnblock = false
+        root._pendingBlockCapture = null
+        root._pendingBlockCaptureGen += 1
+        if (!restoreEditor && !restorePinned && !restoreTodo) {
+            root._suspendedTodoDraft = null
+            return
+        }
+        root._liquidDismissed = false
+        if (restorePinned)
+            root.popupPinned = true
+        if (restoreEditor) {
+            root._suspendedTodoDraft = null
+            root.selectedMainTab = 0
+            root.selectedNotesTab = 0
+            root.escapeArmed = false
+            root._refocusEditorWhenReady = true
+            root.editorFocused = true
+            Qt.callLater(root._applyPendingEditorFocus)
+        } else if (restoreTodo) {
+            root._suspendedTodoDraft = todoDraft
+            root.selectedMainTab = 0
+            root.selectedNotesTab = 1
+            root.escapeArmed = false
+            root._restoringTodoDialog = true
+            Qt.callLater(root._applyPendingTodoRestore)
+        } else {
+            root._suspendedTodoDraft = null
+        }
+    }
+
+    on_PlacementEvictedChanged: {
+        if (root._placementEvicted) {
+            if (root.editorFocused) {
+                if (notesViewLoader.item)
+                    notesViewLoader.item.flushPendingSave()
+                root._refocusEditorWhenReady = true
+            }
+            return
+        }
+        if (!root.presentationActive || root.externallyBlocked)
+            return
+        if (root.editorFocused) {
+            root._refocusEditorWhenReady = true
+            Qt.callLater(root._applyPendingEditorFocus)
+        } else if (root.todoDialogOpen && todoViewLoader.item
+                && typeof todoViewLoader.item.focusAddDialogInput === "function") {
+            Qt.callLater(todoViewLoader.item.focusAddDialogInput)
+        }
+    }
+
+    property QtObject _notepadReadyFocusConnections: Connections {
+        target: Notepad
+        function onReadyChanged(): void {
+            if (Notepad.ready && root._refocusEditorWhenReady)
+                Qt.callLater(root._applyPendingEditorFocus)
+        }
+    }
+
+    property QtObject _windowActiveFocusConnections: Connections {
+        target: contentRoot.Window.window
+        ignoreUnknownSignals: true
+        function onActiveChanged(): void {
+            if (!contentRoot.Window.window?.active
+                    || !root.presentationActive
+                    || root._placementEvicted || root.externallyBlocked)
+                return
+            if (root.editorFocused && notesViewLoader.item
+                    && !notesViewLoader.item.editorActiveFocus) {
+                root._refocusEditorWhenReady = false
+                notesViewLoader.item.focusEditor()
+            } else if (root.todoDialogOpen && todoViewLoader.item
+                    && typeof todoViewLoader.item.focusAddDialogInput === "function") {
+                todoViewLoader.item.focusAddDialogInput()
+            }
+        }
+    }
+
+    onExternallyBlockedChanged: {
+        if (root.externallyBlocked) {
+            root.suspendForBlock()
+            return
+        }
+        if (!root._suspendedByBlock)
+            return
+        Qt.callLater(() => {
+            if (!root || !root._live || root.externallyBlocked || !root._suspendedByBlock)
+                return
+            if (!root.hoverAllowed || !root._anchorReady
+                    || (root._liquidController && !root._liquidController.presented)) {
+                root.clearSuspendedSession()
+                return
+            }
+            root._restoreSuspendedSession()
+        })
     }
 
     function holdNotesTray(): void {
@@ -121,6 +357,8 @@ Bar.StyledPopup {
     }
 
     onRequestClose: {
+        if (!root._suspendingForBlock)
+            root.clearSuspendedSession()
         // An outside click releases keyboard editing, not the user's pin.
         // Allocator/owner loss uses dismissPresentation() and revokes both.
         if (root._liquidDismissed)
@@ -152,7 +390,9 @@ Bar.StyledPopup {
     onPresentationActiveChanged: {
         if (presentationActive) {
             Qt.callLater(() => {
-                if (root.presentationActive && !root.editorFocused) {
+                if (root && root._live && root.presentationActive
+                        && !root.editorFocused && !root.todoDialogOpen
+                        && !root._restoringTodoDialog) {
                     root.entryBridgeHeld = true
                     entryBridgeTimer.restart()
                 }
@@ -160,9 +400,42 @@ Bar.StyledPopup {
             return
         }
 
+        const hadEditor = root.editorFocused
+        const hadPinned = root.popupPinned
+        const hadTodo = root.todoDialogOpen || root._restoringTodoDialog
+        const hadTodoDraft = root.todoDialogOpen && todoViewLoader.item
+                && typeof todoViewLoader.item.captureAddDialogDraft === "function"
+            ? todoViewLoader.item.captureAddDialogDraft()
+            : root._suspendedTodoDraft
+        if (!root._suspendingForBlock && (hadEditor || hadPinned || hadTodo)) {
+            if (root.externallyBlocked) {
+                root._suspendedByBlock = true
+                root._restoreEditorOnUnblock = root._restoreEditorOnUnblock || hadEditor
+                root._restorePinnedOnUnblock = root._restorePinnedOnUnblock || hadPinned
+                root._restoreTodoDialogOnUnblock = root._restoreTodoDialogOnUnblock || hadTodo
+                if (hadTodo)
+                    root._suspendedTodoDraft = hadTodoDraft
+            } else {
+                const prev = root._pendingBlockCapture ?? ({})
+                root._pendingBlockCapture = {
+                    editor: Boolean(prev.editor) || hadEditor,
+                    pinned: Boolean(prev.pinned) || hadPinned,
+                    todo: Boolean(prev.todo) || hadTodo,
+                    todoDraft: hadTodo ? hadTodoDraft : (prev.todoDraft ?? null)
+                }
+                const captureGen = ++root._pendingBlockCaptureGen
+                Qt.callLater(() => {
+                    if (root && root._live && captureGen === root._pendingBlockCaptureGen
+                            && !root.externallyBlocked)
+                        root._pendingBlockCapture = null
+                })
+            }
+        }
         entryBridgeTimer.stop()
         root.entryBridgeHeld = false
         root.escapeArmed = false
+        root._refocusEditorWhenReady = false
+        root._restoringTodoDialog = false
         if (notesViewLoader.item) {
             notesViewLoader.item.flushPendingSave()
             notesViewLoader.item.releaseEditorFocus()
@@ -195,6 +468,37 @@ Bar.StyledPopup {
 
     Item {
         id: contentRoot
+
+        // AbyssPerimeter.ensureEscapeFocus() invokes focusPrimarySurface() on
+        // the presented embedded item. Route active editing/To-do sessions
+        // straight to their text inputs so ensureEscapeFocus() never steals
+        // focus onto contentRoot and triggers editorDeactivated().
+        function focusPrimarySurface(): void {
+            if (root.editorFocused && notesViewLoader.item) {
+                root._refocusEditorWhenReady = false
+                notesViewLoader.item.focusEditor()
+                return
+            }
+            if (root.todoDialogOpen && todoViewLoader.item
+                    && typeof todoViewLoader.item.focusAddDialogInput === "function") {
+                todoViewLoader.item.focusAddDialogInput()
+                return
+            }
+            contentRoot.forceActiveFocus()
+        }
+
+        onParentChanged: {
+            if (parent && root._refocusEditorWhenReady)
+                Qt.callLater(root._applyPendingEditorFocus)
+            if (parent && root._restoringTodoDialog)
+                Qt.callLater(root._applyPendingTodoRestore)
+        }
+        Window.onWindowChanged: {
+            if (Window.window && root._refocusEditorWhenReady)
+                Qt.callLater(root._applyPendingEditorFocus)
+            if (Window.window && root._restoringTodoDialog)
+                Qt.callLater(root._applyPendingTodoRestore)
+        }
 
         // Keep the release shortcut inside the reparented popup content so
         // Qt.WindowShortcut resolves against the actual layer-shell window.
@@ -336,6 +640,7 @@ Bar.StyledPopup {
                     anchors.fill: parent
                     active: root.presentationActive && root.selectedMainTab === 0
                         && root.selectedNotesTab === 0
+                    onLoaded: Qt.callLater(root._applyPendingEditorFocus)
                     sourceComponent: QuickNotesView {
                         margin: 0
                         surfaceLocalTabSelection: true
@@ -344,6 +649,7 @@ Bar.StyledPopup {
                         verticalDotNavigation: true
                         autoMarkdownReading: true
                         externalEscapeHandling: true
+                        preserveEditingWhileSuspended: root._placementEvicted || root._suspendingForBlock
                         onEditorActivated: root.enterEditorMode()
                         onEditorDeactivated: root.editorFocused = false
                     }
@@ -354,8 +660,15 @@ Bar.StyledPopup {
                     anchors.fill: parent
                     active: root.presentationActive && root.selectedMainTab === 0
                         && root.selectedNotesTab === 1
+                    onLoaded: Qt.callLater(root._applyPendingTodoRestore)
                     sourceComponent: DashTodo {
                         color: "transparent"
+                        Component.onDestruction: {
+                            if (!root || !root._live || root._suspendingForBlock || !showAddDialog)
+                                return
+                            if (!root.presentationActive)
+                                root._capturePendingTodoBeforeBlock(captureAddDialogDraft())
+                        }
                     }
                 }
 

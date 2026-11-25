@@ -1436,134 +1436,66 @@ SettingsGroup {
                 }
             }
 
-            RowLayout {
+            GridLayout {
                 Layout.fillWidth: true
-                spacing: 8
+                columns: width >= 660 * Appearance.fontSizeScale ? 3 : 1
+                uniformCellWidths: columns > 1
+                columnSpacing: 10
+                rowSpacing: 10
 
-                MaterialSymbol {
-                    Layout.alignment: Qt.AlignVCenter
-                    text: "palette"
-                    iconSize: 15
-                    color: Appearance.colors.colSubtext
-                }
-
-                StyledText {
-                    Layout.alignment: Qt.AlignVCenter
-                    verticalAlignment: Text.AlignVCenter
-                    text: Translation.tr("Saturation")
-                    font.pixelSize: Appearance.font.pixelSize.smaller
-                    color: Appearance.colors.colSubtext
-                    Layout.preferredWidth: 88
-                }
-
-                StyledSlider {
+                SettingsMetricControl {
                     id: saturationSlider
-                    Layout.fillWidth: true
+                    icon: "palette"
+                    text: Translation.tr("Saturation")
                     from: 0
                     to: 200
                     value: 100
                     stepSize: 5
-                    configuration: StyledSlider.Configuration.S
-                    onMoved: { root.captureOriginalColors(); adjustDebounce.restart() }
+                    enableSettingsSearch: false
+                    valueText: Math.round(liveValue) + "%"
+                    onMoved: nextVal => {
+                        value = nextVal
+                        root.captureOriginalColors()
+                        adjustDebounce.restart()
+                    }
                 }
 
-                StyledText {
-                    Layout.alignment: Qt.AlignVCenter
-                    verticalAlignment: Text.AlignVCenter
-                    text: Math.round(saturationSlider.value) + "%"
-                    font.pixelSize: Appearance.font.pixelSize.smallest
-                    font.family: Appearance.font.family.monospace
-                    color: Appearance.colors.colSubtext
-                    Layout.preferredWidth: 40
-                    horizontalAlignment: Text.AlignRight
-                }
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 8
-
-                MaterialSymbol {
-                    Layout.alignment: Qt.AlignVCenter
-                    text: "brightness_6"
-                    iconSize: 15
-                    color: Appearance.colors.colSubtext
-                }
-
-                StyledText {
-                    Layout.alignment: Qt.AlignVCenter
-                    verticalAlignment: Text.AlignVCenter
-                    text: Translation.tr("Brightness")
-                    font.pixelSize: Appearance.font.pixelSize.smaller
-                    color: Appearance.colors.colSubtext
-                    Layout.preferredWidth: 88
-                }
-
-                StyledSlider {
+                SettingsMetricControl {
                     id: brightnessSlider
-                    Layout.fillWidth: true
+                    icon: "brightness_6"
+                    text: Translation.tr("Brightness")
+                    centerOrigin: true
                     from: -50
                     to: 50
                     value: 0
                     stepSize: 5
-                    configuration: StyledSlider.Configuration.S
-                    onMoved: { root.captureOriginalColors(); adjustDebounce.restart() }
+                    enableSettingsSearch: false
+                    valueText: (liveValue >= 0 ? "+" : "") + Math.round(liveValue)
+                    onMoved: nextVal => {
+                        value = nextVal
+                        root.captureOriginalColors()
+                        adjustDebounce.restart()
+                    }
                 }
 
-                StyledText {
-                    Layout.alignment: Qt.AlignVCenter
-                    verticalAlignment: Text.AlignVCenter
-                    text: (brightnessSlider.value >= 0 ? "+" : "") + Math.round(brightnessSlider.value)
-                    font.pixelSize: Appearance.font.pixelSize.smallest
-                    font.family: Appearance.font.family.monospace
-                    color: Appearance.colors.colSubtext
-                    Layout.preferredWidth: 40
-                    horizontalAlignment: Text.AlignRight
-                }
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 8
-
-                MaterialSymbol {
-                    Layout.alignment: Qt.AlignVCenter
-                    text: "thermostat"
-                    iconSize: 15
-                    color: Appearance.colors.colSubtext
-                }
-
-                StyledText {
-                    Layout.alignment: Qt.AlignVCenter
-                    verticalAlignment: Text.AlignVCenter
-                    text: Translation.tr("Temperature")
-                    font.pixelSize: Appearance.font.pixelSize.smaller
-                    color: Appearance.colors.colSubtext
-                    Layout.preferredWidth: 88
-                }
-
-                StyledSlider {
+                SettingsMetricControl {
                     id: temperatureSlider
-                    Layout.fillWidth: true
+                    icon: "thermostat"
+                    text: Translation.tr("Temperature")
+                    centerOrigin: true
                     from: -50
                     to: 50
                     value: 0
                     stepSize: 5
-                    configuration: StyledSlider.Configuration.S
-                    onMoved: { root.captureOriginalColors(); adjustDebounce.restart() }
-                }
-
-                StyledText {
-                    Layout.alignment: Qt.AlignVCenter
-                    verticalAlignment: Text.AlignVCenter
-                    text: temperatureSlider.value > 0 ? Translation.tr("Warm") : (temperatureSlider.value < 0 ? Translation.tr("Cool") : "0")
-                    font.pixelSize: Appearance.font.pixelSize.smallest
-                    font.family: Appearance.font.family.monospace
-                    color: temperatureSlider.value > 0 ? Appearance.colors.colTertiary
-                        : (temperatureSlider.value < 0 ? Appearance.colors.colPrimary
-                        : Appearance.colors.colSubtext)
-                    Layout.preferredWidth: 40
-                    horizontalAlignment: Text.AlignRight
+                    enableSettingsSearch: false
+                    valueText: liveValue > 0
+                        ? Translation.tr("Warm") + " +" + Math.round(liveValue)
+                        : (liveValue < 0 ? Translation.tr("Cool") + " " + Math.round(liveValue) : "0")
+                    onMoved: nextVal => {
+                        value = nextVal
+                        root.captureOriginalColors()
+                        adjustDebounce.restart()
+                    }
                 }
             }
 

@@ -38,7 +38,7 @@ FocusScope {
     readonly property color mutedInk: Appearance.m3colors.darkmode ? AbyssStyle.textColorMuted : "#3a3a3a"
 
     readonly property real desiredWidth: Math.round(400 * Appearance.fontSizeScale)
-    readonly property real desiredHeight: Math.max(200, Math.ceil(contentColumn.implicitHeight))
+    readonly property real desiredHeight: Math.max(200, Math.ceil(contentColumn.implicitHeight) + 2)
     implicitWidth: desiredWidth
     implicitHeight: desiredHeight
 
@@ -357,6 +357,7 @@ FocusScope {
             AbyssButton {
                 objectName: "abyssPolkitCancelButton"
                 text: Translation.tr("Cancel")
+                outlined: true
                 enabled: !root.previewMode
                 onClicked: PolkitService.cancel()
             }

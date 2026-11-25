@@ -193,8 +193,8 @@ FEDORA_CORE_PKGS=(
   NetworkManager
   gnome-keyring
 
-  # File manager
-  nautilus
+  # File manager runtime/build dep (Alis Files built locally via GTK4-rs)
+  gtk4-devel
 
   # Terminal - kitty is default, configurable in Settings
   kitty

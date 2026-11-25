@@ -36,7 +36,6 @@ ApplicationWindow {
         return entry
     })
     property int currentPage: 0
-    property bool navEditMode: false
     property int _requestedStartPage: -1
     property string _requestedStartSection: ""
     property bool _navigationInitialized: false
@@ -66,12 +65,13 @@ ApplicationWindow {
     }
 
     function showHomeView(): void {
-        SettingsLayoutManager.activeCustomTabId = ""
         if (root.settingsSearchText.length > 0) {
             root.settingsSearchText = ""
             root.settingsSearchResults = []
             if (settingsSearchField)
                 settingsSearchField.text = ""
+            if (compactSettingsSearchField)
+                compactSettingsSearchField.text = ""
             if (waffleWindowRailHeader.searchField)
                 waffleWindowRailHeader.searchField.text = ""
         }
@@ -80,12 +80,13 @@ ApplicationWindow {
     }
 
     function navigateToArea(pageIndex: int): void {
-        SettingsLayoutManager.activeCustomTabId = ""
         if (root.settingsSearchText.length > 0) {
             root.settingsSearchText = ""
             root.settingsSearchResults = []
             if (settingsSearchField)
                 settingsSearchField.text = ""
+            if (compactSettingsSearchField)
+                compactSettingsSearchField.text = ""
             if (waffleWindowRailHeader.searchField)
                 waffleWindowRailHeader.searchField.text = ""
         }
@@ -111,7 +112,6 @@ ApplicationWindow {
         root._historyNavigating = true
         root._historyIndex = Math.max(0, root._historyIndex - 1)
         const entry = root._historyStack[root._historyIndex]
-        SettingsLayoutManager.activeCustomTabId = ""
         if (entry?.home) {
             root.showingHome = true
         } else if (entry) {
@@ -127,7 +127,6 @@ ApplicationWindow {
         root._historyNavigating = true
         root._historyIndex = Math.min(root._historyStack.length - 1, root._historyIndex + 1)
         const entry = root._historyStack[root._historyIndex]
-        SettingsLayoutManager.activeCustomTabId = ""
         if (entry?.home) {
             root.showingHome = true
         } else if (entry) {
@@ -175,7 +174,7 @@ ApplicationWindow {
         if (root._navigationInitialized && Persistent.ready && Persistent.states?.settings) {
             Persistent.states.settings.iiPage = Math.max(0, Math.min(root.currentPage, root.pages.length - 1))
             const pageIdx = Persistent.states.settings.iiPage
-            const cats = SettingsPageRegistry.categories ?? []
+            const cats = SettingsPageRegistry.defaultCategories ?? []
             for (let i = 0; i < cats.length; i++) {
                 const cat = cats[i]
                 if (cat && Array.isArray(cat.pages) && cat.pages.includes(pageIdx) && cat.label) {
@@ -214,6 +213,7 @@ ApplicationWindow {
         if (root._requestedStartSection.length > 0) {
             root.pendingSpotlightSection = root._requestedStartSection
             root.pendingSpotlightPageIndex = root.currentPage
+            root.pendingSpotlightSectionApplied = false
             root.trySpotlight()
         }
     }
@@ -238,7 +238,7 @@ ApplicationWindow {
     property string navGroup: ""
     readonly property var navPageOrder: SettingsPageRegistry.navigationPageIndexes(false)
     readonly property var visibleNavItems: Hierarchy.entries(pages, navPageOrder,
-        navGroup, currentPage, navEditMode)
+        navGroup, currentPage, false)
     function activateNavigation(entry): void {
         if (entry.back) { navGroup="";return }
         if (entry.groupKey) navGroup=entry.groupKey
@@ -398,6 +398,7 @@ ApplicationWindow {
     property string pendingSpotlightSection: ""
     property int pendingSpotlightPageIndex: -1
     property bool pendingSpotlightIsSection: false
+    property bool pendingSpotlightSectionApplied: false
     property var searchTargetFlickable: null
 
     function openSearchResult(entry) {
@@ -427,6 +428,7 @@ ApplicationWindow {
         // Navigate to page (this triggers page load if needed)
         if (pendingSpotlightSection.length > 0 && pagesStack && typeof pagesStack._applySectionToPage === "function") {
             pagesStack._applySectionToPage(entry.pageIndex, pendingSpotlightSection);
+            pendingSpotlightSectionApplied = true;
         }
         if (currentPage !== entry.pageIndex) {
             currentPage = entry.pageIndex;
@@ -450,23 +452,25 @@ ApplicationWindow {
     }
 
     function trySpotlight() {
+        if (pendingSpotlightPageIndex < 0 || root.currentPage !== pendingSpotlightPageIndex) {
+            resetSearchTarget();
+            return;
+        }
         const pageItem = pagesStack.currentItem
         if (!pageItem || pagesStack.currentIndex !== pendingSpotlightPageIndex) {
             if (spotlightRetryCount < spotlightMaxRetries) {
                 spotlightRetryCount++;
                 spotlightPageLoadTimer.restart();
             } else {
-                pendingSpotlightOptionId = -1;
-                pendingSpotlightLabel = "";
-                pendingSpotlightSection = "";
-                pendingSpotlightPageIndex = -1;
-                pendingSpotlightIsSection = false;
+                resetSearchTarget();
             }
             return;
         }
-        if (pendingSpotlightSection.length > 0
-                && typeof pageItem.activateSettingsSearchSection === "function")
+        if (!pendingSpotlightSectionApplied && pendingSpotlightSection.length > 0
+                && typeof pageItem.activateSettingsSearchSection === "function") {
             pageItem.activateSettingsSearchSection(pendingSpotlightSection)
+            pendingSpotlightSectionApplied = true
+        }
 
         var control = pendingSpotlightIsSection
             ? SettingsSearchRegistry.findSectionControl(pendingSpotlightPageIndex,pendingSpotlightSection || pendingSpotlightLabel) : null;
@@ -541,6 +545,7 @@ ApplicationWindow {
             pendingSpotlightSection = "";
             pendingSpotlightPageIndex = -1;
             pendingSpotlightIsSection = false;
+            pendingSpotlightSectionApplied = false;
         }
     }
 
@@ -592,6 +597,7 @@ ApplicationWindow {
         pendingSpotlightSection = "";
         pendingSpotlightPageIndex = -1;
         pendingSpotlightIsSection = false;
+        pendingSpotlightSectionApplied = false;
     }
 
     property real spotlightTargetScrollY: 0
@@ -611,6 +617,7 @@ ApplicationWindow {
     }
 
     function resetSearchTarget() {
+        spotlightPageLoadTimer.stop();
         searchTargetControl = null;
         searchTargetFlickable = null;
         spotlightTargetScrollY = 0;
@@ -619,6 +626,7 @@ ApplicationWindow {
         pendingSpotlightSection = "";
         pendingSpotlightPageIndex = -1;
         pendingSpotlightIsSection = false;
+        pendingSpotlightSectionApplied = false;
     }
 
     visible: true
@@ -641,6 +649,8 @@ ApplicationWindow {
 
         root._requestedStartSection = Quickshell.env("QS_SETTINGS_SECTION") || ""
         root.initializeNavigation()
+        if (root.uiReady && !root._firstFramePainted)
+            Qt.callLater(() => { root._firstFramePainted = true })
     }
 
     Connections {
@@ -685,13 +695,31 @@ ApplicationWindow {
             root._screenAvailHeight * (Config.options?.dashboard?.heightRatio ?? 0.72) + 40))
 
     function handleEscape(): bool {
-        if (SettingsLayoutManager.editMode)
-            return SettingsLayoutManager.handleEscape()
+        if (root.settingsSearchText.length > 0) {
+            root.openSearchResult({})
+            return true
+        }
         if (typeof pagesStack?.currentItem?.handleEscape === "function"
                 && pagesStack.currentItem.handleEscape()) {
             return true
         }
+        if (Boolean(pagesStack?.currentItem?.isSubViewActive)
+                && typeof pagesStack.currentItem.exitSubView === "function") {
+            pagesStack.currentItem.exitSubView()
+            return true
+        }
         return false
+    }
+
+    function dismissFromEscape(): void {
+        if (!root.handleEscape())
+            root.close()
+    }
+
+    property bool _firstFramePainted: false
+    onUiReadyChanged: {
+        if (root.uiReady && !root._firstFramePainted)
+            Qt.callLater(() => { root._firstFramePainted = true })
     }
 
     minimumWidth: 750
@@ -710,22 +738,38 @@ ApplicationWindow {
         color: root.uiReady ? Appearance.colors.colLayer0 : "transparent"
     }
 
+    AlisLoadingScreen {
+        id: windowStartupLoadingScreen
+        objectName: "settingsWindowStartupLoadingScreen"
+        anchors.fill: parent
+        z: 5
+        loading: !root.uiReady
+        title: Translation.tr("Settings")
+        icon: "tune"
+        fillSurface: true
+        backdropOpacity: 0.96
+    }
+
     Shortcut {
         sequences: [StandardKey.Find]
         onActivated: {
             if (SettingsMaterialPreset.waffle)
                 waffleWindowRailHeader.focusSearch()
+            else if (navRailWrapper.compact)
+                compactSettingsSearchField.forceActiveFocus()
             else
                 settingsSearchField.forceActiveFocus()
         }
     }
 
     Shortcut {
+        id: windowEscapeShortcut
         sequence: "Escape"
+        context: Qt.WindowShortcut
         enabled: !settingsSearchField.activeFocus
+            && !compactSettingsSearchField.activeFocus
             && !waffleWindowRailHeader.searchField.activeFocus
-            && (SettingsLayoutManager.editMode || typeof pagesStack?.currentItem?.handleEscape === "function")
-        onActivated: root.handleEscape()
+        onActivated: root.dismissFromEscape()
     }
 
     Rectangle {
@@ -740,18 +784,26 @@ ApplicationWindow {
         Behavior on opacity { NumberAnimation { duration: 150 } }
 
         Keys.onPressed: (event) => {
-            if (event.key === Qt.Key_Escape && root.handleEscape()) {
+            if (event.key === Qt.Key_Escape) {
+                root.dismissFromEscape()
                 event.accepted = true
                 return
             }
             if (event.modifiers === Qt.ControlModifier) {
                 if (event.key === Qt.Key_PageDown || event.key === Qt.Key_Tab) {
                     root.currentPage = root.nextNavPage(root.currentPage)
-                    event.accepted = true;
-                }
-                else if (event.key === Qt.Key_PageUp || event.key === Qt.Key_Backtab) {
+                    event.accepted = true
+                } else if (event.key === Qt.Key_PageUp || event.key === Qt.Key_Backtab) {
                     root.currentPage = root.prevNavPage(root.currentPage)
-                    event.accepted = true;
+                    event.accepted = true
+                }
+            } else if (event.modifiers === Qt.AltModifier) {
+                if (event.key === Qt.Key_Left) {
+                    root.goBack()
+                    event.accepted = true
+                } else if (event.key === Qt.Key_Right) {
+                    root.goForward()
+                    event.accepted = true
                 }
             }
         }
@@ -767,18 +819,11 @@ ApplicationWindow {
             embedded: false
             isOverlay: false
             canGoBack: root.canGoBack || root.settingsSearchText.length > 0
-            editButtonObjectName: SettingsMaterialPreset.waffle ? "windowEditSettingsLayoutButton" : ""
             onBackRequested: {
                 if (root.settingsSearchText.length > 0)
                     root.openSearchResult({})
                 else
                     root.goBack()
-            }
-            onToggleEditLayout: {
-                if (SettingsLayoutManager.editMode)
-                    SettingsLayoutManager.commitEditMode()
-                else
-                    SettingsLayoutManager.beginEditMode()
             }
             onSwitchModeRequested: {
                 Config.setNestedValue("waffles.settings.windowMode", false)
@@ -789,422 +834,35 @@ ApplicationWindow {
             onCloseRequested: root.close()
         }
 
-        Item { // Titlebar with integrated search
-            id: settingsHeader
-            visible: !SettingsMaterialPreset.waffle && (Config.options?.windows?.showTitlebar ?? true)
-            anchors {
-                top: parent.top
-                left: parent.left
-                right: parent.right
-                topMargin: 16
-                leftMargin: 20
-                rightMargin: 20
-            }
-            height: root.navEditMode ? 54 : 42
-
-            Behavior on height {
-                enabled: Appearance.animationsEnabled
-                NumberAnimation { duration: Appearance.animation.elementResize.duration }
-            }
-
-            function slotBlock(index: int): string {
-                return SettingsChromeLayout.headerOrder[index] ?? ""
-            }
-
-            readonly property real headerGap: root.navEditMode ? 8 : 12
-            readonly property real identityWidth: root.navEditMode ? 176 : 190
-            readonly property real actionsWidth: root.navEditMode ? 88 : 0
-            readonly property bool defaultOrder: SettingsChromeLayout.headerOrder.join(",") === "identity,search,actions"
-
-            function searchWidth(): real {
-                const preferred = root.navEditMode ? 390 : 420
-                const minimum = root.navEditMode ? 150 : 180
-                if (settingsHeader.defaultOrder) {
-                    const side = Math.max(settingsHeader.identityWidth, settingsHeader.actionsWidth)
-                    return Math.max(minimum, Math.min(preferred,
-                        settingsHeader.width - 2 * (side + settingsHeader.headerGap)))
-                }
-                return Math.max(minimum, Math.min(preferred,
-                    settingsHeader.width - settingsHeader.identityWidth
-                        - settingsHeader.actionsWidth - 2 * settingsHeader.headerGap))
-            }
-
-            function slotWidth(index: int): real {
-                const block = settingsHeader.slotBlock(index)
-                if (block === "identity")
-                    return settingsHeader.identityWidth
-                if (block === "actions")
-                    return settingsHeader.actionsWidth
-                return settingsHeader.searchWidth()
-            }
-
-            function slotX(index: int): real {
-                const block = settingsHeader.slotBlock(index)
-                if (settingsHeader.defaultOrder) {
-                    if (block === "identity")
-                        return 0
-                    if (block === "actions")
-                        return Math.max(0, settingsHeader.width - settingsHeader.actionsWidth)
-                    return Math.max(0, (settingsHeader.width - settingsHeader.searchWidth()) / 2)
-                }
-
-                const total = settingsHeader.identityWidth + settingsHeader.searchWidth()
-                    + settingsHeader.actionsWidth + 2 * settingsHeader.headerGap
-                let x = Math.max(0, (settingsHeader.width - total) / 2)
-                for (let i = 0; i < index; ++i)
-                    x += settingsHeader.slotWidth(i) + settingsHeader.headerGap
-                return x
-            }
-
-
-            Item {
-                anchors.fill: parent
-
-                Item {
-                    id: settingsHeaderSlot0
-                    x: settingsHeader.slotX(0)
-                    width: settingsHeader.slotWidth(0)
-                    height: parent.height
-                }
-                Item {
-                    id: settingsHeaderSlot1
-                    x: settingsHeader.slotX(1)
-                    width: settingsHeader.slotWidth(1)
-                    height: parent.height
-                }
-                Item {
-                    id: settingsHeaderSlot2
-                    x: settingsHeader.slotX(2)
-                    width: settingsHeader.slotWidth(2)
-                    height: parent.height
-                }
-            }
-
-            Item {
-                id: headerIdentity
-                parent: SettingsChromeLayout.columnFor("identity") === 0 ? settingsHeaderSlot0
-                    : SettingsChromeLayout.columnFor("identity") === 1 ? settingsHeaderSlot1
-                    : settingsHeaderSlot2
-                anchors.fill: parent
-                anchors.topMargin: 4
-                anchors.bottomMargin: 4
-
-                RowLayout {
-                    anchors.fill: parent
-                    spacing: 9
-
-                    Item {
-                        Layout.preferredWidth: 36
-                        Layout.preferredHeight: 36
-
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: width / 2
-                            color: Appearance.colors.colLayer1
-                            border.width: 1
-                            border.color: Appearance.colors.colPrimary
-                        }
-
-                        Rectangle {
-                            id: settingsAvatarMask
-                            anchors.centerIn: parent
-                            width: 32
-                            height: 32
-                            radius: width / 2
-                            visible: false
-                        }
-
-                        Image {
-                            id: settingsAvatarImage
-                            anchors.centerIn: parent
-                            width: 32
-                            height: 32
-                            source: settingsAvatarResolver.resolvedSource
-                            fillMode: Image.PreserveAspectCrop
-                            asynchronous: true
-                            cache: true
-                            smooth: true
-                            mipmap: true
-                            sourceSize.width: 64
-                            sourceSize.height: 64
-                            visible: status === Image.Ready
-                            layer.enabled: visible
-                            layer.effect: OpacityMask { maskSource: settingsAvatarMask }
-
-                            onStatusChanged: {
-                                if (settingsAvatarImage.status !== Image.Error)
-                                    return
-                                const next = settingsAvatarResolver.avatarIndex + 1
-                                if (next < Directories.userAvatarPaths.length)
-                                    settingsAvatarResolver.avatarIndex = next
-                            }
-                        }
-
-                        QtObject {
-                            id: settingsAvatarResolver
-                            property int avatarIndex: 0
-                            readonly property string resolvedSource: Directories.avatarSourceAt(avatarIndex)
-                            readonly property string primaryWatch: Directories.userAvatarSourcePrimary
-                            onPrimaryWatchChanged: avatarIndex = 0
-                        }
-
-                        MaterialSymbol {
-                            anchors.centerIn: parent
-                            visible: settingsAvatarImage.status !== Image.Ready
-                            text: "person"
-                            iconSize: 18
-                            color: Appearance.colors.colPrimary
-                        }
-                    }
-
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 0
-
-                        StyledText {
-                            Layout.fillWidth: true
-                            color: Appearance.colors.colOnLayer0
-                            text: Translation.tr("Settings")
-                            marquee: true
-                            maximumLineCount: 1
-                            font {
-                                family: Appearance.font.family.title
-                                pixelSize: Appearance.font.pixelSize.title
-                                variableAxes: Appearance.font.variableAxes.title
-                            }
-                        }
-
-                        StyledText {
-                            Layout.fillWidth: true
-                            text: SystemInfo.displayName || SystemInfo.username
-                            color: Appearance.colors.colSubtext
-                            font.pixelSize: Appearance.font.pixelSize.small
-                            marquee: true
-                            maximumLineCount: 1
-                        }
-                    }
-                }
-
-                SettingsChromeEditFrame {
-                    anchors.fill: parent
-                    active: root.navEditMode
-                    blockId: "identity"
-                    label: Translation.tr("Identity")
-                    targetIndex: SettingsChromeLayout.columnFor("identity")
-                }
-            }
-
-            Rectangle {
-                id: searchContainer
-                parent: SettingsChromeLayout.columnFor("search") === 0 ? settingsHeaderSlot0
-                    : SettingsChromeLayout.columnFor("search") === 1 ? settingsHeaderSlot1
-                    : settingsHeaderSlot2
-                anchors.fill: parent
-                anchors.topMargin: root.navEditMode ? 8 : 6
-                anchors.bottomMargin: root.navEditMode ? 8 : 6
-                radius: SettingsMaterialPreset.searchRadius
-                color: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.searchColor : settingsSearchField.activeFocus
-                    ? Appearance.colors.colLayer1
-                    : Appearance.colors.colLayer0
-                border.width: settingsSearchField.activeFocus ? 2 : 1
-                border.color: SettingsMaterialPreset.waffle ? (settingsSearchField.activeFocus ? SettingsMaterialPreset.accentColor : SettingsMaterialPreset.cardBorderColor) : settingsSearchField.activeFocus
-                    ? Appearance.colors.colPrimary
-                    : Appearance.m3colors.m3outlineVariant
-
-                Behavior on color { ColorAnimation { duration: 150 } }
-                Behavior on border.color { ColorAnimation { duration: 150 } }
-
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.leftMargin: 8
-                    anchors.rightMargin: 8
-                    spacing: 8
-
-                    // Icono animado
-                    MaterialShapeWrappedMaterialSymbol {
-                        id: settingsSearchIcon
-                        Layout.alignment: Qt.AlignVCenter
-                        iconSize: Appearance.font.pixelSize.huge
-                        shape: root.settingsSearchText.length > 0
-                            ? MaterialShape.Shape.SoftBurst
-                            : MaterialShape.Shape.Cookie7Sided
-                        text: root.settingsSearchResults.length > 0 ? "manage_search" : "search"
-                    }
-
-                    // Campo de texto
-                    Item {
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-
-                        // Placeholder text (behind TextField, separate element)
-                        StyledText {
-                            id: searchPlaceholder
-                            anchors.fill: parent
-                            anchors.leftMargin: 12
-                            verticalAlignment: Text.AlignVCenter
-                            text: Translation.tr("Search settings... (Ctrl+F)")
-                            color: Appearance.colors.colSubtext
-                            font {
-                                family: Appearance.font.family.main
-                                pixelSize: Appearance.font.pixelSize.normal
-                            }
-                            visible: settingsSearchField.text.length === 0 && !settingsSearchField.activeFocus
-                        }
-
-                        TextInput {
-                            id: settingsSearchField
-                            anchors.fill: parent
-                            anchors.leftMargin: 12
-                            verticalAlignment: Text.AlignVCenter
-
-                            color: Appearance.colors.colOnLayer1
-                            selectionColor: Appearance.colors.colPrimaryContainer
-                            selectedTextColor: Appearance.colors.colOnPrimaryContainer
-                            font {
-                                family: Appearance.font.family.main
-                                pixelSize: Appearance.font.pixelSize.normal
-                            }
-
-                            // Custom cursor color
-                            cursorVisible: activeFocus
-                            cursorDelegate: Rectangle {
-                                visible: settingsSearchField.cursorVisible
-                                width: 2
-                                color: Appearance.colors.colPrimary
-
-                                SequentialAnimation on opacity {
-                                    loops: Animation.Infinite
-                                    running: settingsSearchField.cursorVisible
-                                    NumberAnimation { to: 0; duration: 530 }
-                                    NumberAnimation { to: 1; duration: 530 }
-                                }
-                            }
-
-                            text: root.settingsSearchText
-                            onTextChanged: {
-                                root.settingsSearchText = text;
-                                root.recomputeSettingsSearchResults();
-                            }
-
-                            Keys.onPressed: event => {
-                                if (event.key === Qt.Key_Down && root.settingsSearchResults.length > 0) {
-                                    settingsLiveSearch.focusResults()
-                                    event.accepted = true
-                                } else if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
-                                        && root.settingsSearchResults.length > 0) {
-                                    settingsLiveSearch.activateCurrent()
-                                    event.accepted = true
-                                } else if (event.key === Qt.Key_Escape) {
-                                    root.openSearchResult({})
-                                    event.accepted = true
-                                }
-                            }
-                        }
-                    }
-
-                    // Botón de limpiar
-                    RippleButton {
-                        id: clearButton
-                        Layout.preferredWidth: 32
-                        Layout.preferredHeight: 32
-                        Layout.alignment: Qt.AlignVCenter
-                        buttonRadius: Appearance.rounding.full
-                        visible: root.settingsSearchText.length > 0
-                        opacity: visible ? 1 : 0
-                        Behavior on opacity { NumberAnimation { duration: 100 } }
-
-                        onClicked: {
-                            settingsSearchField.text = "";
-                            settingsSearchField.forceActiveFocus();
-                        }
-
-                        StyledToolTip {
-                            text: Translation.tr("Clear search")
-                        }
-
-                        contentItem: MaterialSymbol {
-                            anchors.centerIn: parent
-                            text: "close"
-                            iconSize: 18
-                            color: Appearance.colors.colOnSurfaceVariant
-                        }
-                    }
-
-                    // Badge de resultados
-                    Rectangle {
-                        Layout.preferredHeight: 24
-                        Layout.preferredWidth: resultsCountText.implicitWidth + 16
-                        Layout.alignment: Qt.AlignVCenter
-                        Layout.rightMargin: 4
-                        visible: root.settingsSearchText.length > 0 && root.settingsSearchResults.length > 0
-                        radius: Appearance.rounding.full
-                        color: Appearance.colors.colPrimaryContainer
-
-                        StyledText {
-                            id: resultsCountText
-                            anchors.centerIn: parent
-                            text: root.settingsSearchResults.length.toString()
-                            font.pixelSize: Appearance.font.pixelSize.smaller
-                            font.weight: Font.Medium
-                            color: Appearance.colors.colOnPrimaryContainer
-                        }
-                    }
-                }
-
-                SettingsChromeEditFrame {
-                    anchors.fill: parent
-                    active: root.navEditMode
-                    blockId: "search"
-                    label: Translation.tr("Search")
-                    targetIndex: SettingsChromeLayout.columnFor("search")
-                }
-            }
-
-            Item {
-                id: headerActions
-                visible: root.navEditMode
-                parent: SettingsChromeLayout.columnFor("actions") === 0 ? settingsHeaderSlot0
-                    : SettingsChromeLayout.columnFor("actions") === 1 ? settingsHeaderSlot1
-                    : settingsHeaderSlot2
-                anchors.fill: parent
-                anchors.topMargin: root.navEditMode ? 8 : 6
-                anchors.bottomMargin: root.navEditMode ? 8 : 6
-
-                SettingsChromeEditFrame {
-                    anchors.fill: parent
-                    active: root.navEditMode
-                    blockId: "actions"
-                    label: Translation.tr("Actions")
-                    targetIndex: SettingsChromeLayout.columnFor("actions")
-                }
-            }
-        }
-
-        RowLayout { // Window content with navigation rail and content pane
+        RowLayout {
             id: windowBodyRow
             anchors {
                 top: parent.top
                 left: parent.left
                 right: parent.right
                 bottom: parent.bottom
-                topMargin: waffleWindowTitleBar.visible
-                    ? waffleWindowTitleBar.height
-                    : (settingsHeader.visible ? (16 + settingsHeader.height + 12) : (SettingsMaterialPreset.waffle ? 8 : 16))
-                leftMargin: SettingsMaterialPreset.waffle ? 14 : 16
-                rightMargin: SettingsMaterialPreset.waffle ? 0 : 16
-                bottomMargin: SettingsMaterialPreset.waffle ? 10 : 16
+                topMargin: waffleWindowTitleBar.visible ? waffleWindowTitleBar.height : (SettingsMaterialPreset.waffle ? 8 : 12)
+                leftMargin: SettingsMaterialPreset.waffle ? 14 : 12
+                rightMargin: SettingsMaterialPreset.waffle ? 0 : 12
+                bottomMargin: SettingsMaterialPreset.waffle ? 10 : 12
             }
-            spacing: SettingsMaterialPreset.waffle ? 8 : 10
-            Item {
+            spacing: SettingsMaterialPreset.waffle ? 8 : 12
+
+            // ── Left Navigation Sidebar ──
+            Rectangle {
                 id: navRailWrapper
                 objectName: "settingsWindowNavRail"
                 Layout.fillHeight: true
-                readonly property bool compact: SettingsMaterialPreset.useCompactNav(windowMainFrame.width, root.navEditMode || SettingsLayoutManager.editMode)
+                readonly property bool compact: SettingsMaterialPreset.useCompactNav(windowMainFrame.width, false)
                 readonly property real targetRailWidth: SettingsMaterialPreset.waffle
                     ? Math.min(SettingsMaterialPreset.waffleRailWidth, Math.max(216, Math.round(windowMainFrame.width * 0.24)))
-                    : (compact ? SettingsMaterialPreset.compactNavWidth : 204)
+                    : (compact ? SettingsMaterialPreset.compactNavWidth : SettingsMaterialPreset.navSidebarWidth)
                 Layout.preferredWidth: targetRailWidth
                 implicitWidth: targetRailWidth
+                radius: SettingsMaterialPreset.waffle ? Appearance.rounding.normal : SettingsMaterialPreset.cardRadius
+                color: SettingsMaterialPreset.waffle ? "transparent" : SettingsMaterialPreset.sidebarColor
+                border.width: SettingsMaterialPreset.waffle ? 0 : 1
+                border.color: SettingsMaterialPreset.waffle ? "transparent" : SettingsMaterialPreset.sidebarBorderColor
 
                 Behavior on Layout.preferredWidth {
                     enabled: Appearance.animationsEnabled
@@ -1234,20 +892,338 @@ ApplicationWindow {
                     onFocusResultsRequested: settingsLiveSearch.focusResults()
                     onAcceptCurrentResultRequested: settingsLiveSearch.activateCurrent()
                     onClearSearchRequested: root.openSearchResult({})
+                    onEscapeEmptySearchRequested: root.dismissFromEscape()
+                }
+
+                // ── Sidebar Header: Identity + Integrated Search ──
+                ColumnLayout {
+                    id: windowSidebarTopHeader
+                    visible: !SettingsMaterialPreset.waffle
+                    anchors {
+                        top: parent.top
+                        left: parent.left
+                        right: parent.right
+                        topMargin: 12
+                        leftMargin: navRailWrapper.compact ? 8 : 12
+                        rightMargin: navRailWrapper.compact ? 8 : 12
+                    }
+                    spacing: 10
+
+                    RippleButton {
+                        id: windowIdentityButton
+                        objectName: "windowIdentityAboutButton"
+                        readonly property bool isAboutSelected: !root.showingHome && root.currentPage === 40
+                        Layout.fillWidth: true
+                        implicitHeight: Math.max(46, Math.round(46 * Appearance.fontSizeScale))
+                        buttonRadius: 11
+                        toggled: isAboutSelected
+                        colBackground: "transparent"
+                        colBackgroundHover: SettingsMaterialPreset.navHoverColor
+                        colBackgroundToggled: SettingsMaterialPreset.navSelectedColor
+                        colBackgroundToggledHover: SettingsMaterialPreset.navSelectedHoverColor
+                        Accessible.name: Translation.tr("About Alis")
+                        onClicked: {
+                            if (SettingsPageRegistry.isPageApplicable(40)) {
+                                root.showingHome = false
+                                root.currentPage = 40
+                                if (root.settingsSearchText.length > 0)
+                                    root.openSearchResult({})
+                            }
+                        }
+
+                        StyledToolTip {
+                            text: Translation.tr("About Alis & system info")
+                        }
+
+                        contentItem: Item {
+                            implicitWidth: windowIdentityRow.implicitWidth
+                            implicitHeight: windowIdentityRow.implicitHeight
+
+                            RowLayout {
+                                id: windowIdentityRow
+                                anchors {
+                                    fill: parent
+                                    leftMargin: navRailWrapper.compact ? 0 : 6
+                                    rightMargin: navRailWrapper.compact ? 0 : 6
+                                }
+                                spacing: 10
+
+                                Item {
+                                    Layout.alignment: navRailWrapper.compact ? Qt.AlignHCenter : Qt.AlignVCenter
+                                    Layout.fillWidth: navRailWrapper.compact
+                                    implicitWidth: 34
+                                    implicitHeight: 34
+
+                                    Rectangle {
+                                        anchors.centerIn: parent
+                                        width: 34
+                                        height: 34
+                                        radius: width / 2
+                                        color: SettingsMaterialPreset.cardColor
+                                        border.width: 1.5
+                                        border.color: windowIdentityButton.isAboutSelected
+                                            ? Appearance.colors.colPrimary
+                                            : SettingsMaterialPreset.accentBorder
+                                    }
+
+                                    Rectangle {
+                                        id: settingsAvatarMask
+                                        anchors.centerIn: parent
+                                        width: 30
+                                        height: 30
+                                        radius: width / 2
+                                        visible: false
+                                    }
+
+                                    Image {
+                                        id: settingsAvatarImage
+                                        anchors.centerIn: parent
+                                        width: 30
+                                        height: 30
+                                        source: settingsAvatarResolver.resolvedSource
+                                        fillMode: Image.PreserveAspectCrop
+                                        asynchronous: true
+                                        cache: true
+                                        smooth: true
+                                        mipmap: true
+                                        sourceSize.width: 64
+                                        sourceSize.height: 64
+                                        visible: status === Image.Ready
+                                        layer.enabled: visible
+                                        layer.effect: OpacityMask { maskSource: settingsAvatarMask }
+
+                                        onStatusChanged: {
+                                            if (settingsAvatarImage.status !== Image.Error)
+                                                return
+                                            const next = settingsAvatarResolver.avatarIndex + 1
+                                            if (next < Directories.userAvatarPaths.length)
+                                                settingsAvatarResolver.avatarIndex = next
+                                        }
+                                    }
+
+                                    QtObject {
+                                        id: settingsAvatarResolver
+                                        property int avatarIndex: 0
+                                        readonly property string resolvedSource: Directories.avatarSourceAt(avatarIndex)
+                                        readonly property string primaryWatch: Directories.userAvatarSourcePrimary
+                                        onPrimaryWatchChanged: avatarIndex = 0
+                                    }
+
+                                    MaterialSymbol {
+                                        anchors.centerIn: parent
+                                        visible: settingsAvatarImage.status !== Image.Ready
+                                        text: "person"
+                                        iconSize: 18
+                                        color: Appearance.colors.colPrimary
+                                    }
+                                }
+
+                                ColumnLayout {
+                                    visible: !navRailWrapper.compact
+                                    Layout.fillWidth: true
+                                    Layout.minimumWidth: 0
+                                    spacing: 0
+
+                                    StyledText {
+                                        Layout.fillWidth: true
+                                        Layout.minimumWidth: 0
+                                        color: windowIdentityButton.isAboutSelected
+                                            ? SettingsMaterialPreset.navSelectedTextColor
+                                            : Appearance.colors.colOnLayer0
+                                        text: Translation.tr("Settings")
+                                        elide: Text.ElideRight
+                                        maximumLineCount: 1
+                                        font {
+                                            family: Appearance.font.family.title
+                                            pixelSize: Appearance.font.pixelSize.large
+                                            weight: Font.DemiBold
+                                        }
+                                    }
+
+                                    StyledText {
+                                        Layout.fillWidth: true
+                                        Layout.minimumWidth: 0
+                                        text: SystemInfo.displayName || SystemInfo.username
+                                        color: windowIdentityButton.isAboutSelected
+                                            ? SettingsMaterialPreset.navSelectedTextColor
+                                            : SettingsMaterialPreset.secondaryTextColor
+                                        opacity: windowIdentityButton.isAboutSelected ? 0.82 : 1.0
+                                        font.pixelSize: Appearance.font.pixelSize.smaller
+                                        elide: Text.ElideRight
+                                        maximumLineCount: 1
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Integrated Search Pill (expanded sidebar)
+                    Rectangle {
+                        id: searchContainer
+                        visible: !navRailWrapper.compact
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: Math.round(34 * Appearance.fontSizeScale)
+                        radius: SettingsMaterialPreset.searchRadius
+                        color: settingsSearchField.activeFocus
+                            ? SettingsMaterialPreset.cardColor
+                            : SettingsMaterialPreset.controlSurface
+                        border.width: settingsSearchField.activeFocus ? 1.5 : 1
+                        border.color: settingsSearchField.activeFocus
+                            ? Appearance.colors.colPrimary
+                            : SettingsMaterialPreset.controlBorderColor
+
+                        Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: 150 } }
+                        Behavior on border.color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: 150 } }
+
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 10
+                            anchors.rightMargin: 6
+                            spacing: 6
+
+                            MaterialSymbol {
+                                Layout.alignment: Qt.AlignVCenter
+                                text: root.settingsSearchResults.length > 0 ? "manage_search" : "search"
+                                iconSize: 16
+                                color: settingsSearchField.activeFocus
+                                    ? Appearance.colors.colPrimary
+                                    : SettingsMaterialPreset.secondaryTextColor
+                            }
+
+                            Item {
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+
+                                StyledText {
+                                    anchors.fill: parent
+                                    verticalAlignment: Text.AlignVCenter
+                                    text: Translation.tr("Search...")
+                                    color: SettingsMaterialPreset.secondaryTextColor
+                                    font.family: SettingsMaterialPreset.fontFamily
+                                    font.pixelSize: Appearance.font.pixelSize.small
+                                    visible: settingsSearchField.text.length === 0 && !settingsSearchField.activeFocus
+                                    elide: Text.ElideRight
+                                }
+
+                                TextInput {
+                                    id: settingsSearchField
+                                    anchors.fill: parent
+                                    verticalAlignment: Text.AlignVCenter
+                                    color: SettingsMaterialPreset.textColor
+                                    selectionColor: Appearance.colors.colPrimaryContainer
+                                    selectedTextColor: Appearance.colors.colOnPrimaryContainer
+                                    font.family: SettingsMaterialPreset.fontFamily
+                                    font.pixelSize: Appearance.font.pixelSize.small
+                                    clip: true
+                                    selectByMouse: true
+                                    cursorVisible: activeFocus
+                                    cursorDelegate: Rectangle {
+                                        visible: settingsSearchField.cursorVisible
+                                        width: 1.8
+                                        color: Appearance.colors.colPrimary
+                                    }
+
+                                    Connections {
+                                        target: root
+                                        function onSettingsSearchTextChanged() {
+                                            if (settingsSearchField.text !== root.settingsSearchText)
+                                                settingsSearchField.text = root.settingsSearchText
+                                        }
+                                    }
+
+                                    onTextChanged: {
+                                        if (root.settingsSearchText !== text) {
+                                            root.settingsSearchText = text
+                                            root.recomputeSettingsSearchResults()
+                                        }
+                                    }
+
+                                    Keys.onPressed: event => {
+                                        if (event.key === Qt.Key_Down && root.settingsSearchResults.length > 0) {
+                                            settingsLiveSearch.focusResults()
+                                            event.accepted = true
+                                        } else if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
+                                                && root.settingsSearchResults.length > 0) {
+                                            settingsLiveSearch.activateCurrent()
+                                            event.accepted = true
+                                        } else if (event.key === Qt.Key_Escape) {
+                                            if (root.settingsSearchText.length > 0) {
+                                                root.openSearchResult({})
+                                            } else {
+                                                settingsSearchField.focus = false
+                                                root.dismissFromEscape()
+                                            }
+                                            event.accepted = true
+                                        }
+                                    }
+                                }
+                            }
+
+                            Rectangle {
+                                visible: root.settingsSearchText.length === 0 && !settingsSearchField.activeFocus
+                                Layout.alignment: Qt.AlignVCenter
+                                implicitHeight: 19
+                                implicitWidth: winSearchHintKey.implicitWidth + 10
+                                radius: 5
+                                color: SettingsMaterialPreset.cardColor
+                                border.width: 1
+                                border.color: SettingsMaterialPreset.controlBorderColor
+
+                                StyledText {
+                                    id: winSearchHintKey
+                                    anchors.centerIn: parent
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                    text: "^F"
+                                    font.pixelSize: Appearance.font.pixelSize.smallest
+                                    font.weight: Font.Medium
+                                    color: SettingsMaterialPreset.secondaryTextColor
+                                }
+                            }
+
+                            RippleButton {
+                                id: clearButton
+                                Layout.preferredWidth: 22
+                                Layout.preferredHeight: 22
+                                Layout.alignment: Qt.AlignVCenter
+                                buttonRadius: Appearance.rounding.full
+                                visible: root.settingsSearchText.length > 0
+                                colBackground: "transparent"
+                                colBackgroundHover: SettingsMaterialPreset.controlSurfaceHover
+                                onClicked: {
+                                    root.openSearchResult({})
+                                    settingsSearchField.forceActiveFocus()
+                                }
+                                StyledToolTip { text: Translation.tr("Clear search") }
+                                contentItem: MaterialSymbol {
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                    text: "close"
+                                    iconSize: 14
+                                    color: SettingsMaterialPreset.secondaryTextColor
+                                }
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 1
+                        color: SettingsMaterialPreset.plateDividerColor
+                    }
                 }
 
                 Flickable {
                     id: navRailFlickable
-                    visible: !root.navEditMode || navEditLoader.status !== Loader.Ready
                     anchors {
-                        top: SettingsMaterialPreset.waffle ? waffleWindowRailHeader.bottom : parent.top
+                        top: SettingsMaterialPreset.waffle ? waffleWindowRailHeader.bottom : windowSidebarTopHeader.bottom
                         left: parent.left
                         right: parent.right
-                        bottom: parent.bottom
-                        topMargin: SettingsMaterialPreset.waffle ? 8 : 2
-                        leftMargin: 2
-                        rightMargin: 2
-                        bottomMargin: navBottomActions.height + 6
+                        bottom: SettingsMaterialPreset.waffle ? parent.bottom : navBottomActions.top
+                        topMargin: 8
+                        leftMargin: SettingsMaterialPreset.waffle ? 2 : 8
+                        rightMargin: SettingsMaterialPreset.waffle ? 2 : 8
+                        bottomMargin: SettingsMaterialPreset.waffle ? 6 : 8
                     }
                     contentHeight: navCol.implicitHeight
                     clip: true
@@ -1265,7 +1241,7 @@ ApplicationWindow {
 
                         Repeater {
                             id: navRepeater
-                            model: SettingsPageRegistry.categories
+                            model: SettingsPageRegistry.defaultCategories
 
                             delegate: RippleButton {
                                 id: navHeadingGroup
@@ -1276,67 +1252,46 @@ ApplicationWindow {
                                 readonly property var groupPages: (navHeadingGroup.modelData?.pages ?? []).filter(
                                     idx => root.pages[idx] && SettingsPageRegistry.isPageApplicable(idx)).map(
                                     idx => Object.assign({}, root.pages[idx], { realIndex: idx }))
-                                readonly property int primaryPageIndex: navHeadingGroup.groupPages.length > 0
-                                    ? navHeadingGroup.groupPages[0].realIndex : -1
-                                readonly property bool hasActivePage: SettingsLayoutManager.activeCustomTabId.length === 0
-                                    && navHeadingGroup.groupPages.some(item => item.realIndex === root.currentPage)
-                                readonly property string dropTargetId: "window-nav-cat:" + navHeadingGroup.index
-                                readonly property bool isDropHovered: SettingsLayoutManager.dragActive
-                                    && SettingsLayoutManager.hoveredDropTargetId === navHeadingGroup.dropTargetId
+                                readonly property bool hasActivePage: navHeadingGroup.groupPages.some(
+                                    item => item.realIndex === root.currentPage)
                                 objectName: navHeadingGroup.groupPages.length > 0
                                     ? ("settingsNav_" + (navHeadingGroup.groupPages[0].key || ""))
                                     : ("settingsNavGroup_" + index)
                                 visible: navHeadingGroup.groupPages.length > 0
                                 Layout.fillWidth: true
-                                implicitHeight: SettingsMaterialPreset.waffle ? Math.round(38 * Appearance.fontSizeScale) : 36
+                                implicitHeight: Math.round(38 * Appearance.fontSizeScale)
                                 rippleEnabled: true
                                 buttonRadius: SettingsMaterialPreset.navItemRadius
-                                toggled: navHeadingGroup.hasActivePage || navHeadingGroup.isDropHovered
-                                colBackground: navHeadingGroup.isDropHovered
-                                    ? Appearance.colors.colSecondaryContainer : "transparent"
+                                toggled: navHeadingGroup.hasActivePage
+                                colBackground: "transparent"
                                 colBackgroundHover: SettingsMaterialPreset.navHoverColor
-                                colBackgroundToggled: navHeadingGroup.isDropHovered
-                                    ? Appearance.colors.colSecondaryContainer
-                                    : SettingsMaterialPreset.navSelectedColor
+                                colBackgroundToggled: SettingsMaterialPreset.navSelectedColor
                                 colBackgroundToggledHover: SettingsMaterialPreset.navSelectedHoverColor
 
-                                Component.onCompleted: {
-                                    if (navHeadingGroup.primaryPageIndex >= 0) {
-                                        SettingsLayoutManager.registerDropTarget(navHeadingGroup.dropTargetId, {
-                                            item: navHeadingGroup,
-                                            kind: "sidebar-page",
-                                            pageIndex: navHeadingGroup.primaryPageIndex,
-                                            customTabId: "",
-                                            subTabId: "",
-                                            label: navHeadingGroup.headingTitle
-                                        })
-                                    }
-                                }
-                                Component.onDestruction: {
-                                    SettingsLayoutManager.unregisterDropTarget(navHeadingGroup.dropTargetId)
-                                }
-
                                 onClicked: {
-                                    SettingsLayoutManager.activeCustomTabId = ""
                                     if (navHeadingGroup.groupPages.length > 0) {
                                         const hubEntry = root.preferredCategoryEntry(navHeadingGroup.headingTitle, navHeadingGroup.groupPages)
-                                        if (pagesStack.currentItem && typeof pagesStack.currentItem.exitSubView === "function" && pagesStack.currentItem.isSubViewActive) {
+                                        if (pagesStack.currentItem && typeof pagesStack.currentItem.exitSubView === "function" && pagesStack.currentItem.isSubViewActive)
                                             pagesStack.currentItem.exitSubView()
-                                        }
-                                        if (root.currentPage !== hubEntry.realIndex) {
+                                        if (root.currentPage !== hubEntry.realIndex)
                                             root.activateNavigation(hubEntry)
-                                        }
+                                        if (root.settingsSearchText.length > 0)
+                                            root.openSearchResult({})
                                     }
                                 }
 
                                 Rectangle {
-                                    objectName: "waffleSettingsSelectionIndicator"
-                                    visible: SettingsMaterialPreset.waffle && navHeadingGroup.hasActivePage
+                                    objectName: SettingsMaterialPreset.waffle ? "waffleSettingsSelectionIndicator" : "settingsNavActiveIndicator"
+                                    visible: navHeadingGroup.hasActivePage
                                     anchors.left: parent.left
-                                    anchors.leftMargin: 2
+                                    anchors.leftMargin: SettingsMaterialPreset.waffle ? 2 : 3
                                     anchors.verticalCenter: parent.verticalCenter
-                                    width: 3; height: 16; radius: 1.5
-                                    color: SettingsMaterialPreset.accentColor
+                                    width: 3
+                                    height: 18
+                                    radius: 1.5
+                                    color: SettingsMaterialPreset.waffle
+                                        ? SettingsMaterialPreset.accentColor
+                                        : Appearance.colors.colPrimary
                                 }
 
                                 StyledToolTip {
@@ -1345,206 +1300,62 @@ ApplicationWindow {
                                     text: navHeadingGroup.headingTitle
                                 }
 
-                                contentItem: RowLayout {
-                                    anchors.fill: parent
-                                    anchors.leftMargin: 10
-                                    anchors.rightMargin: 10
-                                    spacing: 9
+                                contentItem: Item {
+                                    implicitWidth: winNavRow.implicitWidth
+                                    implicitHeight: winNavRow.implicitHeight
 
                                     MaterialSymbol {
-                                        Layout.alignment: navRailWrapper.compact ? Qt.AlignCenter : Qt.AlignVCenter
+                                        visible: navRailWrapper.compact
+                                        anchors.centerIn: parent
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
                                         text: navHeadingGroup.groupPages.length > 0
                                             ? SettingsPageRegistry.iconForPage(navHeadingGroup.groupPages[0].realIndex)
                                             : "folder"
-                                        iconSize: 18
+                                        iconSize: 19
                                         color: SettingsMaterialPreset.navigationIconColor(
                                             navHeadingGroup.index,
-                                            Math.max(1, SettingsPageRegistry.categories.length),
+                                            Math.max(1, SettingsPageRegistry.defaultCategories.length),
                                             navHeadingGroup.hasActivePage)
                                     }
 
-                                    StyledText {
+                                    RowLayout {
+                                        id: winNavRow
                                         visible: !navRailWrapper.compact
-                                        Layout.alignment: Qt.AlignVCenter
-                                        Layout.fillWidth: true
-                                        verticalAlignment: Text.AlignVCenter
-                                        text: navHeadingGroup.headingTitle
-                                        font.family: SettingsMaterialPreset.fontFamily
-                                        font.pixelSize: Appearance.font.pixelSize.small
-                                        font.weight: navHeadingGroup.hasActivePage ? Font.DemiBold : Font.Medium
-                                        color: navHeadingGroup.hasActivePage
-                                            ? SettingsMaterialPreset.navSelectedTextColor
-                                            : SettingsMaterialPreset.textColor
-                                        marquee: true
-                                        maximumLineCount: 1
-                                    }
-                                }
-                            }
-                        }
+                                        anchors.fill: parent
+                                        anchors.leftMargin: 12
+                                        anchors.rightMargin: 10
+                                        spacing: 10
 
-                        // ── User-Created Custom Sidebar Tabs ──
-                        Repeater {
-                            id: windowCustomTabsRepeater
-                            model: SettingsLayoutManager.customTabs
-
-                            delegate: RippleButton {
-                                id: windowCustomNavBtn
-                                Accessible.name: windowCustomNavBtn.tabLabel
-                                required property int index
-                                required property var modelData
-                                readonly property string tabId: String(modelData?.id ?? "")
-                                readonly property string tabLabel: String(modelData?.label ?? "")
-                                readonly property bool isActiveCustomTab: SettingsLayoutManager.activeCustomTabId === tabId
-                                readonly property string dropTargetId: "window-nav-custom:" + tabId
-                                readonly property bool isDropHovered: SettingsLayoutManager.dragActive
-                                    && SettingsLayoutManager.hoveredDropTargetId === dropTargetId
-                                objectName: "settingsCustomNav_" + tabId
-                                Layout.fillWidth: true
-                                implicitHeight: 36
-                                rippleEnabled: true
-                                buttonRadius: Appearance.rounding.small
-                                toggled: isActiveCustomTab || isDropHovered
-                                colBackground: isDropHovered ? Appearance.colors.colSecondaryContainer : "transparent"
-                                colBackgroundHover: Appearance.colors.colLayer1Hover
-                                colBackgroundToggled: isDropHovered
-                                    ? Appearance.colors.colSecondaryContainer
-                                    : Appearance.colors.colPrimaryContainer
-                                colBackgroundToggledHover: Appearance.colors.colPrimaryContainerHover
-
-                                Component.onCompleted: {
-                                    if (tabId.length > 0) {
-                                        SettingsLayoutManager.registerDropTarget(dropTargetId, {
-                                            item: windowCustomNavBtn,
-                                            kind: "sidebar-custom-tab",
-                                            pageIndex: -1,
-                                            customTabId: tabId,
-                                            subTabId: "",
-                                            label: tabLabel
-                                        })
-                                    }
-                                }
-                                Component.onDestruction: {
-                                    SettingsLayoutManager.unregisterDropTarget(dropTargetId)
-                                }
-
-                                onClicked: {
-                                    SettingsLayoutManager.activeCustomTabId = tabId
-                                }
-
-                                StyledToolTip {
-                                    position: "right"
-                                    extraVisibleCondition: navRailWrapper.compact
-                                    text: windowCustomNavBtn.tabLabel
-                                }
-
-                                contentItem: RowLayout {
-                                    anchors.fill: parent
-                                    anchors.leftMargin: 10
-                                    anchors.rightMargin: navRailWrapper.compact ? 10 : 6
-                                    spacing: 8
-
-                                    MaterialSymbol {
-                                        Layout.alignment: navRailWrapper.compact ? Qt.AlignCenter : Qt.AlignVCenter
-                                        text: String(windowCustomNavBtn.modelData?.icon || "dashboard_customize")
-                                        iconSize: 18
-                                        color: windowCustomNavBtn.isActiveCustomTab
-                                            ? Appearance.colors.colOnPrimaryContainer
-                                            : Appearance.colors.colPrimary
-                                    }
-
-                                    StyledText {
-                                        visible: !navRailWrapper.compact
-                                        Layout.alignment: Qt.AlignVCenter
-                                        Layout.fillWidth: true
-                                        verticalAlignment: Text.AlignVCenter
-                                        text: windowCustomNavBtn.tabLabel
-                                        font.pixelSize: Appearance.font.pixelSize.small
-                                        font.weight: windowCustomNavBtn.isActiveCustomTab ? Font.DemiBold : Font.Medium
-                                        color: windowCustomNavBtn.isActiveCustomTab
-                                            ? Appearance.colors.colOnPrimaryContainer
-                                            : Appearance.colors.colOnLayer1
-                                        elide: Text.ElideRight
-                                    }
-
-                                    RippleButton {
-                                        visible: SettingsLayoutManager.editMode
-                                        Layout.alignment: Qt.AlignVCenter
-                                        implicitWidth: 22
-                                        implicitHeight: 22
-                                        buttonRadius: Appearance.rounding.full
-                                        colBackground: "transparent"
-                                        onClicked: SettingsLayoutManager.moveCustomTab(windowCustomNavBtn.tabId, -1)
-                                        StyledToolTip {
-                                            text: Translation.tr("Move custom sidebar tab up")
-                                        }
-                                        contentItem: MaterialSymbol {
-                                            anchors.centerIn: parent
+                                        MaterialSymbol {
+                                            Layout.alignment: Qt.AlignVCenter
                                             horizontalAlignment: Text.AlignHCenter
                                             verticalAlignment: Text.AlignVCenter
-                                            text: "keyboard_arrow_up"
-                                            iconSize: 14
-                                            color: Appearance.colors.colSubtext
+                                            text: navHeadingGroup.groupPages.length > 0
+                                                ? SettingsPageRegistry.iconForPage(navHeadingGroup.groupPages[0].realIndex)
+                                                : "folder"
+                                            iconSize: 18
+                                            color: SettingsMaterialPreset.navigationIconColor(
+                                                navHeadingGroup.index,
+                                                Math.max(1, SettingsPageRegistry.defaultCategories.length),
+                                                navHeadingGroup.hasActivePage)
                                         }
-                                    }
 
-                                    RippleButton {
-                                        visible: SettingsLayoutManager.editMode
-                                        Layout.alignment: Qt.AlignVCenter
-                                        implicitWidth: 22
-                                        implicitHeight: 22
-                                        buttonRadius: Appearance.rounding.full
-                                        colBackground: "transparent"
-                                        onClicked: SettingsLayoutManager.deleteCustomTab(windowCustomNavBtn.tabId)
-                                        StyledToolTip {
-                                            text: Translation.tr("Delete custom sidebar tab")
-                                        }
-                                        contentItem: MaterialSymbol {
-                                            anchors.centerIn: parent
-                                            horizontalAlignment: Text.AlignHCenter
+                                        StyledText {
+                                            Layout.alignment: Qt.AlignVCenter
+                                            Layout.fillWidth: true
+                                            Layout.minimumWidth: 0
                                             verticalAlignment: Text.AlignVCenter
-                                            text: "close"
-                                            iconSize: 13
-                                            color: Appearance.colors.colError
+                                            text: navHeadingGroup.headingTitle
+                                            font.family: SettingsMaterialPreset.fontFamily
+                                            font.pixelSize: Appearance.font.pixelSize.small
+                                            font.weight: navHeadingGroup.hasActivePage ? Font.DemiBold : Font.Medium
+                                            color: navHeadingGroup.hasActivePage
+                                                ? SettingsMaterialPreset.navSelectedTextColor
+                                                : SettingsMaterialPreset.textColor
+                                            elide: Text.ElideRight
+                                            maximumLineCount: 1
                                         }
-                                    }
-                                }
-                            }
-                        }
-
-                        // ── Inline "+ New Tab" Button in Edit Mode ──
-                        RippleButton {
-                            visible: SettingsLayoutManager.editMode
-                            Layout.fillWidth: true
-                            implicitHeight: 32
-                            buttonRadius: Appearance.rounding.small
-                            colBackground: Appearance.colors.colLayer1
-                            colBackgroundHover: Appearance.colors.colLayer1Hover
-                            onClicked: {
-                                SettingsLayoutManager.requestInlinePrompt("new-sidebar-tab")
-                            }
-                            StyledToolTip {
-                                text: Translation.tr("Create a new custom tab in the Settings sidebar")
-                            }
-                            contentItem: Item {
-                                implicitWidth: windowNewSidebarTabRow.implicitWidth
-                                implicitHeight: windowNewSidebarTabRow.implicitHeight
-                                Row {
-                                    id: windowNewSidebarTabRow
-                                    anchors.centerIn: parent
-                                    spacing: 6
-                                    MaterialSymbol {
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        text: "add"
-                                        iconSize: 16
-                                        color: Appearance.colors.colPrimary
-                                    }
-                                    StyledText {
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        verticalAlignment: Text.AlignVCenter
-                                        text: Translation.tr("New Sidebar Tab")
-                                        font.pixelSize: Appearance.font.pixelSize.smaller
-                                        font.weight: Font.DemiBold
-                                        color: Appearance.colors.colPrimary
                                     }
                                 }
                             }
@@ -1552,346 +1363,200 @@ ApplicationWindow {
                     }
                 }
 
-                Loader {
-                    id: navEditLoader
-                    anchors {
-                        top: SettingsMaterialPreset.waffle ? waffleWindowRailHeader.bottom : parent.top
-                        left: parent.left
-                        right: parent.right
-                        bottom: navBottomActions.top
-                        topMargin: SettingsMaterialPreset.waffle ? 8 : 0
-                        bottomMargin: 8
-                    }
-                    active: root.navEditMode
-                    asynchronous: true
-                    visible: status === Loader.Ready
-                    opacity: visible ? 1 : 0
-
-                    Behavior on opacity {
-                        enabled: Appearance.animationsEnabled
-                        NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
-                    }
-
-                    sourceComponent: Component {
-                        SettingsNavEditPane {
-                            currentPage: root.currentPage
-                            onPageActivated: pageIndex => root.currentPage = pageIndex
-                            onPageHidden: pageIndex => {
-                                if (root.currentPage !== pageIndex)
-                                    return
-                                Qt.callLater(() => {
-                                    if (root.navPageOrder.length > 0)
-                                        root.currentPage = root.navPageOrder[0]
-                                })
-                            }
-                            onDoneRequested: root.navEditMode = false
-                        }
-                    }
-                }
-
-                // Bottom actions: config file + overlay mode
+                // ── Clean Centered Footer: Config + Overlay (Edit Layout & Edit Navigation removed) ──
                 ColumnLayout {
                     id: navBottomActions
-                    anchors.bottom: parent.bottom
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    spacing: 2
+                    visible: !SettingsMaterialPreset.waffle
+                    anchors {
+                        bottom: parent.bottom
+                        left: parent.left
+                        right: parent.right
+                        bottomMargin: 10
+                        leftMargin: 8
+                        rightMargin: 8
+                    }
+                    spacing: 8
 
-                    RippleButton {
-                        id: windowLayoutEditToggle
-                        Accessible.name: windowLayoutEditToggleLabel.text
-                        objectName: SettingsMaterialPreset.waffle ? "windowLayoutEditToggle" : "windowEditSettingsLayoutButton"
-                        readonly property color editSurface: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.navSelectedColor : Appearance.colors.colPrimaryContainer
-                        readonly property color editSurfaceHover: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.navSelectedHoverColor : Appearance.colors.colPrimaryContainerHover
-                        readonly property color editForeground: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.textColor : Appearance.colors.colOnPrimaryContainer
+                    Rectangle {
                         Layout.fillWidth: true
-                        implicitHeight: 36
-                        buttonRadius: SettingsMaterialPreset.navItemRadius
-                        toggled: SettingsLayoutManager.editMode
-                        colBackground: "transparent"
-                        colBackgroundHover: SettingsMaterialPreset.navHoverColor
-                        colBackgroundToggled: editSurface
-                        colBackgroundToggledHover: editSurfaceHover
-                        onClicked: {
-                            if (SettingsLayoutManager.editMode)
-                                SettingsLayoutManager.commitEditMode()
-                            else
-                                SettingsLayoutManager.beginEditMode()
-                        }
-
-                        contentItem: RowLayout {
-                            anchors.fill: parent
-                            anchors.leftMargin: 10
-                            anchors.rightMargin: navRailWrapper.compact ? 10 : 8
-                            spacing: 10
-
-                            MaterialSymbol {
-                                Layout.alignment: navRailWrapper.compact ? Qt.AlignCenter : Qt.AlignVCenter
-                                text: SettingsLayoutManager.editMode ? "done" : "space_dashboard"
-                                iconSize: 18
-                                color: SettingsLayoutManager.editMode
-                                    ? windowLayoutEditToggle.editForeground
-                                    : SettingsMaterialPreset.secondaryTextColor
-                            }
-
-                            StyledText {
-                                id: windowLayoutEditToggleLabel
-                                visible: !navRailWrapper.compact
-                                Layout.alignment: Qt.AlignVCenter
-                                Layout.fillWidth: true
-                                verticalAlignment: Text.AlignVCenter
-                                text: SettingsLayoutManager.editMode
-                                    ? Translation.tr("Done layout")
-                                    : Translation.tr("Edit layout")
-                                font {
-                                    family: SettingsMaterialPreset.fontFamily
-                                    pixelSize: Appearance.font.pixelSize.small
-                                }
-                                color: SettingsLayoutManager.editMode
-                                    ? windowLayoutEditToggle.editForeground
-                                    : SettingsMaterialPreset.secondaryTextColor
-                                elide: Text.ElideRight
-                            }
-                        }
-
-                        StyledToolTip {
-                            position: "top"
-                            text: SettingsLayoutManager.editMode
-                                ? Translation.tr("Finish editing Settings cards & layout")
-                                : Translation.tr("Resize, arrange, and move Settings cards across tabs")
-                        }
+                        Layout.preferredHeight: 1
+                        color: SettingsMaterialPreset.plateDividerColor
                     }
 
-                    RippleButton {
-                        id: navEditToggle
-                        Accessible.name: navEditToggleLabel.text
-                        readonly property color editSurface: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.navSelectedColor : Appearance.colors.colPrimaryContainer
-                        readonly property color editSurfaceHover: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.navSelectedHoverColor : Appearance.colors.colPrimaryContainerHover
-                        readonly property color editForeground: SettingsMaterialPreset.waffle ? SettingsMaterialPreset.textColor : Appearance.colors.colOnPrimaryContainer
+                    GridLayout {
                         Layout.fillWidth: true
-                        implicitHeight: 36
-                        buttonRadius: SettingsMaterialPreset.navItemRadius
-                        toggled: root.navEditMode
-                        colBackground: "transparent"
-                        colBackgroundHover: SettingsMaterialPreset.navHoverColor
-                        colBackgroundToggled: editSurface
-                        colBackgroundToggledHover: editSurfaceHover
-                        onClicked: root.navEditMode = !root.navEditMode
+                        columns: navRailWrapper.compact ? 1 : 2
+                        uniformCellWidths: !navRailWrapper.compact
+                        columnSpacing: 6
+                        rowSpacing: 6
 
+                        RippleButton {
+                            id: configFileBtn
+                            Accessible.name: configFileBtnLabel.text
+                            property bool justCopied: false
+                            Layout.fillWidth: true
+                            implicitHeight: Math.round(34 * Appearance.fontSizeScale)
+                            buttonRadius: 10
+                            colBackground: SettingsMaterialPreset.controlSurface
+                            colBackgroundHover: SettingsMaterialPreset.controlSurfaceHover
 
-                        contentItem: RowLayout {
-                            anchors.fill: parent
-                            anchors.leftMargin: 10
-                            anchors.rightMargin: navRailWrapper.compact ? 10 : 8
-                            spacing: 10
-
-                            MaterialSymbol {
-                                Layout.alignment: navRailWrapper.compact ? Qt.AlignCenter : Qt.AlignVCenter
-                                text: root.navEditMode ? "done" : "edit"
-                                iconSize: 18
-                                color: root.navEditMode
-                                    ? navEditToggle.editForeground
-                                    : SettingsMaterialPreset.secondaryTextColor
+                            onClicked: Qt.openUrlExternally(`${Directories.config}/alis/config.json`)
+                            altAction: () => {
+                                Quickshell.clipboardText = CF.FileUtils.trimFileProtocol(`${Directories.config}/alis/config.json`)
+                                configFileBtn.justCopied = true
+                                revertTextTimer.restart()
                             }
 
-                            StyledText {
-                                id: navEditToggleLabel
-                                visible: !navRailWrapper.compact
-                                Layout.alignment: Qt.AlignVCenter
-                                Layout.fillWidth: true
-                                verticalAlignment: Text.AlignVCenter
-                                text: root.navEditMode
-                                    ? Translation.tr("Done")
-                                    : Translation.tr("Edit navigation")
-                                font {
-                                    family: SettingsMaterialPreset.fontFamily
-                                    pixelSize: Appearance.font.pixelSize.small
+                            Timer {
+                                id: revertTextTimer
+                                interval: 1500
+                                onTriggered: configFileBtn.justCopied = false
+                            }
+
+                            contentItem: Item {
+                                implicitWidth: configBtnRow.implicitWidth
+                                implicitHeight: configBtnRow.implicitHeight
+
+                                Row {
+                                    id: configBtnRow
+                                    anchors.centerIn: parent
+                                    spacing: navRailWrapper.compact ? 0 : 6
+
+                                    MaterialSymbol {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                        text: configFileBtn.justCopied ? "check" : "code"
+                                        iconSize: 16
+                                        color: configFileBtn.justCopied
+                                            ? Appearance.colors.colPrimary
+                                            : SettingsMaterialPreset.secondaryTextColor
+                                    }
+
+                                    StyledText {
+                                        id: configFileBtnLabel
+                                        visible: !navRailWrapper.compact
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                        text: configFileBtn.justCopied ? Translation.tr("Copied") : Translation.tr("Config")
+                                        font.family: SettingsMaterialPreset.fontFamily
+                                        font.pixelSize: Appearance.font.pixelSize.smaller
+                                        font.weight: Font.Medium
+                                        color: SettingsMaterialPreset.textColor
+                                    }
                                 }
-                                color: root.navEditMode
-                                    ? navEditToggle.editForeground
-                                    : SettingsMaterialPreset.secondaryTextColor
-                                elide: Text.ElideRight
+                            }
+
+                            StyledToolTip {
+                                position: "top"
+                                text: Translation.tr("Open the shell config file\nRight-click to copy path")
                             }
                         }
 
-                        StyledToolTip {
-                            position: "top"
-                            text: root.navEditMode
-                                ? Translation.tr("Finish editing navigation")
-                                : Translation.tr("Reorder or hide Settings pages directly in the sidebar")
-                        }
-                    }
+                        RippleButton {
+                            id: overlayToggleBtn
+                            Accessible.name: overlayToggleBtnLabel.text
+                            Layout.fillWidth: true
+                            implicitHeight: Math.round(34 * Appearance.fontSizeScale)
+                            buttonRadius: 10
+                            colBackground: SettingsMaterialPreset.controlSurface
+                            colBackgroundHover: SettingsMaterialPreset.controlSurfaceHover
 
-                    RippleButton {
-                        id: configFileBtn
-                        Accessible.name: configFileBtnLabel.text
-                        property bool justCopied: false
-                        Layout.fillWidth: true
-                        implicitHeight: 36
-                        buttonRadius: SettingsMaterialPreset.navItemRadius
-                        colBackground: "transparent"
-                        colBackgroundHover: SettingsMaterialPreset.navHoverColor
-
-                        onClicked: Qt.openUrlExternally(`${Directories.config}/alis/config.json`)
-                        altAction: () => {
-                            Quickshell.clipboardText = CF.FileUtils.trimFileProtocol(`${Directories.config}/alis/config.json`);
-                            configFileBtn.justCopied = true;
-                            revertTextTimer.restart();
-                        }
-
-                        Timer {
-                            id: revertTextTimer
-                            interval: 1500
-                            onTriggered: configFileBtn.justCopied = false
-                        }
-
-                        contentItem: RowLayout {
-                            anchors.fill: parent
-                            anchors.leftMargin: 10
-                            anchors.rightMargin: navRailWrapper.compact ? 10 : 8
-                            spacing: 10
-
-                            MaterialSymbol {
-                                Layout.alignment: navRailWrapper.compact ? Qt.AlignCenter : Qt.AlignVCenter
-                                text: configFileBtn.justCopied ? "check" : (navRailWrapper.compact ? "description" : "edit")
-                                iconSize: 18
-                                color: SettingsMaterialPreset.secondaryTextColor
+                            onClicked: {
+                                Config.setNestedValue("settingsUi.overlayMode", true)
+                                settingsRestartTimer.restart()
                             }
 
-                            StyledText {
-                                id: configFileBtnLabel
-                                visible: !navRailWrapper.compact
-                                Layout.alignment: Qt.AlignVCenter
-                                Layout.fillWidth: true
-                                verticalAlignment: Text.AlignVCenter
-                                text: configFileBtn.justCopied ? Translation.tr("Path copied") : Translation.tr("Config file")
-                                font {
-                                    family: SettingsMaterialPreset.fontFamily
-                                    pixelSize: Appearance.font.pixelSize.small
+                            contentItem: Item {
+                                implicitWidth: overlayBtnRow.implicitWidth
+                                implicitHeight: overlayBtnRow.implicitHeight
+
+                                Row {
+                                    id: overlayBtnRow
+                                    anchors.centerIn: parent
+                                    spacing: navRailWrapper.compact ? 0 : 6
+
+                                    MaterialSymbol {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                        text: "layers"
+                                        iconSize: 16
+                                        color: SettingsMaterialPreset.secondaryTextColor
+                                    }
+
+                                    StyledText {
+                                        id: overlayToggleBtnLabel
+                                        visible: !navRailWrapper.compact
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                        text: Translation.tr("Overlay")
+                                        font.family: SettingsMaterialPreset.fontFamily
+                                        font.pixelSize: Appearance.font.pixelSize.smaller
+                                        font.weight: Font.Medium
+                                        color: SettingsMaterialPreset.textColor
+                                    }
                                 }
-                                color: SettingsMaterialPreset.secondaryTextColor
-                                elide: Text.ElideRight
-                            }
-                        }
-
-                        StyledToolTip {
-                            position: "top"
-                            text: Translation.tr("Open the shell config file\nAlternatively right-click to copy path")
-                        }
-                    }
-
-                    RippleButton {
-                        id: overlayToggleBtn
-                        Accessible.name: overlayToggleBtnLabel.text
-                        Layout.fillWidth: true
-                        implicitHeight: 36
-                        buttonRadius: SettingsMaterialPreset.navItemRadius
-                        colBackground: "transparent"
-                        colBackgroundHover: SettingsMaterialPreset.navHoverColor
-
-                        onClicked: {
-                            Config.setNestedValue("settingsUi.overlayMode", true)
-                            settingsRestartTimer.restart()
-                        }
-
-                        contentItem: RowLayout {
-                            anchors.fill: parent
-                            anchors.leftMargin: 10
-                            anchors.rightMargin: navRailWrapper.compact ? 10 : 8
-                            spacing: 10
-
-                            MaterialSymbol {
-                                Layout.alignment: navRailWrapper.compact ? Qt.AlignCenter : Qt.AlignVCenter
-                                text: "layers"
-                                iconSize: 18
-                                color: SettingsMaterialPreset.secondaryTextColor
                             }
 
-                            StyledText {
-                                id: overlayToggleBtnLabel
-                                visible: !navRailWrapper.compact
-                                Layout.alignment: Qt.AlignVCenter
-                                Layout.fillWidth: true
-                                verticalAlignment: Text.AlignVCenter
-                                text: Translation.tr("Overlay")
-                                font {
-                                    family: SettingsMaterialPreset.fontFamily
-                                    pixelSize: Appearance.font.pixelSize.small
-                                }
-                                color: SettingsMaterialPreset.secondaryTextColor
-                                elide: Text.ElideRight
+                            StyledToolTip {
+                                position: "top"
+                                text: Translation.tr("Switch to overlay mode")
                             }
-                        }
-
-                        StyledToolTip {
-                            position: "top"
-                            text: Translation.tr("Switch to overlay mode")
                         }
                     }
                 }
 
                 Timer {
                     id: settingsRestartTimer
-                    interval: 500
+                    interval: 180
                     onTriggered: {
-                        Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "settings"])
+                        Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "settings", "--overlay"])
                         Qt.quit()
                     }
                 }
             }
 
-            Rectangle { // Content container
+            // ── Right Workspace Area ──
+            Rectangle {
                 id: contentContainer
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                // The windowBaseSurface owns the structural fill. Repainting
-                // colLayer0 here would double-composite global transparency.
+                // windowBaseSurface owns the structural colLayer0 fill; keep inner content transparent.
                 color: "transparent"
                 radius: Appearance.rounding.windowRounding - root.contentPadding
                 border.width: 0
                 border.color: "transparent"
+                clip: true
 
-                // ── Page header: iOS Breadcrumb (`‹ Back`) + Title + Subtitle ──
                 Item {
                     id: windowPageHeader
                     anchors { top: parent.top; left: parent.left; right: parent.right }
                     readonly property var meta: root.pages[root.currentPage] ?? {}
-                    readonly property var activeCustomTabObj: SettingsLayoutManager.activeCustomTabId.length > 0
-                        ? (SettingsLayoutManager.customTabs.find(t => t.id === SettingsLayoutManager.activeCustomTabId) ?? null)
-                        : null
-                    readonly property var activeCategory: SettingsPageRegistry.categories.find(
+                    readonly property var activeCategory: SettingsPageRegistry.defaultCategories.find(
                         cat => (cat?.pages ?? []).includes(root.currentPage)) ?? null
-                    readonly property var groupPages: (activeCategory?.pages ?? []).filter(
-                        idx => root.pages[idx] && SettingsPageRegistry.isPageApplicable(idx)).map(
-                        idx => Object.assign({}, root.pages[idx], { realIndex: idx }))
-                    readonly property int hubPageIndex: groupPages.length > 0 ? groupPages[0].realIndex : root.currentPage
                     readonly property Item activePageItem: pagesStack.currentItem
-                    readonly property bool isOnSiblingSubPage: false
-                    readonly property bool isOnInPageSubView: false
-                    readonly property bool isDrilledDown: false
-                    readonly property string backLabel: ""
-                    readonly property string activeTitle: activeCustomTabObj
-                        ? String(activeCustomTabObj.label || Translation.tr("Custom Tab"))
+                    readonly property bool isOnInPageSubView: Boolean(activePageItem?.isSubViewActive)
+                    readonly property bool isDrilledDown: isOnInPageSubView
+                    readonly property string backLabel: activeCategory?.label || meta.name || Translation.tr("Back")
+                    readonly property string activeTitle: isOnInPageSubView && String(activePageItem?.activeSubViewTitle || "").length > 0
+                        ? String(activePageItem.activeSubViewTitle)
                         : String(activeCategory?.label || meta.name || "")
-                    readonly property string activeIcon: activeCustomTabObj
-                        ? String(activeCustomTabObj.icon || "dashboard_customize")
-                        : String(meta.icon || "settings")
+                    readonly property string activeIcon: String(meta.icon || "settings")
 
                     function navigateBack(): void {
                         if (windowPageHeader.isOnInPageSubView && windowPageHeader.activePageItem
                                 && typeof windowPageHeader.activePageItem.exitSubView === "function") {
                             windowPageHeader.activePageItem.exitSubView()
-                            return
-                        }
-                        if (windowPageHeader.isOnSiblingSubPage && windowPageHeader.groupPages.length > 0) {
-                            root.activateNavigation(windowPageHeader.groupPages[0])
                         }
                     }
 
                     height: root.settingsSearchText.trim().length > 0
-                        ? 0
-                        : (SettingsMaterialPreset.waffle ? 56 : 48)
-                    visible: root.settingsSearchText.trim().length === 0
+                        ? (navRailWrapper.compact && !SettingsMaterialPreset.waffle ? Math.round(50 * Appearance.fontSizeScale) : 0)
+                        : (SettingsMaterialPreset.waffle ? 56 : Math.max(Math.round(54 * Appearance.fontSizeScale), windowPageHeaderRow.implicitHeight + 10))
+                    visible: height > 0
 
                     WaffleSettings.WWin11SettingsBreadcrumb {
                         id: waffleWindowBreadcrumb
@@ -1912,26 +1577,24 @@ ApplicationWindow {
                         id: windowPageHeaderRow
                         visible: !SettingsMaterialPreset.waffle
                         anchors.fill: parent
-                        anchors.leftMargin: 20
-                        anchors.rightMargin: 20
-                        anchors.topMargin: 6
+                        anchors.leftMargin: 16
+                        anchors.rightMargin: 16
+                        anchors.topMargin: 4
                         anchors.bottomMargin: 6
-                        spacing: 10
+                        spacing: 11
 
                         RippleButton {
                             id: windowBackBtn
                             objectName: "settingsHeaderBackButton"
-                            visible: windowPageHeader.isDrilledDown
+                            visible: windowPageHeader.isDrilledDown && root.settingsSearchText.trim().length === 0
                             Layout.alignment: Qt.AlignVCenter
                             implicitHeight: 30
                             implicitWidth: windowBackRow.implicitWidth + 18
                             buttonRadius: height / 2
-                            colBackground: Appearance.colors.colPrimaryContainer
-                            colBackgroundHover: Appearance.colors.colPrimaryContainerHover
+                            colBackground: SettingsMaterialPreset.pillSelectedColor
+                            colBackgroundHover: SettingsMaterialPreset.pillSelectedHoverColor
                             onClicked: windowPageHeader.navigateBack()
-                            StyledToolTip {
-                                text: Translation.tr("Go back")
-                            }
+                            StyledToolTip { text: Translation.tr("Go back") }
 
                             contentItem: Item {
                                 implicitWidth: windowBackRow.implicitWidth
@@ -1943,62 +1606,200 @@ ApplicationWindow {
 
                                     MaterialSymbol {
                                         anchors.verticalCenter: parent.verticalCenter
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
                                         text: "chevron_left"
-                                        iconSize: 18
-                                        color: Appearance.colors.colOnPrimaryContainer
+                                        iconSize: 17
+                                        color: SettingsMaterialPreset.pillSelectedTextColor
                                     }
 
                                     StyledText {
                                         anchors.verticalCenter: parent.verticalCenter
+                                        horizontalAlignment: Text.AlignHCenter
                                         verticalAlignment: Text.AlignVCenter
                                         text: windowPageHeader.backLabel
                                         font.pixelSize: Appearance.font.pixelSize.smaller
                                         font.weight: Font.DemiBold
-                                        color: Appearance.colors.colOnPrimaryContainer
+                                        color: SettingsMaterialPreset.pillSelectedTextColor
                                     }
                                 }
                             }
                         }
 
-                        MaterialSymbol {
-                            visible: windowPageHeader.isDrilledDown
+                        Rectangle {
+                            visible: root.settingsSearchText.trim().length === 0
                             Layout.alignment: Qt.AlignVCenter
-                            text: "chevron_right"
-                            iconSize: 16
-                            color: Appearance.colors.colSubtext
-                        }
+                            implicitWidth: 34
+                            implicitHeight: 34
+                            radius: 10
+                            color: SettingsMaterialPreset.accentTint
+                            border.width: 1
+                            border.color: SettingsMaterialPreset.accentBorder
 
-                        MaterialShapeWrappedMaterialSymbol {
-                            text: windowPageHeader.activeIcon
-                            iconSize: 15
-                            Layout.alignment: Qt.AlignVCenter
-                        }
-
-                        StyledText {
-                            Layout.alignment: Qt.AlignVCenter
-                            verticalAlignment: Text.AlignVCenter
-                            text: windowPageHeader.activeTitle
-                            marquee: true
-                            maximumLineCount: 1
-                            font {
-                                family: Appearance.font.family.title
-                                pixelSize: Appearance.font.pixelSize.normal
-                                weight: Font.DemiBold
+                            MaterialSymbol {
+                                anchors.centerIn: parent
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                                text: windowPageHeader.activeIcon
+                                iconSize: 18
+                                color: Appearance.colors.colPrimary
                             }
-                            color: Appearance.colors.colOnLayer1
                         }
 
-                        StyledText {
-                            Layout.alignment: Qt.AlignVCenter
+                        ColumnLayout {
+                            visible: root.settingsSearchText.trim().length === 0
                             Layout.fillWidth: true
-                            verticalAlignment: Text.AlignVCenter
-                            text: windowPageHeader.activeCustomTabObj
-                                ? Translation.tr("Custom modular Settings tab")
-                                : (windowPageHeader.meta.desc ?? "")
-                            font.pixelSize: Appearance.font.pixelSize.small
-                            color: Appearance.colors.colSubtext
-                            marquee: true
-                            maximumLineCount: 1
+                            Layout.minimumWidth: 0
+                            Layout.alignment: Qt.AlignVCenter
+                            spacing: 1
+
+                            StyledText {
+                                Layout.fillWidth: true
+                                Layout.minimumWidth: 0
+                                text: windowPageHeader.activeTitle
+                                elide: Text.ElideRight
+                                maximumLineCount: 1
+                                font {
+                                    family: Appearance.font.family.title
+                                    pixelSize: Appearance.font.pixelSize.large
+                                    weight: Font.DemiBold
+                                }
+                                color: SettingsMaterialPreset.textColor
+                            }
+
+                            StyledText {
+                                visible: text.length > 0
+                                Layout.fillWidth: true
+                                Layout.minimumWidth: 0
+                                text: String(windowPageHeader.meta.desc ?? "")
+                                font.pixelSize: Appearance.font.pixelSize.smaller
+                                color: SettingsMaterialPreset.secondaryTextColor
+                                elide: Text.ElideRight
+                                maximumLineCount: 1
+                            }
+                        }
+
+                        // Compact-mode inline search field
+                        Rectangle {
+                            visible: navRailWrapper.compact
+                            Layout.fillWidth: root.settingsSearchText.trim().length > 0
+                            Layout.preferredWidth: root.settingsSearchText.trim().length > 0 ? 320 : 210
+                            Layout.maximumWidth: root.settingsSearchText.trim().length > 0 ? 480 : 240
+                            Layout.preferredHeight: Math.round(34 * Appearance.fontSizeScale)
+                            Layout.alignment: Qt.AlignVCenter
+                            radius: SettingsMaterialPreset.searchRadius
+                            color: compactSettingsSearchField.activeFocus
+                                ? SettingsMaterialPreset.cardColor
+                                : SettingsMaterialPreset.controlSurface
+                            border.width: compactSettingsSearchField.activeFocus ? 1.5 : 1
+                            border.color: compactSettingsSearchField.activeFocus
+                                ? Appearance.colors.colPrimary
+                                : SettingsMaterialPreset.controlBorderColor
+
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: 10
+                                anchors.rightMargin: 6
+                                spacing: 6
+
+                                MaterialSymbol {
+                                    Layout.alignment: Qt.AlignVCenter
+                                    text: root.settingsSearchResults.length > 0 ? "manage_search" : "search"
+                                    iconSize: 16
+                                    color: compactSettingsSearchField.activeFocus
+                                        ? Appearance.colors.colPrimary
+                                        : SettingsMaterialPreset.secondaryTextColor
+                                }
+
+                                Item {
+                                    Layout.fillWidth: true
+                                    Layout.fillHeight: true
+
+                                    StyledText {
+                                        anchors.fill: parent
+                                        verticalAlignment: Text.AlignVCenter
+                                        visible: compactSettingsSearchField.text.length === 0 && !compactSettingsSearchField.activeFocus
+                                        text: Translation.tr("Search settings...")
+                                        font.pixelSize: Appearance.font.pixelSize.small
+                                        color: SettingsMaterialPreset.secondaryTextColor
+                                        elide: Text.ElideRight
+                                    }
+
+                                    TextInput {
+                                        id: compactSettingsSearchField
+                                        anchors.fill: parent
+                                        verticalAlignment: Text.AlignVCenter
+                                        color: SettingsMaterialPreset.textColor
+                                        font.family: SettingsMaterialPreset.fontFamily
+                                        font.pixelSize: Appearance.font.pixelSize.small
+                                        clip: true
+                                        selectByMouse: true
+                                        selectionColor: Appearance.colors.colPrimaryContainer
+                                        selectedTextColor: Appearance.colors.colOnPrimaryContainer
+                                        cursorVisible: activeFocus
+                                        cursorDelegate: Rectangle {
+                                            visible: compactSettingsSearchField.cursorVisible
+                                            width: 1.8
+                                            color: Appearance.colors.colPrimary
+                                        }
+
+                                        Connections {
+                                            target: root
+                                            function onSettingsSearchTextChanged() {
+                                                if (compactSettingsSearchField.text !== root.settingsSearchText)
+                                                    compactSettingsSearchField.text = root.settingsSearchText
+                                            }
+                                        }
+
+                                        onTextChanged: {
+                                            if (root.settingsSearchText !== text) {
+                                                root.settingsSearchText = text
+                                                root.recomputeSettingsSearchResults()
+                                            }
+                                        }
+
+                                        Keys.onPressed: event => {
+                                            if (event.key === Qt.Key_Down && root.settingsSearchResults.length > 0) {
+                                                settingsLiveSearch.focusResults()
+                                                event.accepted = true
+                                            } else if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
+                                                    && root.settingsSearchResults.length > 0) {
+                                                settingsLiveSearch.activateCurrent()
+                                                event.accepted = true
+                                            } else if (event.key === Qt.Key_Escape) {
+                                                if (root.settingsSearchText.length > 0) {
+                                                    root.openSearchResult({})
+                                                } else {
+                                                    compactSettingsSearchField.focus = false
+                                                    root.dismissFromEscape()
+                                                }
+                                                event.accepted = true
+                                            }
+                                        }
+                                    }
+                                }
+
+                                RippleButton {
+                                    visible: root.settingsSearchText.length > 0
+                                    Layout.preferredWidth: 22
+                                    Layout.preferredHeight: 22
+                                    Layout.alignment: Qt.AlignVCenter
+                                    buttonRadius: Appearance.rounding.full
+                                    colBackground: "transparent"
+                                    colBackgroundHover: SettingsMaterialPreset.controlSurfaceHover
+                                    onClicked: {
+                                        root.openSearchResult({})
+                                        compactSettingsSearchField.forceActiveFocus()
+                                    }
+                                    contentItem: MaterialSymbol {
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                        text: "close"
+                                        iconSize: 14
+                                        color: SettingsMaterialPreset.secondaryTextColor
+                                    }
+                                }
+                            }
                         }
                     }
 
@@ -2008,7 +1809,7 @@ ApplicationWindow {
                     }
                     SequentialAnimation {
                         id: windowPageHeaderSwap
-                        NumberAnimation { target: windowPageHeaderRow; property: "opacity"; to: 0; duration: Appearance.animation.elementMoveFast.duration / 2; easing.type: Appearance.animation.elementMoveFast.type }
+                        NumberAnimation { target: windowPageHeaderRow; property: "opacity"; to: 0.35; duration: Appearance.animation.elementMoveFast.duration / 2; easing.type: Appearance.animation.elementMoveFast.type }
                         NumberAnimation { target: windowPageHeaderRow; property: "opacity"; to: 1; duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type }
                     }
 
@@ -2016,20 +1817,19 @@ ApplicationWindow {
                         visible: !SettingsMaterialPreset.waffle
                         anchors { bottom: parent.bottom; left: parent.left; right: parent.right; leftMargin: 16; rightMargin: 16 }
                         height: 1
-                        color: Appearance.m3colors.m3outlineVariant
-                        opacity: 0.5
+                        color: SettingsMaterialPreset.plateDividerColor
                     }
                 }
 
                 SettingsPageHost {
                     id: pagesStack
                     anchors { top: windowPageHeader.bottom; left: parent.left; right: parent.right; bottom: parent.bottom }
-
                     pages: root.pages
                     requestedIndex: root.currentPage
                     visible: root.settingsSearchText.trim().length === 0
                     enabled: visible
                     loadEnabled: Config.ready && root._navigationInitialized
+                        && (root._firstFramePainted || Quickshell.env("QT_QUICK_BACKEND") === "software")
                     onPageNavigationRequested: pageIndex => root.currentPage = pageIndex
 
                     SettingsPageLoadingOverlay {
@@ -2039,49 +1839,22 @@ ApplicationWindow {
                         icon: String(root.pages?.[root.currentPage]?.icon ?? "tune")
                         z: 15
                     }
-
                 }
 
-                // Live search is the page content, never a floating dropdown.
-                // The page host stays loaded but hidden so leaving search restores
-                // the same page/section state without another expensive load.
                 SettingsLiveSearchResults {
                     id: settingsLiveSearch
-                    anchors.fill: parent
+                    anchors { top: windowPageHeader.bottom; left: parent.left; right: parent.right; bottom: parent.bottom }
                     z: 20
                     query: root.settingsSearchText
                     results: root.settingsSearchResults
-                    searchField: SettingsMaterialPreset.waffle ? waffleWindowRailHeader.searchField : settingsSearchField
+                    searchField: SettingsMaterialPreset.waffle
+                        ? waffleWindowRailHeader.searchField
+                        : (navRailWrapper.compact ? compactSettingsSearchField : settingsSearchField)
                     iconForPage: index => SettingsPageRegistry.iconForPage(index)
                     onActivated: entry => root.openSearchResult(entry)
                     onCloseRequested: root.openSearchResult({})
                 }
-
             }
         }
-    }
-
-    SettingsEditToolbar {
-        id: windowExternalEditToolbar
-        visible: SettingsLayoutManager.editMode && root.uiReady
-        z: 500
-        targetPage: pagesStack.currentItem
-        width: Math.min(implicitWidth, Math.max(320, parent.width - 24))
-        anchors.bottom: parent.bottom
-        anchors.horizontalCenter: parent.horizontalCenter
-    }
-
-    // Let the current page scroll its last cards clear above the bottom dock.
-    Binding {
-        target: pagesStack.currentItem
-        property: "editBottomScrollReserve"
-        value: windowExternalEditToolbar.visible ? windowExternalEditToolbar.height : 0
-        when: pagesStack.currentItem?.editBottomScrollReserve !== undefined
-        restoreMode: Binding.RestoreBindingOrValue
-    }
-
-    SettingsModuleDragOverlay {
-        anchors.fill: parent
-        z: 99999
     }
 }
