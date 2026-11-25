@@ -630,7 +630,7 @@ ApplicationWindow {
     }
 
     visible: true
-    onClosing: Qt.quit()
+    onClosing: Qt.callLater(Qt.quit)
     title: "alis Settings"
 
     Component.onCompleted: {
@@ -649,8 +649,6 @@ ApplicationWindow {
 
         root._requestedStartSection = Quickshell.env("QS_SETTINGS_SECTION") || ""
         root.initializeNavigation()
-        if (root.uiReady && !root._firstFramePainted)
-            Qt.callLater(() => { root._firstFramePainted = true })
     }
 
     Connections {
@@ -694,9 +692,24 @@ ApplicationWindow {
             Math.max(500, root._screenAvailHeight - 40),
             root._screenAvailHeight * (Config.options?.dashboard?.heightRatio ?? 0.72) + 40))
 
+    function _isEditableTextInput(item): bool {
+        if (!item || item.readOnly === true)
+            return false
+        return item.cursorPosition !== undefined && typeof item.select === "function"
+    }
+
     function handleEscape(): bool {
         if (root.settingsSearchText.length > 0) {
             root.openSearchResult({})
+            return true
+        }
+        const focused = root.activeFocusItem
+        if (focused
+                && focused !== settingsSearchField
+                && focused !== compactSettingsSearchField
+                && focused !== waffleWindowRailHeader.searchField
+                && root._isEditableTextInput(focused)) {
+            focused.focus = false
             return true
         }
         if (typeof pagesStack?.currentItem?.handleEscape === "function"
@@ -716,10 +729,17 @@ ApplicationWindow {
             root.close()
     }
 
-    property bool _firstFramePainted: false
-    onUiReadyChanged: {
-        if (root.uiReady && !root._firstFramePainted)
-            Qt.callLater(() => { root._firstFramePainted = true })
+    property bool _firstFramePainted: Quickshell.env("QT_QUICK_BACKEND") === "software"
+    onFrameSwapped: {
+        if (!root._firstFramePainted)
+            root._firstFramePainted = true
+    }
+    Timer {
+        id: firstFrameFallbackTimer
+        interval: 120
+        repeat: false
+        running: root.uiReady && !root._firstFramePainted
+        onTriggered: root._firstFramePainted = true
     }
 
     minimumWidth: 750
@@ -743,7 +763,7 @@ ApplicationWindow {
         objectName: "settingsWindowStartupLoadingScreen"
         anchors.fill: parent
         z: 5
-        loading: !root.uiReady
+        loading: !root.uiReady || !root._firstFramePainted
         title: Translation.tr("Settings")
         icon: "tune"
         fillSurface: true
@@ -768,7 +788,7 @@ ApplicationWindow {
         context: Qt.WindowShortcut
         enabled: !settingsSearchField.activeFocus
             && !compactSettingsSearchField.activeFocus
-            && !waffleWindowRailHeader.searchField.activeFocus
+            && !(waffleWindowRailHeader.searchField?.activeFocus ?? false)
         onActivated: root.dismissFromEscape()
     }
 

@@ -167,19 +167,40 @@ Item {
             return
 
         let retained = _retainedIndices.slice()
+        let lru = _lruIndices.filter(value => value !== index)
         if (retained.indexOf(index) < 0) {
+            // Never allow retained indices to exceed the fixed slot pool; evict
+            // oldest non-active LRU slots first so rapid switching across >8
+            // pages always receives a free Loader slot and never deadlocks.
+            const maxPool = Math.max(2, root._slotPoolSize)
+            while (retained.length >= maxPool) {
+                let evictIndex = -1
+                for (let i = 0; i < lru.length; i++) {
+                    const candidate = lru[i]
+                    if (candidate !== _currentIndex
+                            && candidate !== _pendingIndex
+                            && candidate !== requestedIndex
+                            && candidate !== index) {
+                        evictIndex = candidate
+                        lru.splice(i, 1)
+                        break
+                    }
+                }
+                if (evictIndex < 0)
+                    break
+                retained = retained.filter(value => value !== evictIndex)
+            }
             retained.push(index)
             _retainedIndices = retained
         }
 
-        let lru = _lruIndices.filter(value => value !== index)
         lru.push(index)
         _lruIndices = lru
         _syncResidency()
     }
 
     function _trimCache() {
-        const limit = Math.max(2, cacheLimit)
+        const limit = Math.min(root._slotPoolSize, Math.max(2, cacheLimit))
         let retained = _retainedIndices.slice()
         let lru = _lruIndices.slice()
 
@@ -278,6 +299,7 @@ Item {
         _errorIndex = -1
 
         _retain(_pendingIndex)
+        _trimCache()
         const pendingLoader = _loaderFor(_pendingIndex)
         if (pendingLoader) {
             pendingLoader.opacity = 0

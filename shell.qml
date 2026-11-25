@@ -622,7 +622,9 @@ ShellRoot {
         for (let i = 0; i < wins.length; ++i) {
             const win = wins[i]
             const title = String(win?.title ?? "")
-            if (title === "alis Settings" || title === "Settings — Alis") {
+            const appId = String(win?.app_id ?? "").toLowerCase()
+            const appMatches = appId.length === 0 || appId.includes("quickshell") || appId === "qs"
+            if (appMatches && (title === "alis Settings" || title === "Settings — Alis")) {
                 if (win?.id !== undefined && win?.id !== null) {
                     NiriService.closeWindow(win.id)
                     return true

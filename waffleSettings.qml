@@ -154,8 +154,45 @@ ApplicationWindow {
     onCurrentPageChanged: root._persistCurrentPage()
 
     visible: true
-    onClosing: Qt.quit()
+    onClosing: Qt.callLater(Qt.quit)
     title: "Settings — Alis"
+
+    property bool _firstFramePainted: Quickshell.env("QT_QUICK_BACKEND") === "software"
+    onFrameSwapped: {
+        if (!root._firstFramePainted)
+            root._firstFramePainted = true
+    }
+    Timer {
+        id: firstFrameFallbackTimer
+        interval: 120
+        repeat: false
+        running: root.uiReady && !root._firstFramePainted
+        onTriggered: root._firstFramePainted = true
+    }
+
+    function _isEditableTextInput(item): bool {
+        if (!item || item.readOnly === true)
+            return false
+        return item.cursorPosition !== undefined && typeof item.select === "function"
+    }
+
+    function handleEscape(): bool {
+        if (settingsContent.searchText && settingsContent.searchText.length > 0) {
+            settingsContent.searchText = ""
+            return true
+        }
+        const focused = root.activeFocusItem
+        if (focused && root._isEditableTextInput(focused)) {
+            focused.focus = false
+            return true
+        }
+        return false
+    }
+
+    function dismissFromEscape(): void {
+        if (!root.handleEscape())
+            root.close()
+    }
 
     function tryOpenPendingSection(): void {
         if (!root.pendingStartSection || !root.uiReady)
@@ -214,7 +251,7 @@ ApplicationWindow {
     // Loading state
     Item {
         anchors.fill: parent
-        visible: !root.uiReady
+        visible: !root.uiReady || !root._firstFramePainted
 
         WText {
             id: startupLoadingLabel
@@ -225,14 +262,14 @@ ApplicationWindow {
             color: Looks.colors.subfg
 
             SequentialAnimation on opacity {
-                running: !root.uiReady && Looks.transition.enabled
+                running: (!root.uiReady || !root._firstFramePainted) && Looks.transition.enabled
                 loops: Animation.Infinite
                 NumberAnimation { from: 0.55; to: 1; duration: 780; easing.type: Easing.InOutSine }
                 NumberAnimation { from: 1; to: 0.55; duration: 780; easing.type: Easing.InOutSine }
                 onRunningChanged: { if (!running) startupLoadingLabel.opacity = 1 }
             }
             SequentialAnimation on scale {
-                running: !root.uiReady && Looks.transition.enabled
+                running: (!root.uiReady || !root._firstFramePainted) && Looks.transition.enabled
                 loops: Animation.Infinite
                 NumberAnimation { from: 0.98; to: 1.04; duration: 780; easing.type: Easing.InOutSine }
                 NumberAnimation { from: 1.04; to: 0.98; duration: 780; easing.type: Easing.InOutSine }
@@ -251,6 +288,7 @@ ApplicationWindow {
         pages: root.pages
         currentPage: root.currentPage
         loadEnabled: root.uiReady && root._navigationInitialized
+            && (root._firstFramePainted || Quickshell.env("QT_QUICK_BACKEND") === "software")
         onCurrentPageChanged: {
             if (navigationReady && root.currentPage !== currentPage)
                 root.currentPage = currentPage
@@ -267,13 +305,7 @@ ApplicationWindow {
     Shortcut {
         sequence: "Escape"
         context: Qt.WindowShortcut
-        onActivated: {
-            if (settingsContent.searchText && settingsContent.searchText.length > 0) {
-                settingsContent.searchText = ""
-                return
-            }
-            root.close()
-        }
+        onActivated: root.dismissFromEscape()
     }
 
     Shortcut {

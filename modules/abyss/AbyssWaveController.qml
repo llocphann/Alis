@@ -19,6 +19,8 @@ Item {
     property string mode: "SLEEPING"
     property int revision: 0
     property real crestPeak: 0
+    property real _paintedCrestPeak: 0
+    property real _prevPaintedCrestPeak: 0
     property real lastStep: 0
     readonly property bool running: ticker.running
     readonly property var texture: textureSource
@@ -38,6 +40,8 @@ Item {
         // Disarm the shader synchronously; a hidden/offscreen Canvas may not
         // produce another paint after its last animation clock has stopped.
         crestPeak = 0
+        _paintedCrestPeak = 0
+        _prevPaintedCrestPeak = 0
         // A disabled wave solver never consumes mass. The output field still
         // animates while Waves is off, so recalculating up to 256 mass samples
         // on every Recording/Notification geometry frame was wasted CPU work.
@@ -125,7 +129,11 @@ Item {
         width: root.sampleCount; height: 1
         renderTarget: Canvas.Image
         onAvailableChanged: if (available) requestPaint()
-        onPainted: textureSource.scheduleUpdate()
+        onPainted: {
+            root._prevPaintedCrestPeak = root._paintedCrestPeak
+            root._paintedCrestPeak = root.crestPeak
+            textureSource.scheduleUpdate()
+        }
         onPaint: {
             if (!root.simulation || width <= 0) return
             root.crestPeak = Wave.projectCrests(root.simulation,Appearance.effectsEnabled && AbyssStyle.quality !== "performance")
@@ -171,7 +179,10 @@ Item {
         readonly property real encodedHeightCeiling: 256
         // Tight upper bound on active crest height so AbyssField.vert only
         // shrinks its skipped transparent interior by the real wave height.
-        readonly property real activePeakHeight: root.crestPeak > 0.01 ? Math.min(256, Math.ceil(root.crestPeak) + 2) : 0
+        // Keep a 1-frame high-water mark across GPU texture uploads so decay
+        // or clearSpectrum() can never clip a crest still in textureSource.
+        readonly property real _effectivePeak: Math.max(root.crestPeak, root._paintedCrestPeak, root._prevPaintedCrestPeak)
+        readonly property real activePeakHeight: _effectivePeak > 0.01 ? Math.min(256, Math.ceil(_effectivePeak) + 2) : 0
         readonly property bool activeProfile: root.crestPeak > .01
         width: samples.width; height: samples.height
         x: -width; y: -height

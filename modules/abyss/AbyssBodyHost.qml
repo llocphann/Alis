@@ -74,7 +74,10 @@ Item {
             _idleEvicted = false
             idleUnloadTimer.stop()
             warmExpiry.stop()
-            if (retainAfterFirstOpen) openedOnce = true
+            // Latch openedOnce only after content is already loaded so a cold
+            // showLoadingSurface open never bypasses _coldOpenSlideReady on frame 0.
+            if (retainAfterFirstOpen && content.status === Loader.Ready)
+                openedOnce = true
         } else {
             if (!semanticOpen && !open) activationOrder = 0
             if (warmHeld && !retainAfterFirstOpen && !backgroundPreload) warmExpiry.restart()
@@ -1070,6 +1073,8 @@ Item {
         opacity: 1
         enabled: root.acceptsInput
         onLoaded: {
+            if (root.retainAfterFirstOpen && !root._idleEvicted)
+                root.openedOnce = true
             root.warmHeld = root.warmContent && root.visualResident
             if (item.participant !== undefined) item.participant = root
             if (item.outputName !== undefined) item.outputName = Qt.binding(() => root.outputName)

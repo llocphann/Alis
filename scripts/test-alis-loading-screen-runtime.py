@@ -444,6 +444,7 @@ ShellRoot {
         XDG_CONFIG_HOME=str(folder / "config"),
         XDG_STATE_HOME=str(folder / "state"),
         XDG_CACHE_HOME=str(folder / "cache"),
+        XDG_DATA_HOME=str(folder / "data"),
     )
     res = subprocess.run(["qs", "-p", str(folder), "--no-color"], env=env, text=True, capture_output=True, timeout=25)
     log = res.stdout + res.stderr
@@ -564,6 +565,7 @@ ShellRoot {
         XDG_CONFIG_HOME=str(folder2 / "config"),
         XDG_STATE_HOME=str(folder2 / "state"),
         XDG_CACHE_HOME=str(folder2 / "cache"),
+        XDG_DATA_HOME=str(folder2 / "data"),
     )
     res2 = subprocess.run(["qs", "-p", str(folder2), "--no-color"], env=env2, text=True, capture_output=True, timeout=25)
     log2 = res2.stdout + res2.stderr

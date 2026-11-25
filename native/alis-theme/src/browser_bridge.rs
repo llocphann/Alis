@@ -502,10 +502,13 @@ fn serve_loop(
                 }
                 ConnPhase::Sse { last_activity, .. } => *last_activity + KEEPALIVE_INTERVAL,
             };
-            let rem = next_wake
-                .saturating_duration_since(now)
-                .as_millis()
-                .min(i32::MAX as u128) as i32;
+            let dur = next_wake.saturating_duration_since(now);
+            let rem = if dur.is_zero() {
+                0
+            } else {
+                // Round sub-millisecond waits up to 1ms so poll(2) never busy-spins.
+                ((dur.as_micros() + 999) / 1000).min(i32::MAX as u128) as i32
+            };
             timeout_ms = if timeout_ms < 0 {
                 rem
             } else {
@@ -586,30 +589,31 @@ fn serve_loop(
             }
         }
 
-        // 2. Service existing connections (walk backwards so swap_remove is safe).
-        // Snapshot the count matching pollfds[1..].
+        // 2. Service existing connections. Snapshot the count matching pollfds[1..].
         let polled_count = pollfds.len().saturating_sub(1);
         let mut completed_requests: Vec<(usize, String, String)> = Vec::new();
-        let mut to_remove: Vec<usize> = Vec::new();
+        let mut removed = vec![false; conns.len()];
 
         for idx in 0..polled_count {
             let revents = pollfds[idx + 1].revents;
             let conn = &mut conns[idx];
 
             if (revents & (libc::POLLERR | libc::POLLNVAL)) != 0 {
-                to_remove.push(idx);
+                removed[idx] = true;
                 continue;
             }
 
             let mut remove = false;
             match &mut conn.phase {
                 ConnPhase::Reading { buf, deadline } => {
+                    let mut req_complete = false;
                     if (revents & (libc::POLLIN | libc::POLLHUP)) != 0 {
                         loop {
                             match conn.stream.read(&mut read_tmp) {
                                 Ok(0) => {
                                     if let Some((m, p)) = parse_request_ready(buf) {
                                         completed_requests.push((idx, m, p));
+                                        req_complete = true;
                                     } else {
                                         remove = true;
                                     }
@@ -623,6 +627,7 @@ fn serve_loop(
                                     buf.extend_from_slice(&read_tmp[..n]);
                                     if let Some((m, p)) = parse_request_ready(buf) {
                                         completed_requests.push((idx, m, p));
+                                        req_complete = true;
                                         break;
                                     }
                                 }
@@ -634,11 +639,13 @@ fn serve_loop(
                                 }
                             }
                         }
-                    } else if now >= *deadline {
+                    }
+                    if !remove && !req_complete && now >= *deadline {
                         remove = true;
                     }
                 }
                 ConnPhase::WritingClose { deadline, .. } => {
+                    let dl = *deadline;
                     if (revents & libc::POLLHUP) != 0 {
                         remove = true;
                     } else if (revents & libc::POLLOUT) != 0 {
@@ -646,7 +653,8 @@ fn serve_loop(
                             Ok(true) | Err(()) => remove = true,
                             Ok(false) => {}
                         }
-                    } else if now >= *deadline {
+                    }
+                    if !remove && now >= dl {
                         remove = true;
                     }
                 }
@@ -693,20 +701,15 @@ fn serve_loop(
                 }
             }
             if remove {
-                to_remove.push(idx);
+                removed[idx] = true;
             }
         }
 
-        // Remove dead connections before dispatching requests (adjusting completed indices).
-        // Simpler: dispatch completed requests FIRST (they are guaranteed not in to_remove),
-        // unless POST /notify compacts SSE clients — so handle removal cleanly by marking via Option
-        // or handling non-broadcast requests inline and removing dead connections in descending order.
-        to_remove.sort_unstable();
-        to_remove.dedup();
+        // Dispatch completed requests using O(1) removed bitmap before sweeping dead connections.
         let mut notify_indices: Vec<usize> = Vec::new();
 
         for (idx, method, path) in completed_requests {
-            if to_remove.binary_search(&idx).is_ok() {
+            if removed[idx] {
                 continue;
             }
             if method == "POST" && path == "/notify" {
@@ -716,7 +719,7 @@ fn serve_loop(
             let sse_clients = conns
                 .iter()
                 .enumerate()
-                .filter(|(i, c)| c.is_sse() && to_remove.binary_search(i).is_err())
+                .filter(|&(i, c)| c.is_sse() && !removed[i])
                 .count();
 
             if method == "GET" && path == "/events" {
@@ -738,7 +741,7 @@ fn serve_loop(
                     last_activity: now,
                 };
                 if conns[idx].flush_writes(now).is_err() {
-                    to_remove.push(idx);
+                    removed[idx] = true;
                 }
                 continue;
             }
@@ -799,7 +802,7 @@ fn serve_loop(
                 deadline: now + REQUEST_TIMEOUT,
             };
             match conns[idx].flush_writes(now) {
-                Ok(true) | Err(()) => to_remove.push(idx),
+                Ok(true) | Err(()) => removed[idx] = true,
                 Ok(false) => {}
             }
         }
@@ -807,14 +810,14 @@ fn serve_loop(
         // Handle POST /notify requests (may drop stale SSE connections cleanly via raw_fd lookup).
         let notify_fds: Vec<libc::c_int> = notify_indices
             .iter()
-            .filter(|i| to_remove.binary_search(i).is_err())
+            .filter(|&&i| !removed[i])
             .map(|&i| conns[i].stream.as_raw_fd())
             .collect();
 
-        to_remove.sort_unstable();
-        to_remove.dedup();
-        for &idx in to_remove.iter().rev() {
-            conns.swap_remove(idx);
+        for idx in (0..removed.len()).rev() {
+            if removed[idx] {
+                conns.swap_remove(idx);
+            }
         }
 
         for fd in notify_fds {
@@ -980,6 +983,31 @@ mod tests {
                 assert!(line.contains("#006876"));
                 break;
             }
+        }
+
+        // Concurrent batch: multiple simultaneous /health, /theme, /notify, and aborted sockets
+        let mut handles = Vec::new();
+        for n in 0..8 {
+            handles.push(thread::spawn(move || {
+                if n % 3 == 0 {
+                    // Immediate disconnect (aborted reader)
+                    if let Ok(s) = TcpStream::connect(("127.0.0.1", port)) {
+                        drop(s);
+                    }
+                    return;
+                }
+                let req = if n % 3 == 1 {
+                    "GET /health HTTP/1.1\r\nHost: localhost\r\n\r\n"
+                } else {
+                    "POST /notify HTTP/1.1\r\nHost: localhost\r\nContent-Length: 0\r\n\r\n"
+                };
+                let resp = http_request(port, req);
+                assert!(resp.starts_with("HTTP/1.1 200 OK"), "unexpected resp: {resp}");
+                assert!(resp.contains(r#""clients":1"#), "wrong client count in batch: {resp}");
+            }));
+        }
+        for h in handles {
+            h.join().unwrap();
         }
 
         // Shut down cleanly
