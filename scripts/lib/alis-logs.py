@@ -683,6 +683,8 @@ def classify_issue(entry: LogEntry) -> tuple[bool, str, str]:
     # Actionable hint derivation
     if "File does not exist" in msg or "FileView" in msg:
         hint = "Add printErrors: false on optional FileView or guard existence before reading"
+    elif "ABI mismatch" in msg or "Quickshell was built against Qt" in msg:
+        hint = "Rebuild pinned Quickshell against the host Qt6 ABI via `alis doctor --fix-abi`"
     elif "Binding loop" in msg:
         hint = "Break circular QML property dependency (use an intermediate state trigger or onChanged handler)"
     elif any(tok in msg for tok in ("ReferenceError", "TypeError", "SyntaxError", "RangeError")):

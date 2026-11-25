@@ -180,6 +180,13 @@ def test_modern_parsers_and_diagnose() -> None:
     clean_diag = json.loads(p_clean.stdout)
     assert clean_diag["healthy"] is True and clean_diag["actionableCount"] == 0, clean_diag
 
+    # Qt/Quickshell ABI mismatch stays actionable and points directly to `alis doctor --fix-abi`
+    abi_log = "2026-11-26T00:10:20+0700 host alis[1596]:   WARN: Quickshell was built against Qt 6.12.0 but the system has updated to Qt 6.12.1\n"
+    p_abi = run_logs(["--diagnose", "--json"], stdin_text=abi_log)
+    abi_diag = json.loads(p_abi.stdout)
+    assert abi_diag["healthy"] is False and abi_diag["actionableCount"] == 1, abi_diag
+    assert "alis doctor --fix-abi" in abi_diag["actionable"][0]["hint"], abi_diag
+
 
 def test_alis_cli_subcommands() -> None:
     # 1. Per-subcommand --help
